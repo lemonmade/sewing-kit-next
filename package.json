@@ -1,0 +1,20 @@
+{
+  "name": "sewing-kit-next",
+  "private": true,
+  "scripts": {
+    "test": "jest --watch",
+    "build": "yarn tsc --build"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "jest-watch-yarn-workspaces": "^1.1.0",
+    "prettier": "^1.18.2",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@types/jest": "^24.0.15"
+  }
+}
