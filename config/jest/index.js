@@ -24,7 +24,7 @@ module.exports = function jestConfigFactory(dirname) {
     testEnvironmentOptions: {
       url: 'http://localhost:3000/',
     },
-    watchPathIgnorePatterns: ['/fixtures/'],
+    watchPathIgnorePatterns: ['/fixtures/', '/tmp/'],
   };
 };
 
