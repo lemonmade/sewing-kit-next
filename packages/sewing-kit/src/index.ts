@@ -1,19 +1,12 @@
 import {resolve} from 'path';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
-import {AsyncSeriesHook} from 'tapable';
+import {AsyncParallelHook} from 'tapable';
 
-import {
-  Work,
-  Configuration,
-  Build,
-  Workspace,
-  Runtime,
-  BrowserEntry,
-  BuildType,
-} from './concepts';
+import {Work, Build, WorkspaceDiscovery, BrowserEntry} from './concepts';
 
 const webPlugin = makePlugin(() => import('./plugins/web'));
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
+const browserAppPlugin = makePlugin(() => import('./plugins/browser-app'));
 
 export interface Options {
   root: string;
@@ -22,15 +15,15 @@ export interface Options {
 
 export async function run({root, plugins = []}: Options) {
   const work = await init(plugins);
-  const configuration = new Configuration();
-  const build = new Build(configuration);
 
-  work.hooks.configure.call(configuration);
+  const discovery = new WorkspaceDiscovery(root);
+  work.hooks.discovery.call(discovery);
+  const workspace = await discovery.discover();
+
+  const build = new Build();
   work.hooks.build.call(build);
 
-  const workspace = await discover(root);
-
-  const browserEntries = [...workspace.browserApps].reduce<BrowserEntry[]>(
+  const buildTargets = [...workspace.browserApps].reduce<BrowserEntry[]>(
     (all, app) => {
       return [...all, ...app.entries];
     },
@@ -38,24 +31,13 @@ export async function run({root, plugins = []}: Options) {
   );
 
   await Promise.all(
-    browserEntries.map(async (browserEntry) => {
-      const rules = await build.hooks.rules.promise([], browserEntry);
-      const extensions = await build.hooks.extensions.promise([
-        '.js',
-        '.jsx',
-        '.mjs',
-        '.json',
-      ], browserEntry);
-
-      const config = await build.hooks.config.promise({
-        mode: 'development',
-        entry: browserEntry.roots,
-        output: {
-          path: resolve(root, 'build/browser', browserEntry.id),
+    buildTargets.map(async (buildTarget) => {
+      const config = await build.hooks.config.promise(
+        {
+          mode: 'development',
         },
-        resolve: {extensions},
-        module: {rules},
-      });
+        buildTarget,
+      );
 
       await buildWebpack(config);
     }),
@@ -65,8 +47,9 @@ export async function run({root, plugins = []}: Options) {
 async function init(plugins: ((work: Work) => void)[]) {
   const work = new Work();
 
-  const rootHook = new AsyncSeriesHook(['work']);
+  const rootHook = new AsyncParallelHook(['work']);
 
+  rootHook.tapPromise('SewingKit.browserApp', browserAppPlugin);
   rootHook.tapPromise('SewingKit.web', webPlugin);
   rootHook.tapPromise('SewingKit.typescript', typescriptPlugin);
 
@@ -90,28 +73,6 @@ function forcePromiseTap(plugin: (...args: any[]) => unknown) {
       return Promise.reject(error);
     }
   };
-}
-
-function discover(root: string) {
-  const workspace = new Workspace();
-
-  workspace.browserApps.add({
-    name: 'main',
-    entries: new Set([
-      {
-        id: 'main',
-        name: 'main',
-        type: BuildType.Browser,
-        options: {},
-        variants: [],
-        runtime: Runtime.Browser,
-        roots: [resolve(root, 'client')],
-        assets: {scripts: true, styles: true, images: true, files: true},
-      },
-    ]),
-  });
-
-  return workspace;
 }
 
 function buildWebpack(config: WebpackConfiguration) {

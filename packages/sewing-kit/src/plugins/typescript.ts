@@ -1,10 +1,19 @@
 import {produce} from 'immer';
 import {Work, BabelConfig} from '../concepts';
 
+const PLUGIN = 'SewingKit.typescript';
+
 export default function typescript(work: Work) {
-  work.hooks.configure.tap('SewingKit.typescript', (configuration) => {
-    configuration.hooks.babel.tap(
-      'SewingKit.typescript',
+  work.hooks.build.tap(PLUGIN, (build) => {
+    build.hooks.extensions.tap(
+      PLUGIN,
+      produce((extensions: string[]) => {
+        extensions.unshift('.ts', '.tsx');
+      }),
+    );
+
+    build.configuration.hooks.babel.tap(
+      PLUGIN,
       produce((babelConfig: BabelConfig) => {
         for (const preset of babelConfig.presets) {
           if (
@@ -18,20 +27,11 @@ export default function typescript(work: Work) {
         }
       }),
     );
-  });
 
-  work.hooks.build.tap('SewingKit.typescript', (build) => {
-    build.hooks.extensions.tap(
-      'SewingKit.typescript',
-      produce((extensions: string[]) => {
-        extensions.unshift('.ts', '.tsx');
-      }),
-    );
-
-    build.hooks.rules.tapPromise('SewingKit.typescript', async (rules) => {
+    build.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
       const options = await build.configuration.hooks.babel.promise({
         presets: [],
-      });
+      }, target);
 
       return produce(rules, (rules) => {
         rules.push({

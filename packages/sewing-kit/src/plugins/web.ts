@@ -1,16 +1,24 @@
 import {produce} from 'immer';
-import {Work, BabelConfig} from '../concepts';
+import {Work, Runtime} from '../concepts';
+
+const PLUGIN = 'SewingKit.web';
 
 export default function web(work: Work) {
-  work.hooks.configure.tap('SewingKit.web', (configuration) => {
-    configuration.hooks.babel.tap(
-      'SewingKit.web',
-      produce((babelConfig: BabelConfig) => {
-        babelConfig.presets.push([
-          'babel-preset-shopify/web',
-          {modules: false},
-        ]);
-      }),
+  work.hooks.build.tap(PLUGIN, (build) => {
+    build.configuration.hooks.babel.tap(
+      PLUGIN,
+      (babelConfig, target) => {
+        if (target.runtime !== Runtime.Browser) {
+          return babelConfig;
+        }
+
+        return produce(babelConfig, (babelConfig) => {
+          babelConfig.presets.push([
+            'babel-preset-shopify/web',
+            {modules: false},
+          ]);
+        })
+      }
     );
   });
 }
