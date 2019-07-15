@@ -1,4 +1,3 @@
-import {resolve} from 'path';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
@@ -21,7 +20,7 @@ export async function run({root, plugins = []}: Options) {
   const workspace = await discovery.discover();
 
   const build = new Build();
-  work.hooks.build.call(build);
+  work.hooks.build.call(build, workspace);
 
   const buildTargets = [...workspace.browserApps].reduce<BrowserEntry[]>(
     (all, app) => {
