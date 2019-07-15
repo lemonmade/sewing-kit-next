@@ -18,26 +18,34 @@ export enum Runtime {
   ServiceWorker = 'service-worker',
 }
 
-export interface BrowserBuildOptions {}
+export enum BuildType {
+  Service = 'service',
+  Browser = 'browser',
+  Package = 'package',
+}
 
-export interface BrowserBuildVariants {}
+export interface BrowserEntryOptions {}
 
-export interface BrowserBuild {
+export interface BrowserEntryVariants {}
+
+export interface BrowserEntry {
   readonly id: string;
+  readonly name: string;
+  readonly type: BuildType.Browser;
   readonly assets: Assets;
   readonly roots: string[];
   readonly runtime: Runtime.Browser;
-  readonly options: BrowserBuildOptions;
-  readonly variants: VariantValues<BrowserBuildVariants>;
+  readonly options: BrowserEntryOptions;
+  readonly variants: VariantValues<BrowserEntryVariants>;
 }
 
 export interface ServiceWorker {
-  readonly variants: VariantValues<BrowserBuildVariants>;
+  readonly variants: VariantValues<BrowserEntryVariants>;
 }
 
 export interface BrowserApp {
   readonly name: string;
-  readonly builds: Set<BrowserBuild>;
+  readonly entries: Set<BrowserEntry>;
   readonly serviceWorker?: ServiceWorker;
 }
 
@@ -46,6 +54,8 @@ export interface PackageBuildOptions {}
 export interface PackageBuildVariants {}
 
 export interface PackageEntry {
+  readonly name: string;
+  readonly type: BuildType.Package;
   readonly roots: string[];
   readonly runtime: Runtime;
   readonly options: PackageBuildOptions;
@@ -56,7 +66,9 @@ export interface Package {
   readonly entries: Set<PackageEntry>;
 }
 
-export interface Service {}
+export interface Service {
+  readonly type: BuildType.Service;
+}
 
 export class Workspace {
   readonly packages = new Set<Package>();
@@ -64,11 +76,13 @@ export class Workspace {
   readonly browserApps = new Set<BrowserApp>();
 }
 
+export type BuildTarget = Service | PackageEntry | BrowserEntry;
+
 export class Build {
   readonly hooks = {
-    rules: new AsyncSeriesWaterfallHook<any[]>(['rules']),
-    extensions: new AsyncSeriesWaterfallHook<string[]>(['extensions']),
-    config: new AsyncSeriesWaterfallHook<WebpackConfiguration>(['config']),
+    rules: new AsyncSeriesWaterfallHook<any[], BuildTarget>(['rules', 'target']),
+    extensions: new AsyncSeriesWaterfallHook<string[], BuildTarget>(['extensions', 'target']),
+    config: new AsyncSeriesWaterfallHook<WebpackConfiguration, BuildTarget>(['config', 'target']),
   };
 
   constructor(public readonly configuration: Configuration) {}

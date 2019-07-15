@@ -8,7 +8,8 @@ import {
   Build,
   Workspace,
   Runtime,
-  BrowserBuild,
+  BrowserEntry,
+  BuildType,
 } from './concepts';
 
 const webPlugin = makePlugin(() => import('./plugins/web'));
@@ -27,39 +28,35 @@ export async function run({root, plugins = []}: Options) {
   work.hooks.configure.call(configuration);
   work.hooks.build.call(build);
 
-  const rules = await build.hooks.rules.promise([]);
-  const extensions = await build.hooks.extensions.promise([
-    '.js',
-    '.jsx',
-    '.mjs',
-    '.json',
-  ]);
-
-  function toConfig(build: BrowserBuild): WebpackConfiguration {
-    return {
-      mode: 'development',
-      entry: build.roots,
-      output: {
-        path: resolve(root, 'build/browser', build.id),
-      },
-      resolve: {extensions},
-      module: {rules},
-    };
-  }
-
   const workspace = await discover(root);
 
-  const configs = [...workspace.browserApps].reduce<WebpackConfiguration[]>(
+  const browserEntries = [...workspace.browserApps].reduce<BrowserEntry[]>(
     (all, app) => {
-      const configs = [...app.builds].map(toConfig);
-      return [...all, ...configs];
+      return [...all, ...app.entries];
     },
     [],
   );
 
   await Promise.all(
-    configs.map(async (rawConfig) => {
-      const config = await build.hooks.config.promise(rawConfig);
+    browserEntries.map(async (browserEntry) => {
+      const rules = await build.hooks.rules.promise([], browserEntry);
+      const extensions = await build.hooks.extensions.promise([
+        '.js',
+        '.jsx',
+        '.mjs',
+        '.json',
+      ], browserEntry);
+
+      const config = await build.hooks.config.promise({
+        mode: 'development',
+        entry: browserEntry.roots,
+        output: {
+          path: resolve(root, 'build/browser', browserEntry.id),
+        },
+        resolve: {extensions},
+        module: {rules},
+      });
+
       await buildWebpack(config);
     }),
   );
@@ -88,7 +85,7 @@ function forcePromiseTap(plugin: (...args: any[]) => unknown) {
       const result = plugin(...args);
       return typeof result !== 'object' || result == null || !('then' in result)
         ? Promise.resolve<void>(result as any)
-        : result as any;
+        : (result as any);
     } catch (error) {
       return Promise.reject(error);
     }
@@ -100,9 +97,11 @@ function discover(root: string) {
 
   workspace.browserApps.add({
     name: 'main',
-    builds: new Set([
+    entries: new Set([
       {
         id: 'main',
+        name: 'main',
+        type: BuildType.Browser,
         options: {},
         variants: [],
         runtime: Runtime.Browser,
