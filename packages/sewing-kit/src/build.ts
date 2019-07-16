@@ -14,15 +14,32 @@ export interface Environment {
   readonly simulate: Env;
 }
 
+export interface BabelConfig {
+  presets: any[];
+}
+
+export class Configuration {
+  readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
+  readonly rules = new AsyncSeriesWaterfallHook<any[]>(['rules']);
+  readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
+  readonly finalize = new AsyncSeriesWaterfallHook<WebpackConfiguration>([
+    'config',
+  ]);
+}
+
 export class BuildTask {
-  readonly webpack = {
-    browser: new AsyncParallelHook<BrowserWebpackBuild>(['browserApp']),
+  readonly configure = {
+    common: new AsyncParallelHook<Configuration>(['configuration']),
+    browser: new AsyncParallelHook<Configuration, BrowserAppBuild>([
+      'configuration',
+      'browserApp',
+    ]),
     // serviceWorker: new AsyncParallelHook<ServiceWorkerWebpackBuild>([
     //   'serviceWorker',
     // ]),
   };
 
-  readonly hooks = {
+  readonly discovery = {
     browserApps: new AsyncSeriesWaterfallHook<BrowserAppBuild[]>([
       'browserApps',
     ]),
@@ -43,20 +60,6 @@ export interface BrowserAppBuild {
   readonly variants: VariantValues<BrowserBuildVariants>;
 }
 
-export class BrowserWebpackBuild {
-  readonly configuration = new BuildConfiguration();
-  readonly hooks = {
-    rules: new AsyncSeriesWaterfallHook<any[]>(['rules']),
-    extensions: new AsyncSeriesWaterfallHook<string[]>(['extensions']),
-    config: new AsyncSeriesWaterfallHook<WebpackConfiguration>(['config']),
-  };
-
-  constructor(
-    public readonly app: BrowserApp,
-    public readonly variants: VariantValues<BrowserBuildVariants>,
-  ) {}
-}
-
 // export class ServiceWorkerWebpackBuild {
 //   readonly configuration = new BuildConfiguration();
 //   readonly hooks = {
@@ -65,13 +68,3 @@ export class BrowserWebpackBuild {
 //     config: new AsyncSeriesWaterfallHook<WebpackConfiguration>(['config']),
 //   };
 // }
-
-export interface BabelConfig {
-  presets: any[];
-}
-
-export class BuildConfiguration {
-  readonly hooks = {
-    babel: new AsyncSeriesWaterfallHook<BabelConfig>(['config']),
-  };
-}

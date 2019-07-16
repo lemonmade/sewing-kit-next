@@ -20,8 +20,8 @@ export default function browserApp(work: Work) {
   });
 
   work.tasks.build.tap(PLUGIN, (build, _, workspace) => {
-    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
-      browserBuild.configuration.hooks.babel.tap(PLUGIN, (babelConfig) => {
+    build.configure.browser.tap(PLUGIN, (configuration, browserBuild) => {
+      configuration.babel.tap(PLUGIN, (babelConfig) => {
         return produce(babelConfig, (babelConfig) => {
           babelConfig.presets.push([
             'babel-preset-shopify/web',
@@ -30,7 +30,7 @@ export default function browserApp(work: Work) {
         });
       });
 
-      browserBuild.hooks.config.tapPromise(PLUGIN, async (config) => {
+      configuration.finalize.tapPromise(PLUGIN, async (config) => {
         const variantPart = browserBuild.variants
           .map(({name, value}) => `${name}/${value}`)
           .join('/');

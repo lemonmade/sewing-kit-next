@@ -7,15 +7,15 @@ const PLUGIN = 'SewingKit.typescript';
 
 export default function typescript(work: Work) {
   work.tasks.build.tap(PLUGIN, (buildTask) => {
-    buildTask.webpack.browser.tap(PLUGIN, (browserBuild) => {
-      browserBuild.hooks.extensions.tap(
+    buildTask.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
         PLUGIN,
         produce((extensions: string[]) => {
           extensions.unshift('.ts', '.tsx');
         }),
       );
 
-      browserBuild.configuration.hooks.babel.tap(
+      configuration.babel.tap(
         PLUGIN,
         produce((babelConfig: BabelConfig) => {
           for (const preset of babelConfig.presets) {
@@ -31,11 +31,10 @@ export default function typescript(work: Work) {
         }),
       );
 
-      browserBuild.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
-        const options = await browserBuild.configuration.hooks.babel.promise(
-          {presets: []},
-          target,
-        );
+      configuration.rules.tapPromise(PLUGIN, async (rules) => {
+        const options = await configuration.babel.promise({
+          presets: [],
+        });
 
         return produce(rules, (rules) => {
           rules.push({

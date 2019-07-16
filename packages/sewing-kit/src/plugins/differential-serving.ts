@@ -19,7 +19,7 @@ const BROWSER_TARGETS: {
 
 export default function differentialServing(work: Work) {
   work.tasks.build.tap(PLUGIN, (build) => {
-    build.hooks.browserApps.tap(PLUGIN, (browserBuilds) => {
+    build.discovery.browserApps.tap(PLUGIN, (browserBuilds) => {
       return browserBuilds.reduce<BrowserAppBuild[]>((allBuilds, build) => {
         return [
           ...allBuilds,
@@ -35,17 +35,17 @@ export default function differentialServing(work: Work) {
       }, []);
     });
 
-    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
-      browserBuild.configuration.hooks.babel.tap(PLUGIN, (babelConfig) => {
+    build.configure.browser.tap(PLUGIN, (configuration, browserBuild) => {
+      const variant = browserBuild.variants.find(
+        ({name}) => name === 'browserTarget',
+      );
+
+      if (variant == null) {
+        return;
+      }
+
+      configuration.babel.tap(PLUGIN, (babelConfig) => {
         return produce(babelConfig, (babelConfig) => {
-          const variant = browserBuild.variants.find(
-            ({name}) => name === 'browserTarget',
-          );
-
-          if (variant == null) {
-            return;
-          }
-
           for (const preset of babelConfig.presets) {
             if (
               Array.isArray(preset) &&

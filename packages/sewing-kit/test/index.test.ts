@@ -30,8 +30,8 @@ describe('sewing-kit', () => {
 
 function debugPlugin(work: Work) {
   work.tasks.build.tap('debug', (buildTask) => {
-    buildTask.webpack.browser.tap('debug', (browserBuild) => {
-      browserBuild.hooks.config.tap('debug', (config) => {
+    buildTask.configure.common.tap('debug', (configuration) => {
+      configuration.finalize.tap('debug', (config) => {
         // console.log(JSON.stringify(config, null, 2));
 
         return config;

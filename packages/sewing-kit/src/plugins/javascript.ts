@@ -6,16 +6,16 @@ const PLUGIN = 'SewingKit.javascript';
 
 export default function javascript(work: Work) {
   work.tasks.build.tap(PLUGIN, (build) => {
-    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
-      browserBuild.hooks.extensions.tap(
+    build.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
         PLUGIN,
         produce((extensions: string[]) => {
           extensions.unshift('.js', '.jsx', '.mjs');
         }),
       );
 
-      browserBuild.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
-        const options = await browserBuild.configuration.hooks.babel.promise(
+      configuration.rules.tapPromise(PLUGIN, async (rules, target) => {
+        const options = await configuration.babel.promise(
           {presets: []},
           target,
         );

@@ -2,7 +2,7 @@ import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
 import {Work} from './work';
-import {BuildTask, Env, BrowserWebpackBuild} from './build';
+import {BuildTask, Env, Configuration} from './build';
 import {WorkspaceDiscovery} from './discovery';
 
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
@@ -30,29 +30,24 @@ export async function run({root, plugins = []}: Options) {
   const build = new BuildTask();
   work.tasks.build.call(build, env, workspace);
 
-  const browserBuilds = await build.hooks.browserApps.promise(
+  const browserBuilds = await build.discovery.browserApps.promise(
     [...workspace.browserApps].map((app) => ({
       app,
       variants: [],
     })),
   );
 
-  const browserWebpackBuilds = browserBuilds.map(
-    ({app, variants}) => new BrowserWebpackBuild(app, variants),
-  );
-
   await Promise.all(
-    browserWebpackBuilds.map((webpackBuild) =>
-      build.webpack.browser.promise(webpackBuild),
-    ),
-  );
+    browserBuilds.map(async (browserBuild) => {
+      const configuration = new Configuration();
 
-  await Promise.all(
-    browserWebpackBuilds.map(async (browserBuild) => {
-      const rules = await browserBuild.hooks.rules.promise([]);
-      const extensions = await browserBuild.hooks.extensions.promise([]);
+      await build.configure.common.promise(configuration);
+      await build.configure.browser.promise(configuration, browserBuild);
 
-      const config = await browserBuild.hooks.config.promise({
+      const rules = await configuration.rules.promise([]);
+      const extensions = await configuration.extensions.promise([]);
+
+      const config = await configuration.finalize.promise({
         mode: toMode(env.simulate),
         resolve: {extensions},
         module: {rules},

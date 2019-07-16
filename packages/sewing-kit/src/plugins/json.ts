@@ -6,8 +6,8 @@ const PLUGIN = 'SewingKit.json';
 
 export default function json(work: Work) {
   work.tasks.build.tap(PLUGIN, (build) => {
-    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
-      browserBuild.hooks.extensions.tap(
+    build.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
         PLUGIN,
         produce((extensions: string[]) => {
           extensions.unshift('.json');
