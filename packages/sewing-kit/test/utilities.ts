@@ -7,6 +7,7 @@ import {
   pathExists,
   emptyDir,
 } from 'fs-extra';
+import toTree from 'tree-node-cli';
 import {run, Options} from '../src';
 
 export class Workspace {
@@ -36,6 +37,10 @@ export class Workspace {
 
   resolve(file: string) {
     return resolve(this.directory, file);
+  }
+
+  debug() {
+    console.log(toTree(this.directory));
   }
 }
 

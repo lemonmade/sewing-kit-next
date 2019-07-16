@@ -13,6 +13,7 @@ export enum Runtime {
   Node = 'node',
   Browser = 'browser',
   ServiceWorker = 'service-worker',
+  WebWorker = 'web-worker',
 }
 
 export enum BuildType {
@@ -26,7 +27,6 @@ export interface BrowserEntryOptions {}
 export interface BrowserEntryVariants {}
 
 export interface BrowserEntry {
-  readonly id: string;
   readonly name: string;
   readonly type: BuildType.Browser;
   readonly assets: Assets;

@@ -18,7 +18,6 @@ export default function browserApp(work: Work) {
 
       browserAppDiscovery.hooks.discover.tapPromise(PLUGIN, async () => {
         await browserAppDiscovery.addEntry({
-          id: 'main',
           name: 'main',
           type: BuildType.Browser,
           options: {},
@@ -40,17 +39,24 @@ export default function browserApp(work: Work) {
       }
 
       const rules = await build.hooks.rules.promise([], target);
-      const extensions = await build.hooks.extensions.promise(
-        ['.js', '.jsx', '.mjs', '.json'],
-        target,
-      );
+      const extensions = await build.hooks.extensions.promise([], target);
+
+      const variantPart = target.variants
+        .map(({name, value}) => `${name}/${value}`)
+        .join('/');
 
       return {
         ...config,
         mode: 'development',
-        entry: target.roots,
+        entry: {[target.name]: target.roots},
         output: {
-          path: resolve(workspace.root, 'build/browser', target.id),
+          filename: '[name].js',
+          path: resolve(
+            workspace.root,
+            'build/browser',
+            target.name,
+            variantPart,
+          ),
         },
         resolve: {extensions},
         module: {rules},

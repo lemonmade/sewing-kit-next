@@ -1,5 +1,7 @@
 import {produce} from 'immer';
-import {Work, BabelConfig} from '../concepts';
+
+import {Work} from '../work';
+import {BabelConfig} from '../build';
 
 const PLUGIN = 'SewingKit.typescript';
 
@@ -29,13 +31,17 @@ export default function typescript(work: Work) {
     );
 
     build.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
-      const options = await build.configuration.hooks.babel.promise({
-        presets: [],
-      }, target);
+      const options = await build.configuration.hooks.babel.promise(
+        {
+          presets: [],
+        },
+        target,
+      );
 
       return produce(rules, (rules) => {
         rules.push({
           test: /\.tsx?/,
+          exclude: /node_modules/,
           loader: 'babel-loader',
           options,
         });

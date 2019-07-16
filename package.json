@@ -16,6 +16,7 @@
     "jest": "^24.8.0",
     "jest-watch-yarn-workspaces": "^1.1.0",
     "prettier": "^1.18.2",
+    "tree-node-cli": "^1.2.5",
     "typescript": "^3.5.3"
   },
   "dependencies": {}

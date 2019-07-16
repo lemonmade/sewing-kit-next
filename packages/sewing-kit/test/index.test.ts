@@ -1,5 +1,5 @@
 import {withWorkspace} from './utilities';
-import {Work} from '../src/concepts';
+import {Work} from '../src/work';
 
 describe('sewing-kit', () => {
   it('auto-detects a client bundle in the client entrypoint', async () => {
@@ -17,9 +17,13 @@ describe('sewing-kit', () => {
 
       await workspace.run({root: workspace.directory, plugins: [debugPlugin]});
 
-      expect(await workspace.contents('build/browser/main/main.js')).toContain(
-        'function main(message) {',
-      );
+      // workspace.debug();
+
+      expect(
+        await workspace.contents(
+          'build/browser/main/browserTarget/baseline/main.js',
+        ),
+      ).toContain('function main(message) {');
     });
   });
 });

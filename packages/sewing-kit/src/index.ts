@@ -9,6 +9,11 @@ import {WorkspaceDiscovery} from './discovery';
 const webPlugin = makePlugin(() => import('./plugins/web'));
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
 const browserAppPlugin = makePlugin(() => import('./plugins/browser-app'));
+const differentialServingPlugin = makePlugin(() =>
+  import('./plugins/differential-serving'),
+);
+const javascriptPlugin = makePlugin(() => import('./plugins/javascript'));
+const jsonPlugin = makePlugin(() => import('./plugins/json'));
 
 export interface Options {
   root: string;
@@ -53,7 +58,13 @@ async function init(plugins: ((work: Work) => void)[]) {
 
   rootHook.tapPromise('SewingKit.browserApp', browserAppPlugin);
   rootHook.tapPromise('SewingKit.web', webPlugin);
+  rootHook.tapPromise('SewingKit.json', jsonPlugin);
+  rootHook.tapPromise('SewingKit.javascript', javascriptPlugin);
   rootHook.tapPromise('SewingKit.typescript', typescriptPlugin);
+  rootHook.tapPromise(
+    'SewingKit.differentialServing',
+    differentialServingPlugin,
+  );
 
   for (const plugin of plugins) {
     rootHook.tapPromise('custom', forcePromiseTap(plugin));
