@@ -1,33 +1,38 @@
-import {resolve} from 'path';
+import {resolve, join} from 'path';
 // import {produce} from 'immer';
-import {Work, Runtime, BuildType} from '../concepts';
+import {Work, Runtime, BuildType, BrowserAppDiscovery} from '../concepts';
 
 const PLUGIN = 'SewingKit.browserApp';
 
 export default function browserApp(work: Work) {
   work.hooks.discovery.tap(PLUGIN, (discovery) => {
-    discovery.hooks.discover.tap(PLUGIN, async (root) => {
-      await discovery.addBrowserApp({
+    discovery.hooks.discover.tapPromise(PLUGIN, async (root) => {
+      const browserAppDiscovery = new BrowserAppDiscovery({
         name: 'main',
-        entries: new Set([
-          {
-            id: 'main',
-            name: 'main',
-            type: BuildType.Browser,
-            options: {},
-            variants: [],
-            runtime: Runtime.Browser,
-            roots: [resolve(root, 'client')],
-            assets: {scripts: true, styles: true, images: true, files: true},
-          },
-        ]),
+        root: join(root, 'client'),
+        entries: new Set(),
       });
+
+      browserAppDiscovery.hooks.discover.tapPromise(PLUGIN, async () => {
+        await browserAppDiscovery.addEntry({
+          id: 'main',
+          name: 'main',
+          type: BuildType.Browser,
+          options: {},
+          variants: [],
+          runtime: Runtime.Browser,
+          roots: [resolve(root, 'client')],
+          assets: {scripts: true, styles: true, images: true, files: true},
+        });
+      });
+
+      await discovery.addBrowserApp(browserAppDiscovery);
     });
   });
 
   work.hooks.build.tap(PLUGIN, (build, workspace) => {
     build.hooks.config.tapPromise(PLUGIN, async (config, target) => {
-      if (target.runtime !== Runtime.Browser) {
+      if (target.type !== BuildType.Browser) {
         return config;
       }
 
