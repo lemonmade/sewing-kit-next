@@ -1,10 +1,9 @@
 import {produce} from 'immer';
-
 import {Work} from '../work';
-import {BrowserEntry, BrowserEntryVariants, BuildType} from '../concepts';
+import {BrowserBuildVariants, BrowserAppBuild} from '../build';
 
-declare module '../concepts' {
-  interface BrowserEntryVariants {
+declare module '../build' {
+  interface BrowserBuildVariants {
     browserTarget: 'baseline' | 'latest';
   }
 }
@@ -12,61 +11,51 @@ declare module '../concepts' {
 const PLUGIN = 'SewingKit.differentialServing';
 
 const BROWSER_TARGETS: {
-  [K in BrowserEntryVariants['browserTarget']]: string[];
+  [K in BrowserBuildVariants['browserTarget']]: string[];
 } = {
   baseline: [],
   latest: [],
 };
 
 export default function differentialServing(work: Work) {
-  work.hooks.discovery.tap(PLUGIN, (discovery) => {
-    discovery.hooks.browserApp.tap(PLUGIN, (appDiscovery) => {
-      appDiscovery.hooks.entries.tap(PLUGIN, (entries) => {
-        return entries.reduce<BrowserEntry[]>((allEntries, entry) => {
-          return [
-            ...allEntries,
-            ...Object.keys(BROWSER_TARGETS).map((target) => ({
-              ...entry,
-              variants: [
-                ...entry.variants,
-                {
-                  name: 'browserTarget' as const,
-                  value: target as keyof typeof BROWSER_TARGETS,
-                },
-              ],
-            })),
-          ];
-        }, []);
-      });
-
-      return true;
+  work.tasks.build.tap(PLUGIN, (build) => {
+    build.hooks.browserApps.tap(PLUGIN, (browserBuilds) => {
+      return browserBuilds.reduce<BrowserAppBuild[]>((allBuilds, build) => {
+        return [
+          ...allBuilds,
+          ...Object.keys(BROWSER_TARGETS).map((target) =>
+            produce(build, (build) => {
+              build.variants.push({
+                name: 'browserTarget',
+                value: target as keyof typeof BROWSER_TARGETS,
+              });
+            }),
+          ),
+        ];
+      }, []);
     });
-  });
 
-  work.hooks.build.tap(PLUGIN, (build) => {
-    build.configuration.hooks.babel.tap(PLUGIN, (babelConfig, target) => {
-      return produce(babelConfig, (babelConfig) => {
-        if (target.type !== BuildType.Browser) {
-          return;
-        }
+    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
+      browserBuild.configuration.hooks.babel.tap(PLUGIN, (babelConfig) => {
+        return produce(babelConfig, (babelConfig) => {
+          const variant = browserBuild.variants.find(
+            ({name}) => name === 'browserTarget',
+          );
 
-        const variant = target.variants.find(
-          ({name}) => name === 'browserTarget',
-        );
-
-        if (variant == null) {
-          return;
-        }
-
-        for (const preset of babelConfig.presets) {
-          if (
-            Array.isArray(preset) &&
-            preset[0] === 'babel-preset-shopify/web'
-          ) {
-            preset[1] = preset[1] || {};
-            preset[1].browsers = BROWSER_TARGETS[variant.value];
+          if (variant == null) {
+            return;
           }
-        }
+
+          for (const preset of babelConfig.presets) {
+            if (
+              Array.isArray(preset) &&
+              preset[0] === 'babel-preset-shopify/web'
+            ) {
+              preset[1] = preset[1] || {};
+              preset[1].browsers = BROWSER_TARGETS[variant.value];
+            }
+          }
+        });
       });
     });
   });

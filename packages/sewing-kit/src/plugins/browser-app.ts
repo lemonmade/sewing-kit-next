@@ -1,66 +1,48 @@
-import {resolve, join} from 'path';
-// import {produce} from 'immer';
+import {resolve} from 'path';
+import {produce} from 'immer';
 
 import {Work} from '../work';
-import {BrowserAppDiscovery} from '../discovery';
-import {Runtime, BuildType} from '../concepts';
+import {Runtime} from '../concepts';
 
 const PLUGIN = 'SewingKit.browserApp';
 
 export default function browserApp(work: Work) {
-  work.hooks.discovery.tap(PLUGIN, (discovery) => {
+  work.tasks.discovery.tap(PLUGIN, (discovery) => {
     discovery.hooks.discover.tapPromise(PLUGIN, async (root) => {
-      const browserAppDiscovery = new BrowserAppDiscovery({
+      await discovery.addBrowserApp({
         name: 'main',
-        root: join(root, 'client'),
-        entries: new Set(),
+        options: {},
+        runtime: Runtime.Browser,
+        roots: [resolve(root, 'client')],
+        assets: {scripts: true, styles: true, images: true, files: true},
       });
-
-      browserAppDiscovery.hooks.discover.tapPromise(PLUGIN, async () => {
-        await browserAppDiscovery.addEntry({
-          name: 'main',
-          type: BuildType.Browser,
-          options: {},
-          variants: [],
-          runtime: Runtime.Browser,
-          roots: [resolve(root, 'client')],
-          assets: {scripts: true, styles: true, images: true, files: true},
-        });
-      });
-
-      await discovery.addBrowserApp(browserAppDiscovery);
     });
   });
 
-  work.hooks.build.tap(PLUGIN, (build, workspace) => {
-    build.hooks.config.tapPromise(PLUGIN, async (config, target) => {
-      if (target.type !== BuildType.Browser) {
-        return config;
-      }
+  work.tasks.build.tap(PLUGIN, (build, _, workspace) => {
+    build.webpack.browser.tap(PLUGIN, (browserBuild) => {
+      browserBuild.configuration.hooks.babel.tap(PLUGIN, (babelConfig) => {
+        return produce(babelConfig, (babelConfig) => {
+          babelConfig.presets.push([
+            'babel-preset-shopify/web',
+            {modules: false},
+          ]);
+        });
+      });
 
-      const rules = await build.hooks.rules.promise([], target);
-      const extensions = await build.hooks.extensions.promise([], target);
+      browserBuild.hooks.config.tapPromise(PLUGIN, async (config) => {
+        const variantPart = browserBuild.variants
+          .map(({name, value}) => `${name}/${value}`)
+          .join('/');
 
-      const variantPart = target.variants
-        .map(({name, value}) => `${name}/${value}`)
-        .join('/');
+        return produce(config, (config) => {
+          config.entry = browserBuild.app.roots;
 
-      return {
-        ...config,
-        mode: 'development',
-        entry: {[target.name]: target.roots},
-        output: {
-          filename: '[name].js',
-          path: resolve(
-            workspace.root,
-            'build/browser',
-            target.name,
-            variantPart,
-          ),
-        },
-        resolve: {extensions},
-        module: {rules},
-      };
+          config.output = config.output || {};
+          config.output.filename = `${browserBuild.app.name}/${variantPart}/[name].js`;
+          config.output.path = resolve(workspace.root, 'build/browser');
+        });
+      });
     });
   });
 }

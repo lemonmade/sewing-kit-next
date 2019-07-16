@@ -2,11 +2,9 @@ import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
 import {Work} from './work';
-import {Build} from './build';
-import {BrowserEntry} from './concepts';
+import {BuildTask, Env, BrowserWebpackBuild} from './build';
 import {WorkspaceDiscovery} from './discovery';
 
-const webPlugin = makePlugin(() => import('./plugins/web'));
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
 const browserAppPlugin = makePlugin(() => import('./plugins/browser-app'));
 const differentialServingPlugin = makePlugin(() =>
@@ -24,31 +22,55 @@ export async function run({root, plugins = []}: Options) {
   const work = await init(plugins);
 
   const discovery = new WorkspaceDiscovery(root);
-  work.hooks.discovery.call(discovery);
+  work.tasks.discovery.call(discovery);
   const workspace = await discovery.discover();
 
-  const build = new Build();
-  work.hooks.build.call(build, workspace);
+  const env = {actual: Env.Development, simulate: Env.Development};
 
-  const buildTargets = [...workspace.browserApps].reduce<BrowserEntry[]>(
-    (all, app) => {
-      return [...all, ...app.entries];
-    },
-    [],
+  const build = new BuildTask();
+  work.tasks.build.call(build, env, workspace);
+
+  const browserBuilds = await build.hooks.browserApps.promise(
+    [...workspace.browserApps].map((app) => ({
+      app,
+      variants: [],
+    })),
+  );
+
+  const browserWebpackBuilds = browserBuilds.map(
+    ({app, variants}) => new BrowserWebpackBuild(app, variants),
   );
 
   await Promise.all(
-    buildTargets.map(async (buildTarget) => {
-      const config = await build.hooks.config.promise(
-        {
-          mode: 'development',
-        },
-        buildTarget,
-      );
+    browserWebpackBuilds.map((webpackBuild) =>
+      build.webpack.browser.promise(webpackBuild),
+    ),
+  );
+
+  await Promise.all(
+    browserWebpackBuilds.map(async (browserBuild) => {
+      const rules = await browserBuild.hooks.rules.promise([]);
+      const extensions = await browserBuild.hooks.extensions.promise([]);
+
+      const config = await browserBuild.hooks.config.promise({
+        mode: toMode(env.simulate),
+        resolve: {extensions},
+        module: {rules},
+      });
 
       await buildWebpack(config);
     }),
   );
+}
+
+function toMode(env: Env) {
+  switch (env) {
+    case Env.Production:
+    case Env.Staging:
+      return 'production';
+    default:
+      return 'development';
+  }
 }
 
 async function init(plugins: ((work: Work) => void)[]) {
@@ -56,11 +78,10 @@ async function init(plugins: ((work: Work) => void)[]) {
 
   const rootHook = new AsyncParallelHook(['work']);
 
-  rootHook.tapPromise('SewingKit.browserApp', browserAppPlugin);
-  rootHook.tapPromise('SewingKit.web', webPlugin);
   rootHook.tapPromise('SewingKit.json', jsonPlugin);
   rootHook.tapPromise('SewingKit.javascript', javascriptPlugin);
   rootHook.tapPromise('SewingKit.typescript', typescriptPlugin);
+  rootHook.tapPromise('SewingKit.browserApp', browserAppPlugin);
   rootHook.tapPromise(
     'SewingKit.differentialServing',
     differentialServingPlugin,

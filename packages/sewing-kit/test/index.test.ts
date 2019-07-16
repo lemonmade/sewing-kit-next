@@ -29,11 +29,13 @@ describe('sewing-kit', () => {
 });
 
 function debugPlugin(work: Work) {
-  work.hooks.build.tap('debug', (build) => {
-    build.hooks.config.tap('debug', (config) => {
-      // console.log(JSON.stringify(config, null, 2));
+  work.tasks.build.tap('debug', (buildTask) => {
+    buildTask.webpack.browser.tap('debug', (browserBuild) => {
+      browserBuild.hooks.config.tap('debug', (config) => {
+        // console.log(JSON.stringify(config, null, 2));
 
-      return config;
+        return config;
+      });
     });
   });
 }

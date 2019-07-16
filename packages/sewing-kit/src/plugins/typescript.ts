@@ -6,44 +6,44 @@ import {BabelConfig} from '../build';
 const PLUGIN = 'SewingKit.typescript';
 
 export default function typescript(work: Work) {
-  work.hooks.build.tap(PLUGIN, (build) => {
-    build.hooks.extensions.tap(
-      PLUGIN,
-      produce((extensions: string[]) => {
-        extensions.unshift('.ts', '.tsx');
-      }),
-    );
-
-    build.configuration.hooks.babel.tap(
-      PLUGIN,
-      produce((babelConfig: BabelConfig) => {
-        for (const preset of babelConfig.presets) {
-          if (
-            Array.isArray(preset) &&
-            (preset[0] === 'babel-preset-shopify/web' ||
-              preset[0] === 'babel-preset-shopify/node')
-          ) {
-            preset[1] = preset[1] || {};
-            preset[1].typescript = true;
-          }
-        }
-      }),
-    );
-
-    build.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
-      const options = await build.configuration.hooks.babel.promise(
-        {
-          presets: [],
-        },
-        target,
+  work.tasks.build.tap(PLUGIN, (buildTask) => {
+    buildTask.webpack.browser.tap(PLUGIN, (browserBuild) => {
+      browserBuild.hooks.extensions.tap(
+        PLUGIN,
+        produce((extensions: string[]) => {
+          extensions.unshift('.ts', '.tsx');
+        }),
       );
 
-      return produce(rules, (rules) => {
-        rules.push({
-          test: /\.tsx?/,
-          exclude: /node_modules/,
-          loader: 'babel-loader',
-          options,
+      browserBuild.configuration.hooks.babel.tap(
+        PLUGIN,
+        produce((babelConfig: BabelConfig) => {
+          for (const preset of babelConfig.presets) {
+            if (
+              Array.isArray(preset) &&
+              (preset[0] === 'babel-preset-shopify/web' ||
+                preset[0] === 'babel-preset-shopify/node')
+            ) {
+              preset[1] = preset[1] || {};
+              preset[1].typescript = true;
+            }
+          }
+        }),
+      );
+
+      browserBuild.hooks.rules.tapPromise(PLUGIN, async (rules, target) => {
+        const options = await browserBuild.configuration.hooks.babel.promise(
+          {presets: []},
+          target,
+        );
+
+        return produce(rules, (rules) => {
+          rules.push({
+            test: /\.tsx?/,
+            exclude: /node_modules/,
+            loader: 'babel-loader',
+            options,
+          });
         });
       });
     });
