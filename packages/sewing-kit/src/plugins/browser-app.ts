@@ -1,6 +1,9 @@
 import {resolve, join} from 'path';
 // import {produce} from 'immer';
-import {Work, Runtime, BuildType, BrowserAppDiscovery} from '../concepts';
+
+import {Work} from '../work';
+import {BrowserAppDiscovery} from '../discovery';
+import {Runtime, BuildType} from '../concepts';
 
 const PLUGIN = 'SewingKit.browserApp';
 

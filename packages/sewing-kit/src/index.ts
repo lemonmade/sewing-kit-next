@@ -1,7 +1,10 @@
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
-import {Work, Build, WorkspaceDiscovery, BrowserEntry} from './concepts';
+import {Work} from './work';
+import {Build} from './build';
+import {BrowserEntry} from './concepts';
+import {WorkspaceDiscovery} from './discovery';
 
 const webPlugin = makePlugin(() => import('./plugins/web'));
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
