@@ -2,7 +2,28 @@ import {withWorkspace} from './utilities';
 import {Work} from '../src/work';
 
 describe('sewing-kit', () => {
-  it('auto-detects a client bundle in the client entrypoint', async () => {
+  describe.skip('packages', () => {
+    it('detects a package in /src', async () => {
+      await withWorkspace('simple-package', async (workspace) => {
+        await workspace.writeFile(
+          'src/index.ts',
+          `
+            export function pkg() {
+              console.log('Hello, world!');
+            }
+          `,
+        );
+
+        await workspace.run({root: workspace.directory});
+
+        expect(await workspace.contents('__dist__/index.js')).toContain(
+          'export function pkg()',
+        );
+      });
+    });
+  });
+
+  it('auto-detects a client bundle in /client', async () => {
     await withWorkspace('simple-client', async (workspace) => {
       await workspace.writeFile(
         'client/index.ts',

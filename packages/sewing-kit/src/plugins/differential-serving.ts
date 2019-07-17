@@ -1,6 +1,6 @@
 import {produce} from 'immer';
 import {Work} from '../work';
-import {BrowserBuildVariants, BrowserAppBuild} from '../build';
+import {BrowserBuildVariants, WebAppBuild} from '../build';
 
 declare module '../build' {
   interface BrowserBuildVariants {
@@ -19,8 +19,8 @@ const BROWSER_TARGETS: {
 
 export default function differentialServing(work: Work) {
   work.tasks.build.tap(PLUGIN, (build) => {
-    build.discovery.browserApps.tap(PLUGIN, (browserBuilds) => {
-      return browserBuilds.reduce<BrowserAppBuild[]>((allBuilds, build) => {
+    build.discovery.apps.tap(PLUGIN, (appBuilds) => {
+      return appBuilds.reduce<WebAppBuild[]>((allBuilds, build) => {
         return [
           ...allBuilds,
           ...Object.keys(BROWSER_TARGETS).map((target) =>

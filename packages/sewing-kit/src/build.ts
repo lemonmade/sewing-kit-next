@@ -1,6 +1,6 @@
 import {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncSeriesWaterfallHook, AsyncParallelHook} from 'tapable';
-import {BrowserApp} from './concepts';
+import {WebApp} from './concepts';
 
 export enum Env {
   Development = 'development',
@@ -30,7 +30,7 @@ export class Configuration {
 export class BuildTask {
   readonly configure = {
     common: new AsyncParallelHook<Configuration>(['configuration']),
-    browser: new AsyncParallelHook<Configuration, BrowserAppBuild>([
+    browser: new AsyncParallelHook<Configuration, WebAppBuild>([
       'configuration',
       'browserApp',
     ]),
@@ -40,9 +40,7 @@ export class BuildTask {
   };
 
   readonly discovery = {
-    browserApps: new AsyncSeriesWaterfallHook<BrowserAppBuild[]>([
-      'browserApps',
-    ]),
+    apps: new AsyncSeriesWaterfallHook<WebAppBuild[]>(['browserApps']),
     // services: new AsyncSeriesWaterfallHook(['services']),
   };
 
@@ -55,8 +53,8 @@ type VariantValues<T> = {
 
 export interface BrowserBuildVariants {}
 
-export interface BrowserAppBuild {
-  readonly app: BrowserApp;
+export interface WebAppBuild {
+  readonly app: WebApp;
   readonly variants: VariantValues<BrowserBuildVariants>;
 }
 

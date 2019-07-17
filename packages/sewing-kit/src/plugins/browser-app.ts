@@ -8,13 +8,15 @@ const PLUGIN = 'SewingKit.browserApp';
 
 export default function browserApp(work: Work) {
   work.tasks.discovery.tap(PLUGIN, (discovery) => {
-    discovery.hooks.discover.tapPromise(PLUGIN, async (root) => {
-      await discovery.addBrowserApp({
-        name: 'main',
-        options: {},
-        runtime: Runtime.Browser,
-        roots: [resolve(root, 'client')],
-        assets: {scripts: true, styles: true, images: true, files: true},
+    discovery.hooks.apps.tap(PLUGIN, (apps) => {
+      return produce(apps, (apps) => {
+        apps.push({
+          name: 'main',
+          options: {},
+          runtime: Runtime.Browser,
+          root: resolve(discovery.root, 'client'),
+          assets: {scripts: true, styles: true, images: true, files: true},
+        });
       });
     });
   });
@@ -36,7 +38,7 @@ export default function browserApp(work: Work) {
           .join('/');
 
         return produce(config, (config) => {
-          config.entry = browserBuild.app.roots;
+          config.entry = [browserBuild.app.root];
 
           config.output = config.output || {};
           config.output.filename = `${browserBuild.app.name}/${variantPart}/[name].js`;

@@ -3,6 +3,7 @@ import {AsyncParallelHook} from 'tapable';
 
 import {Work} from './work';
 import {BuildTask, Env, Configuration} from './build';
+import {Project} from './concepts';
 import {WorkspaceDiscovery} from './discovery';
 
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
@@ -12,6 +13,7 @@ const differentialServingPlugin = makePlugin(() =>
 );
 const javascriptPlugin = makePlugin(() => import('./plugins/javascript'));
 const jsonPlugin = makePlugin(() => import('./plugins/json'));
+const packagePlugin = makePlugin(() => import('./plugins/json'));
 
 export interface Options {
   root: string;
@@ -21,8 +23,9 @@ export interface Options {
 export async function run({root, plugins = []}: Options) {
   const work = await init(plugins);
 
+  const project = new Project(root);
   const discovery = new WorkspaceDiscovery(root);
-  work.tasks.discovery.call(discovery);
+  work.tasks.discovery.call(discovery, project);
   const workspace = await discovery.discover();
 
   const env = {actual: Env.Development, simulate: Env.Development};
@@ -30,8 +33,8 @@ export async function run({root, plugins = []}: Options) {
   const build = new BuildTask();
   work.tasks.build.call(build, env, workspace);
 
-  const browserBuilds = await build.discovery.browserApps.promise(
-    [...workspace.browserApps].map((app) => ({
+  const browserBuilds = await build.discovery.apps.promise(
+    [...workspace.apps].map((app) => ({
       app,
       variants: [],
     })),
@@ -81,6 +84,7 @@ async function init(plugins: ((work: Work) => void)[]) {
     'SewingKit.differentialServing',
     differentialServingPlugin,
   );
+  rootHook.tapPromise('SewingKit.packages', packagePlugin);
 
   for (const plugin of plugins) {
     rootHook.tapPromise('custom', forcePromiseTap(plugin));

@@ -1,3 +1,6 @@
+import {basename, resolve} from 'path';
+import glob from 'glob';
+
 export interface Assets {
   readonly scripts: boolean;
   readonly styles: boolean;
@@ -18,19 +21,19 @@ export enum BuildType {
   Package = 'package',
 }
 
-export interface BrowserAppOptions {}
+export interface WebAppOptions {}
 
 export interface ServiceWorker {
-  readonly roots: string[];
+  readonly root: string;
   readonly runtime: Runtime.ServiceWorker;
 }
 
-export interface BrowserApp {
+export interface WebApp {
   readonly name: string;
-  readonly roots: string[];
+  readonly root: string;
   readonly assets: Assets;
   readonly runtime: Runtime.Browser;
-  readonly options: BrowserAppOptions;
+  readonly options: WebAppOptions;
   readonly serviceWorker?: ServiceWorker;
 }
 
@@ -38,10 +41,9 @@ export interface PackageBuildOptions {}
 
 export interface PackageEntry {
   readonly name: string;
-  readonly type: BuildType.Package;
-  readonly roots: string[];
-  readonly runtime: Runtime;
+  readonly root: string;
   readonly options: PackageBuildOptions;
+  readonly runtime?: Runtime;
 }
 
 export interface Package {
@@ -55,10 +57,25 @@ export interface Service {
   readonly runtime: Runtime.Node;
 }
 
-export class Workspace {
-  readonly packages = new Set<Package>();
-  readonly services = new Set<Service>();
-  readonly browserApps = new Set<BrowserApp>();
+export interface Workspace {
+  readonly apps: WebApp[];
+  readonly packages: Package[];
+  readonly services: Service[];
+  readonly root: string;
+}
 
-  constructor(public readonly root: string) {}
+export class Project {
+  get name() {
+    return basename(this.root);
+  }
+
+  constructor(private readonly root: string) {}
+
+  async hasFile(file: string) {
+    return glob.sync(file, {nodir: true, cwd: this.root}).length > 0;
+  }
+
+  resolve(path: string) {
+    return resolve(this.root, path);
+  }
 }

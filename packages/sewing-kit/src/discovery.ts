@@ -1,52 +1,22 @@
-import {AsyncSeriesBailHook, AsyncParallelHook} from 'tapable';
-import {BrowserApp, Service, Package, Workspace} from './concepts';
+import {AsyncSeriesBailHook, AsyncSeriesWaterfallHook} from 'tapable';
+import {WebApp, Service, Package, Workspace} from './concepts';
 
 export class WorkspaceDiscovery {
   readonly hooks = {
-    discover: new AsyncParallelHook<string>(['root']),
-    browserApp: new AsyncSeriesBailHook<BrowserApp, never, never, boolean>([
-      'app',
-    ]),
-    service: new AsyncSeriesBailHook<Service, never, never, boolean>([
-      'service',
-    ]),
-    package: new AsyncSeriesBailHook<Package, never, never, boolean>([
-      'package',
-    ]),
+    apps: new AsyncSeriesWaterfallHook<WebApp[], never, never>(['apps']),
+    services: new AsyncSeriesBailHook<Service[], never, never>(['service']),
+    packages: new AsyncSeriesBailHook<Package[], never, never>(['packages']),
   };
 
-  private readonly workspace: Workspace;
+  constructor(public readonly root: string) {}
 
-  constructor(public readonly root: string) {
-    this.workspace = new Workspace(root);
-  }
+  async discover(): Promise<Workspace> {
+    const [apps, services, packages] = await Promise.all([
+      this.hooks.apps.promise([]),
+      this.hooks.services.promise([]),
+      this.hooks.packages.promise([]),
+    ]);
 
-  async discover() {
-    await this.hooks.discover.promise(this.workspace.root);
-    return this.workspace;
-  }
-
-  async addBrowserApp(app: BrowserApp) {
-    const include = await this.hooks.browserApp.promise(app);
-
-    if (include !== false) {
-      this.workspace.browserApps.add(app);
-    }
-  }
-
-  async addPackage(pkg: Package) {
-    const include = await this.hooks.package.promise(pkg);
-
-    if (include !== false) {
-      this.workspace.packages.add(pkg);
-    }
-  }
-
-  async addService(service: Service) {
-    const include = await this.hooks.service.promise(service);
-
-    if (include !== false) {
-      this.workspace.services.add(service);
-    }
+    return {apps, services, packages, root: this.root};
   }
 }
