@@ -1,5 +1,5 @@
 import {basename, resolve} from 'path';
-import glob from 'glob';
+import glob, {IOptions as GlobOptions} from 'glob';
 
 export interface Assets {
   readonly scripts: boolean;
@@ -49,6 +49,7 @@ export interface PackageEntry {
 export interface Package {
   readonly name: string;
   readonly root: string;
+  readonly sourceRoot: string;
   readonly entries: readonly PackageEntry[];
 }
 
@@ -69,13 +70,23 @@ export class Project {
     return basename(this.root);
   }
 
-  constructor(private readonly root: string) {}
+  constructor(public readonly root: string) {}
 
   async hasFile(file: string) {
-    return glob.sync(file, {nodir: true, cwd: this.root}).length > 0;
+    const matches = await this.glob(file, {nodir: true});
+    return matches.length > 0;
   }
 
-  resolve(path: string) {
-    return resolve(this.root, path);
+  async hasDirectory(dir: string) {
+    const matches = await this.glob(dir.endsWith('/') ? dir : `${dir}/`);
+    return matches.length > 0;
+  }
+
+  resolve(...paths: string[]) {
+    return resolve(this.root, ...paths);
+  }
+
+  async glob(pattern: string, options: Omit<GlobOptions, 'cwd'> = {}) {
+    return glob.sync(pattern, {...options, cwd: this.root, absolute: true});
   }
 }

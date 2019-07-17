@@ -1,3 +1,6 @@
+import {dirname} from 'path';
+import {exec} from 'child_process';
+import {writeFile, mkdirp} from 'fs-extra';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
@@ -13,7 +16,7 @@ const differentialServingPlugin = makePlugin(() =>
 );
 const javascriptPlugin = makePlugin(() => import('./plugins/javascript'));
 const jsonPlugin = makePlugin(() => import('./plugins/json'));
-const packagePlugin = makePlugin(() => import('./plugins/json'));
+const packagePlugin = makePlugin(() => import('./plugins/package'));
 
 export interface Options {
   root: string;
@@ -40,8 +43,26 @@ export async function run({root, plugins = []}: Options) {
     })),
   );
 
-  await Promise.all(
-    browserBuilds.map(async (browserBuild) => {
+  const babelConfig = project.resolve(
+    '.sewing-kit/build/packages/babel-config-base.js',
+  );
+
+  await mkdirp(dirname(babelConfig));
+
+  await writeFile(
+    babelConfig,
+    `module.exports = ${JSON.stringify({
+      presets: [
+        [
+          require.resolve('babel-preset-shopify'),
+          {typescript: true, modules: false},
+        ],
+      ],
+    })};`,
+  );
+
+  await Promise.all([
+    ...browserBuilds.map(async (browserBuild) => {
       const configuration = new Configuration();
 
       await build.configure.common.promise(configuration);
@@ -58,7 +79,25 @@ export async function run({root, plugins = []}: Options) {
 
       await buildWebpack(config);
     }),
-  );
+    ...workspace.packages.map((pkg) => {
+      return new Promise((resolve, reject) => {
+        exec(
+          `node_modules/.bin/babel ${pkg.sourceRoot} --out-dir ${JSON.stringify(
+            project.resolve(pkg.root, '__dist__'),
+          )} --verbose --no-babelrc --extensions ".ts,.tsx,.js,.jsx,.mjs" --config-file ${JSON.stringify(
+            babelConfig,
+          )}`,
+          (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          },
+        );
+      });
+    }),
+  ]);
 }
 
 function toMode(env: Env) {

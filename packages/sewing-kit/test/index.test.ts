@@ -2,14 +2,14 @@ import {withWorkspace} from './utilities';
 import {Work} from '../src/work';
 
 describe('sewing-kit', () => {
-  describe.skip('packages', () => {
+  describe.only('packages', () => {
     it('detects a package in /src', async () => {
       await withWorkspace('simple-package', async (workspace) => {
         await workspace.writeFile(
           'src/index.ts',
           `
-            export function pkg() {
-              console.log('Hello, world!');
+            export function pkg(greet: string) {
+              console.log(\`Hello, \${greet}!\`);
             }
           `,
         );
@@ -17,8 +17,32 @@ describe('sewing-kit', () => {
         await workspace.run({root: workspace.directory});
 
         expect(await workspace.contents('__dist__/index.js')).toContain(
-          'export function pkg()',
+          'export function pkg(',
         );
+      });
+    });
+
+    it('detects packages in /packages', async () => {
+      await withWorkspace('monorepo-package', async (workspace) => {
+        await workspace.writeFile(
+          'packages/one/src/index.ts',
+          `export function one() {}`,
+        );
+
+        await workspace.writeFile(
+          'packages/two/src/index.ts',
+          `export function two() {}`,
+        );
+
+        await workspace.run({root: workspace.directory});
+
+        expect(
+          await workspace.contents('packages/one/__dist__/index.js'),
+        ).toContain('export function one(');
+
+        expect(
+          await workspace.contents('packages/two/__dist__/index.js'),
+        ).toContain('export function two(');
       });
     });
   });

@@ -40,7 +40,7 @@ export class Workspace {
   }
 
   debug() {
-    console.log(toTree(this.directory));
+    console.log(toTree(this.directory, {allFiles: true}));
   }
 }
 

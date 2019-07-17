@@ -7,8 +7,12 @@ import {Runtime} from '../concepts';
 const PLUGIN = 'SewingKit.browserApp';
 
 export default function browserApp(work: Work) {
-  work.tasks.discovery.tap(PLUGIN, (discovery) => {
-    discovery.hooks.apps.tap(PLUGIN, (apps) => {
+  work.tasks.discovery.tap(PLUGIN, (discovery, project) => {
+    discovery.hooks.apps.tapPromise(PLUGIN, async (apps) => {
+      if (!(await project.hasFile('client/index.*'))) {
+        return apps;
+      }
+
       return produce(apps, (apps) => {
         apps.push({
           name: 'main',
