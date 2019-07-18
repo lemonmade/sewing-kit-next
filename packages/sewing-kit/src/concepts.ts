@@ -1,4 +1,5 @@
-import {basename, resolve} from 'path';
+import {resolve, join, dirname} from 'path';
+import {writeFile, mkdirp} from 'fs-extra';
 import glob, {IOptions as GlobOptions} from 'glob';
 
 export interface Assets {
@@ -23,18 +24,11 @@ export enum BuildType {
 
 export interface WebAppOptions {}
 
-export interface ServiceWorker {
-  readonly root: string;
-  readonly runtime: Runtime.ServiceWorker;
-}
-
-export interface WebApp {
-  readonly name: string;
-  readonly root: string;
+export interface WebApp extends Project {
+  readonly entry: string;
   readonly assets: Assets;
-  readonly runtime: Runtime.Browser;
   readonly options: WebAppOptions;
-  readonly serviceWorker?: ServiceWorker;
+  readonly serviceWorker?: string;
 }
 
 export interface PackageBuildOptions {}
@@ -46,31 +40,39 @@ export interface PackageEntry {
   readonly runtime?: Runtime;
 }
 
-export interface Package {
-  readonly name: string;
-  readonly root: string;
-  readonly sourceRoot: string;
+export interface Package extends Project {
   readonly entries: readonly PackageEntry[];
 }
 
-export interface Service {
-  readonly type: BuildType.Service;
-  readonly runtime: Runtime.Node;
+export interface Service extends Project {
+  readonly entry: string;
+}
+
+export interface Project {
+  readonly name: string;
+  readonly root: string;
+  readonly fs: FileSystem;
+  readonly dependencies: Dependencies;
 }
 
 export interface Workspace {
-  readonly apps: WebApp[];
-  readonly packages: Package[];
-  readonly services: Service[];
+  readonly name: string;
   readonly root: string;
+  readonly fs: FileSystem;
+  readonly dependencies: Dependencies;
+  readonly sewingKit: SewingKitFileSystem;
+
+  readonly apps: readonly WebApp[];
+  readonly packages: readonly Package[];
+  readonly services: readonly Service[];
 }
 
-export class Project {
-  get name() {
-    return basename(this.root);
-  }
+export class Dependencies {
+  constructor(private readonly root: string) {}
+}
 
-  constructor(public readonly root: string) {}
+export class FileSystem {
+  constructor(protected readonly root: string) {}
 
   async hasFile(file: string) {
     const matches = await this.glob(file, {nodir: true});
@@ -82,11 +84,35 @@ export class Project {
     return matches.length > 0;
   }
 
-  resolve(...paths: string[]) {
-    return resolve(this.root, ...paths);
-  }
-
   async glob(pattern: string, options: Omit<GlobOptions, 'cwd'> = {}) {
     return glob.sync(pattern, {...options, cwd: this.root, absolute: true});
+  }
+
+  resolvePath(...paths: string[]) {
+    return resolve(this.root, ...paths);
+  }
+}
+
+export class SewingKitFileSystem extends FileSystem {
+  constructor(projectRoot: string) {
+    super(join(projectRoot, '.sewing-kit'));
+  }
+
+  async write(file: string, contents: string) {
+    const resolved = this.resolvePath(file);
+    await mkdirp(dirname(resolved));
+    await writeFile(resolved, contents);
+  }
+
+  configPath(...paths: string[]) {
+    return this.resolvePath('config', ...paths);
+  }
+
+  cachePath(...paths: string[]) {
+    return this.resolvePath('cache', ...paths);
+  }
+
+  resolvePath(...paths: string[]) {
+    return resolve(this.root, ...paths);
   }
 }

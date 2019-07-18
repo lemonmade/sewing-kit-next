@@ -2,7 +2,7 @@ import {withWorkspace} from './utilities';
 import {Work} from '../src/work';
 
 describe('sewing-kit', () => {
-  describe.only('packages', () => {
+  describe('packages', () => {
     it('detects a package in /src', async () => {
       await withWorkspace('simple-package', async (workspace) => {
         await workspace.writeFile(
@@ -62,11 +62,11 @@ describe('sewing-kit', () => {
 
       await workspace.run({root: workspace.directory, plugins: [debugPlugin]});
 
-      // workspace.debug();
+      workspace.debug();
 
       expect(
         await workspace.contents(
-          'build/browser/main/browserTarget/baseline/main.js',
+          'build/browser/baseline/main.js',
         ),
       ).toContain('function main(message) {');
     });

@@ -1,7 +1,21 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
-import {WebApp, Service, Package, Workspace} from './concepts';
+import {
+  WebApp,
+  Service,
+  Package,
+  Workspace,
+  Dependencies,
+  FileSystem,
+  SewingKitFileSystem,
+} from './concepts';
+import { basename } from 'path';
 
 export class WorkspaceDiscovery {
+  readonly name: string;
+  readonly fs: FileSystem;
+  readonly sewingKit: SewingKitFileSystem;
+  readonly dependencies: Dependencies;
+
   readonly hooks = {
     apps: new AsyncSeriesWaterfallHook<WebApp[], never, never>(['apps']),
     services: new AsyncSeriesWaterfallHook<Service[], never, never>([
@@ -12,7 +26,12 @@ export class WorkspaceDiscovery {
     ]),
   };
 
-  constructor(public readonly root: string) {}
+  constructor(public readonly root: string) {
+    this.name = basename(root);
+    this.fs = new FileSystem(root);
+    this.dependencies = new Dependencies(root);
+    this.sewingKit = new SewingKitFileSystem(root);
+  }
 
   async discover(): Promise<Workspace> {
     const [apps, services, packages] = await Promise.all([
@@ -21,6 +40,15 @@ export class WorkspaceDiscovery {
       this.hooks.packages.promise([]),
     ]);
 
-    return {apps, services, packages, root: this.root};
+    return {
+      name: this.name,
+      root: this.root,
+      fs: this.fs,
+      sewingKit: this.sewingKit,
+      dependencies: this.dependencies,
+      apps,
+      services,
+      packages,
+    };
   }
 }

@@ -1,12 +1,9 @@
-import {dirname} from 'path';
 import {exec} from 'child_process';
-import {writeFile, mkdirp} from 'fs-extra';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
 import {Work} from './work';
 import {BuildTask, Env, Configuration} from './build';
-import {Project} from './concepts';
 import {WorkspaceDiscovery} from './discovery';
 
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
@@ -26,9 +23,8 @@ export interface Options {
 export async function run({root, plugins = []}: Options) {
   const work = await init(plugins);
 
-  const project = new Project(root);
   const discovery = new WorkspaceDiscovery(root);
-  work.tasks.discovery.call(discovery, project);
+  work.tasks.discovery.call(discovery);
   const workspace = await discovery.discover();
 
   const env = {actual: Env.Development, simulate: Env.Development};
@@ -43,13 +39,11 @@ export async function run({root, plugins = []}: Options) {
     })),
   );
 
-  const babelConfig = project.resolve(
-    '.sewing-kit/build/packages/babel-config-base.js',
+  const babelConfig = workspace.sewingKit.configPath(
+    'build/packages/babel.esnext.js',
   );
 
-  await mkdirp(dirname(babelConfig));
-
-  await writeFile(
+  await workspace.sewingKit.write(
     babelConfig,
     `module.exports = ${JSON.stringify({
       presets: [
@@ -82,8 +76,10 @@ export async function run({root, plugins = []}: Options) {
     ...workspace.packages.map((pkg) => {
       return new Promise((resolve, reject) => {
         exec(
-          `node_modules/.bin/babel ${pkg.sourceRoot} --out-dir ${JSON.stringify(
-            project.resolve(pkg.root, '__dist__'),
+          `node_modules/.bin/babel ${
+            pkg.entries[0].root
+          } --out-dir ${JSON.stringify(
+            pkg.fs.resolvePath(pkg.root, '__dist__'),
           )} --verbose --no-babelrc --extensions ".ts,.tsx,.js,.jsx,.mjs" --config-file ${JSON.stringify(
             babelConfig,
           )}`,

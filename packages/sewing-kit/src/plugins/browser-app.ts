@@ -1,24 +1,25 @@
-import {resolve} from 'path';
+import {resolve, join} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../work';
-import {Runtime} from '../concepts';
 
 const PLUGIN = 'SewingKit.browserApp';
 
 export default function browserApp(work: Work) {
-  work.tasks.discovery.tap(PLUGIN, (discovery, project) => {
+  work.tasks.discovery.tap(PLUGIN, (discovery) => {
     discovery.hooks.apps.tapPromise(PLUGIN, async (apps) => {
-      if (!(await project.hasFile('client/index.*'))) {
+      if (!(await discovery.fs.hasFile('client/index.*'))) {
         return apps;
       }
 
       return produce(apps, (apps) => {
         apps.push({
-          name: 'main',
+          fs: discovery.fs,
+          name: discovery.name,
+          root: discovery.root,
+          dependencies: discovery.dependencies,
           options: {},
-          runtime: Runtime.Browser,
-          root: resolve(discovery.root, 'client'),
+          entry: resolve(discovery.root, 'client'),
           assets: {scripts: true, styles: true, images: true, files: true},
         });
       });
@@ -37,15 +38,15 @@ export default function browserApp(work: Work) {
       });
 
       configuration.finalize.tapPromise(PLUGIN, async (config) => {
-        const variantPart = browserBuild.variants
-          .map(({name, value}) => `${name}/${value}`)
-          .join('/');
+        const {app, variants} = browserBuild;
+        const variantPart = variants.map(({value}) => value).join('-');
+        const appParts = workspace.apps.length > 1 ? [app.name] : [];
 
         return produce(config, (config) => {
-          config.entry = [browserBuild.app.root];
+          config.entry = [browserBuild.app.entry];
 
           config.output = config.output || {};
-          config.output.filename = `${browserBuild.app.name}/${variantPart}/[name].js`;
+          config.output.filename = join(...appParts, variantPart, '[name].js');
           config.output.path = resolve(workspace.root, 'build/browser');
         });
       });

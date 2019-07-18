@@ -1,43 +1,48 @@
 import {basename} from 'path';
 import {produce} from 'immer';
 import {Work} from '../work';
+import {FileSystem, Dependencies} from '../concepts';
 
 const PLUGIN = 'SewingKit.packages';
 
 export default function packages(work: Work) {
-  work.tasks.discovery.tap(PLUGIN, (discovery, project) => {
+  work.tasks.discovery.tap(PLUGIN, (discovery) => {
     discovery.hooks.packages.tapPromise(PLUGIN, async (packages) => {
-      if (await project.hasFile('src/index.*')) {
+      if (await discovery.fs.hasFile('src/index.*')) {
+        const fs = new FileSystem(discovery.root);
+
         return produce(packages, (packages) => {
           packages.push({
-            name: project.name,
-            root: project.root,
-            sourceRoot: project.resolve('src'),
+            fs,
+            root: discovery.root,
+            name: discovery.name,
+            dependencies: new Dependencies(discovery.root),
             entries: [
               {
                 name: 'main',
                 options: {},
-                root: project.resolve('src'),
+                root: fs.resolvePath('src'),
               },
             ],
           });
         });
       }
 
-      const packageMatches = await project.glob('packages/*/');
+      const packageMatches = await discovery.fs.glob('packages/*/');
       const newPackages = await Promise.all(
         packageMatches.map((root) => {
-          const sourceRoot = project.resolve(root, 'src');
+          const fs = new FileSystem(root);
 
           return {
-            name: basename(root),
+            fs,
             root,
-            sourceRoot,
+            name: basename(root),
+            dependencies: new Dependencies(root),
             entries: [
               {
                 name: 'main',
                 options: {},
-                root: sourceRoot,
+                root: fs.resolvePath(root, 'src'),
               },
             ],
           };
