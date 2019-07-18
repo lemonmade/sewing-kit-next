@@ -1,3 +1,5 @@
+import 'core-js/features/array/flat-map';
+
 import {join} from 'path';
 import {exec} from 'child_process';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
@@ -33,9 +35,16 @@ export async function run({root, plugins = []}: Options) {
   const build = new BuildTask();
   work.tasks.build.call(build, env, workspace);
 
-  const browserBuilds = await build.discovery.apps.promise(
-    [...workspace.apps].map((app) => ({
+  const webAppBuilds = await build.discovery.apps.promise(
+    workspace.apps.map((app) => ({
       app,
+      variants: [],
+    })),
+  );
+
+  const packageBuilds = await build.discovery.packages.promise(
+    workspace.packages.map((pkg) => ({
+      pkg,
       variants: [],
     })),
   );
@@ -57,42 +66,51 @@ export async function run({root, plugins = []}: Options) {
   );
 
   await Promise.all([
-    ...browserBuilds.map(async (browserBuild) => {
-      const {app, variants} = browserBuild;
+    ...webAppBuilds.map(async (webAppBuild) => {
+      const {app, variants} = webAppBuild;
       const variantPart = variants.map(({value}) => value).join('-');
       const appParts = workspace.apps.length > 1 ? [app.name] : [];
 
       const configuration = new Configuration();
       await build.configure.common.promise(configuration);
-      await build.configure.browser.promise(configuration, browserBuild);
+      await build.configure.browser.promise(configuration, webAppBuild);
 
       const rules = await configuration.webpackRules.promise([]);
       const extensions = await configuration.extensions.promise([]);
-      const outputPath = await configuration.output.promise(browserBuild.app.fs.buildPath());
+      const outputPath = await configuration.output.promise(app.fs.buildPath());
 
       const config = await configuration.webpackConfig.promise({
-        entry: [app.entry],
+        entry: await configuration.entries.promise([app.entry]),
         mode: toMode(env.simulate),
         resolve: {extensions},
         module: {rules},
         output: {
           path: outputPath,
-          filename: join(...appParts, variantPart, '[name].js')
+          filename: join(...appParts, variantPart, '[name].js'),
         },
       });
 
       await buildWebpack(config);
     }),
-    ...workspace.packages.map((pkg) => {
+    ...packageBuilds.map(async (packageBuild) => {
+      const {pkg} = packageBuild;
+
+      const configuration = new Configuration();
+      await build.configure.common.promise(configuration);
+      await build.configure.package.promise(configuration, packageBuild);
+
+      const extensions = await configuration.extensions.promise([]);
+      const outputPath = await configuration.output.promise(pkg.fs.buildPath());
+
       return new Promise((resolve, reject) => {
         exec(
           `node_modules/.bin/babel ${
             pkg.entries[0].root
           } --out-dir ${JSON.stringify(
-            pkg.fs.resolvePath(pkg.root, '__dist__'),
-          )} --verbose --no-babelrc --extensions ".ts,.tsx,.js,.jsx,.mjs" --config-file ${JSON.stringify(
-            babelConfig,
-          )}`,
+            outputPath,
+          )} --verbose --no-babelrc --extensions ${JSON.stringify(
+            extensions.join(','),
+          )} --config-file ${JSON.stringify(babelConfig)}`,
           (error) => {
             if (error) {
               reject(error);

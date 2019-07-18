@@ -1,6 +1,6 @@
 import {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncSeriesWaterfallHook, AsyncParallelHook} from 'tapable';
-import {WebApp} from './concepts';
+import {WebApp, Package} from './concepts';
 
 export enum Env {
   Development = 'development',
@@ -21,6 +21,7 @@ export interface BabelConfig {
 export class Configuration {
   readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
   readonly output = new AsyncSeriesWaterfallHook<string>(['output']);
+  readonly entries = new AsyncSeriesWaterfallHook<string[]>(['entries']);
   readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
 
   readonly webpackRules = new AsyncSeriesWaterfallHook<any[]>(['rules']);
@@ -34,7 +35,11 @@ export class BuildTask {
     common: new AsyncParallelHook<Configuration>(['configuration']),
     browser: new AsyncParallelHook<Configuration, WebAppBuild>([
       'configuration',
-      'browserApp',
+      'webAppBuild',
+    ]),
+    package: new AsyncParallelHook<Configuration, PackageBuild>([
+      'configuration',
+      'packageBuild',
     ]),
     // serviceWorker: new AsyncParallelHook<ServiceWorkerWebpackBuild>([
     //   'serviceWorker',
@@ -42,7 +47,8 @@ export class BuildTask {
   };
 
   readonly discovery = {
-    apps: new AsyncSeriesWaterfallHook<WebAppBuild[]>(['browserApps']),
+    apps: new AsyncSeriesWaterfallHook<WebAppBuild[]>(['webAppBuilds']),
+    packages: new AsyncSeriesWaterfallHook<PackageBuild[]>(['packageBuilds']),
     // services: new AsyncSeriesWaterfallHook(['services']),
   };
 
@@ -58,6 +64,13 @@ export interface BrowserBuildVariants {}
 export interface WebAppBuild {
   readonly app: WebApp;
   readonly variants: VariantValues<BrowserBuildVariants>;
+}
+
+export interface PackageBuildVariants {}
+
+export interface PackageBuild {
+  readonly pkg: Package;
+  readonly variants: VariantValues<PackageBuildVariants>;
 }
 
 // export class ServiceWorkerWebpackBuild {

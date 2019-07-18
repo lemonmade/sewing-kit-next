@@ -16,7 +16,9 @@ describe('sewing-kit', () => {
 
         await workspace.run({root: workspace.directory});
 
-        expect(await workspace.contents('__dist__/index.js')).toContain(
+        workspace.debug();
+
+        expect(await workspace.contents('build/esm/index.js')).toContain(
           'export function pkg(',
         );
       });
@@ -37,11 +39,11 @@ describe('sewing-kit', () => {
         await workspace.run({root: workspace.directory});
 
         expect(
-          await workspace.contents('packages/one/__dist__/index.js'),
+          await workspace.contents('packages/one/build/esm/index.js'),
         ).toContain('export function one(');
 
         expect(
-          await workspace.contents('packages/two/__dist__/index.js'),
+          await workspace.contents('packages/two/build/esm/index.js'),
         ).toContain('export function two(');
       });
     });
@@ -61,8 +63,6 @@ describe('sewing-kit', () => {
       );
 
       await workspace.run({root: workspace.directory, plugins: [debugPlugin]});
-
-      workspace.debug();
 
       expect(
         await workspace.contents(

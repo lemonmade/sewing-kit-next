@@ -20,19 +20,16 @@ const BROWSER_TARGETS: {
 export default function differentialServing(work: Work) {
   work.tasks.build.tap(PLUGIN, (build) => {
     build.discovery.apps.tap(PLUGIN, (appBuilds) => {
-      return appBuilds.reduce<WebAppBuild[]>((allBuilds, build) => {
-        return [
-          ...allBuilds,
-          ...Object.keys(BROWSER_TARGETS).map((target) =>
-            produce(build, (build) => {
-              build.variants.push({
-                name: 'browserTarget',
-                value: target as keyof typeof BROWSER_TARGETS,
-              });
-            }),
-          ),
-        ];
-      }, []);
+      return appBuilds.flatMap<WebAppBuild>((build) => {
+        return Object.keys(BROWSER_TARGETS).map((target) =>
+          produce(build, (build) => {
+            build.variants.push({
+              name: 'browserTarget',
+              value: target as keyof typeof BROWSER_TARGETS,
+            });
+          }),
+        );
+      });
     });
 
     build.configure.browser.tap(PLUGIN, (configuration, browserBuild) => {
