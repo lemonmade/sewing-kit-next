@@ -20,9 +20,11 @@ export interface BabelConfig {
 
 export class Configuration {
   readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
-  readonly rules = new AsyncSeriesWaterfallHook<any[]>(['rules']);
+  readonly output = new AsyncSeriesWaterfallHook<string>(['output']);
   readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
-  readonly finalize = new AsyncSeriesWaterfallHook<WebpackConfiguration>([
+
+  readonly webpackRules = new AsyncSeriesWaterfallHook<any[]>(['rules']);
+  readonly webpackConfig = new AsyncSeriesWaterfallHook<WebpackConfiguration>([
     'config',
   ]);
 }

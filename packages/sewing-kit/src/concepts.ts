@@ -88,6 +88,10 @@ export class FileSystem {
     return glob.sync(pattern, {...options, cwd: this.root, absolute: true});
   }
 
+  buildPath(...paths: string[]) {
+    return this.resolvePath('build', ...paths);
+  }
+
   resolvePath(...paths: string[]) {
     return resolve(this.root, ...paths);
   }

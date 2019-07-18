@@ -1,4 +1,4 @@
-import {resolve, join} from 'path';
+import {resolve} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../work';
@@ -27,7 +27,7 @@ export default function browserApp(work: Work) {
   });
 
   work.tasks.build.tap(PLUGIN, (build, _, workspace) => {
-    build.configure.browser.tap(PLUGIN, (configuration, browserBuild) => {
+    build.configure.browser.tap(PLUGIN, (configuration) => {
       configuration.babel.tap(PLUGIN, (babelConfig) => {
         return produce(babelConfig, (babelConfig) => {
           babelConfig.presets.push([
@@ -37,19 +37,7 @@ export default function browserApp(work: Work) {
         });
       });
 
-      configuration.finalize.tapPromise(PLUGIN, async (config) => {
-        const {app, variants} = browserBuild;
-        const variantPart = variants.map(({value}) => value).join('-');
-        const appParts = workspace.apps.length > 1 ? [app.name] : [];
-
-        return produce(config, (config) => {
-          config.entry = [browserBuild.app.entry];
-
-          config.output = config.output || {};
-          config.output.filename = join(...appParts, variantPart, '[name].js');
-          config.output.path = resolve(workspace.root, 'build/browser');
-        });
-      });
+      configuration.output.tap(PLUGIN, () => workspace.fs.buildPath('browser'));
     });
   });
 }

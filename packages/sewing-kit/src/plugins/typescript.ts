@@ -31,7 +31,7 @@ export default function typescript(work: Work) {
         }),
       );
 
-      configuration.rules.tapPromise(PLUGIN, async (rules) => {
+      configuration.webpackRules.tapPromise(PLUGIN, async (rules) => {
         const options = await configuration.babel.promise({
           presets: [],
         });

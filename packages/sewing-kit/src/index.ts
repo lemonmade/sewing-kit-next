@@ -1,3 +1,4 @@
+import {join} from 'path';
 import {exec} from 'child_process';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
@@ -57,18 +58,27 @@ export async function run({root, plugins = []}: Options) {
 
   await Promise.all([
     ...browserBuilds.map(async (browserBuild) => {
-      const configuration = new Configuration();
+      const {app, variants} = browserBuild;
+      const variantPart = variants.map(({value}) => value).join('-');
+      const appParts = workspace.apps.length > 1 ? [app.name] : [];
 
+      const configuration = new Configuration();
       await build.configure.common.promise(configuration);
       await build.configure.browser.promise(configuration, browserBuild);
 
-      const rules = await configuration.rules.promise([]);
+      const rules = await configuration.webpackRules.promise([]);
       const extensions = await configuration.extensions.promise([]);
+      const outputPath = await configuration.output.promise(browserBuild.app.fs.buildPath());
 
-      const config = await configuration.finalize.promise({
+      const config = await configuration.webpackConfig.promise({
+        entry: [app.entry],
         mode: toMode(env.simulate),
         resolve: {extensions},
         module: {rules},
+        output: {
+          path: outputPath,
+          filename: join(...appParts, variantPart, '[name].js')
+        },
       });
 
       await buildWebpack(config);

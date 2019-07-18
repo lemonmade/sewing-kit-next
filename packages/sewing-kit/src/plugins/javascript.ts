@@ -14,7 +14,7 @@ export default function javascript(work: Work) {
         }),
       );
 
-      configuration.rules.tapPromise(PLUGIN, async (rules, target) => {
+      configuration.webpackRules.tapPromise(PLUGIN, async (rules, target) => {
         const options = await configuration.babel.promise(
           {presets: []},
           target,
