@@ -1,8 +1,11 @@
 {
   "name": "sewing-kit-of-lemons",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "sk": "./bin/sk"
+  },
   "dependencies": {
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.4",
