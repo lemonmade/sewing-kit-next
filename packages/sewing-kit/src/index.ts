@@ -1,12 +1,21 @@
+import 'core-js/features/array/flat';
 import 'core-js/features/array/flat-map';
 
-import {join} from 'path';
 import {exec} from 'child_process';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncParallelHook} from 'tapable';
 
 import {Work} from './work';
-import {BuildTask, Env, Configuration} from './build';
+import {
+  BuildTask,
+  Env,
+  Configuration,
+  VariantBuilder,
+  BrowserBuildVariants,
+  PackageBuildVariants,
+  WebAppBuild,
+  PackageBuild,
+} from './build';
 import {WorkspaceDiscovery} from './discovery';
 
 const typescriptPlugin = makePlugin(() => import('./plugins/typescript'));
@@ -17,6 +26,9 @@ const differentialServingPlugin = makePlugin(() =>
 const javascriptPlugin = makePlugin(() => import('./plugins/javascript'));
 const jsonPlugin = makePlugin(() => import('./plugins/json'));
 const packagePlugin = makePlugin(() => import('./plugins/package'));
+const packageCommonJs = makePlugin(() => import('./plugins/package-commonjs'));
+const packageEsmodules = makePlugin(() => import('./plugins/package-esmodules'));
+const packageEsnext = makePlugin(() => import('./plugins/package-esnext'));
 
 export interface Options {
   root: string;
@@ -35,19 +47,21 @@ export async function run({root, plugins = []}: Options) {
   const build = new BuildTask();
   work.tasks.build.call(build, env, workspace);
 
-  const webAppBuilds = await build.discovery.apps.promise(
-    workspace.apps.map((app) => ({
-      app,
-      variants: [],
-    })),
-  );
+  const webAppBuilds = (await Promise.all(
+    workspace.apps.map(async (app) => {
+      const variants = new VariantBuilder<BrowserBuildVariants>();
+      await build.variants.apps.promise(variants, app);
+      return variants.all.map<WebAppBuild>((variant) => ({app, variant}));
+    }),
+  )).flat();
 
-  const packageBuilds = await build.discovery.packages.promise(
-    workspace.packages.map((pkg) => ({
-      pkg,
-      variants: [],
-    })),
-  );
+  const packageBuilds = (await Promise.all(
+    workspace.packages.map(async (pkg) => {
+      const variants = new VariantBuilder<PackageBuildVariants>();
+      await build.variants.packages.promise(variants, pkg);
+      return variants.all.map<PackageBuild>((variant) => ({pkg, variant}));
+    }),
+  )).flat();
 
   const babelConfig = workspace.sewingKit.configPath(
     'build/packages/babel.esnext.js',
@@ -67,9 +81,7 @@ export async function run({root, plugins = []}: Options) {
 
   await Promise.all([
     ...webAppBuilds.map(async (webAppBuild) => {
-      const {app, variants} = webAppBuild;
-      const variantPart = variants.map(({value}) => value).join('-');
-      const appParts = workspace.apps.length > 1 ? [app.name] : [];
+      const {app} = webAppBuild;
 
       const configuration = new Configuration();
       await build.configure.common.promise(configuration);
@@ -78,6 +90,7 @@ export async function run({root, plugins = []}: Options) {
       const rules = await configuration.webpackRules.promise([]);
       const extensions = await configuration.extensions.promise([]);
       const outputPath = await configuration.output.promise(app.fs.buildPath());
+      const filename = await configuration.filename.promise('[name].js');
 
       const config = await configuration.webpackConfig.promise({
         entry: await configuration.entries.promise([app.entry]),
@@ -86,7 +99,7 @@ export async function run({root, plugins = []}: Options) {
         module: {rules},
         output: {
           path: outputPath,
-          filename: join(...appParts, variantPart, '[name].js'),
+          filename,
         },
       });
 
@@ -148,6 +161,9 @@ async function init(plugins: ((work: Work) => void)[]) {
     differentialServingPlugin,
   );
   rootHook.tapPromise('SewingKit.packages', packagePlugin);
+  rootHook.tapPromise('SewingKit.packageCommonJs', packageCommonJs);
+  rootHook.tapPromise('SewingKit.packageEsmodules', packageEsmodules);
+  rootHook.tapPromise('SewingKit.packageEsnext', packageEsnext);
 
   for (const plugin of plugins) {
     rootHook.tapPromise('custom', forcePromiseTap(plugin));

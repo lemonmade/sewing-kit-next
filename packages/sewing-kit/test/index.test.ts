@@ -16,8 +16,6 @@ describe('sewing-kit', () => {
 
         await workspace.run({root: workspace.directory});
 
-        workspace.debug();
-
         expect(await workspace.contents('build/esm/index.js')).toContain(
           'export function pkg(',
         );

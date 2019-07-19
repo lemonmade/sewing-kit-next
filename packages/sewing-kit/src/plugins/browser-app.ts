@@ -1,4 +1,4 @@
-import {resolve} from 'path';
+import {resolve, join} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../work';
@@ -27,7 +27,7 @@ export default function browserApp(work: Work) {
   });
 
   work.tasks.build.tap(PLUGIN, (build, _, workspace) => {
-    build.configure.browser.tap(PLUGIN, (configuration) => {
+    build.configure.browser.tap(PLUGIN, (configuration, {app}) => {
       configuration.babel.tap(PLUGIN, (babelConfig) => {
         return produce(babelConfig, (babelConfig) => {
           babelConfig.presets.push([
@@ -38,6 +38,9 @@ export default function browserApp(work: Work) {
       });
 
       configuration.output.tap(PLUGIN, () => workspace.fs.buildPath('browser'));
+      configuration.filename.tap(PLUGIN, (filename) =>
+        workspace.apps.length > 1 ? join(app.name, filename) : filename,
+      );
     });
   });
 }
