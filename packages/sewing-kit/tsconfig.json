@@ -5,5 +5,10 @@
     "baseUrl": "src",
     "rootDir": "src"
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "references": [
+    {"path": "../sewing-kit-workspace"},
+    {"path": "../sewing-kit-task-build"},
+    {"path": "../sewing-kit-plugin-package-commonjs"}
+  ]
 }

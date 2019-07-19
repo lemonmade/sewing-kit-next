@@ -2,7 +2,7 @@ import {basename} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../work';
-import {FileSystem, Dependencies} from '../concepts';
+import {FileSystem, Dependencies} from '../workspace';
 
 const PLUGIN = 'SewingKit.packages';
 

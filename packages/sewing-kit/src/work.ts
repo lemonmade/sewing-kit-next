@@ -1,16 +1,13 @@
-import {SyncHook} from 'tapable';
-
-import {BuildTask, Environment} from './build';
-import {Workspace} from './concepts';
-import {WorkspaceDiscovery} from './discovery';
+import {AsyncParallelHook} from 'tapable';
 
 export class Work {
   readonly tasks = {
-    discovery: new SyncHook<WorkspaceDiscovery>(['workspace']),
-    build: new SyncHook<BuildTask, Environment, Workspace>([
-      'build',
-      'env',
-      'workspace',
-    ]),
+    discovery: new AsyncParallelHook<
+      import('./tasks/discovery').WorkspaceDiscovery
+    >(['workspace']),
+    build: new AsyncParallelHook<
+      import('./tasks/build').BuildTask,
+      import('./workspace').Workspace
+    >(['build', 'env', 'workspace']),
   };
 }

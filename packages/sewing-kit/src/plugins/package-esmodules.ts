@@ -4,7 +4,7 @@ import {Work} from '../work';
 const PLUGIN = 'SewingKit.package-esmodules';
 const VARIANT = 'esmodules';
 
-declare module '../build' {
+declare module '../tasks/build/types' {
   interface PackageBuildVariants {
     [VARIANT]: boolean;
   }

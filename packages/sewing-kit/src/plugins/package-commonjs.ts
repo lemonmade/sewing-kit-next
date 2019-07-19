@@ -4,7 +4,7 @@ import {Work} from '../work';
 const PLUGIN = 'SewingKit.package-commonjs';
 const VARIANT = 'commonjs';
 
-declare module '../build' {
+declare module '../tasks/build/types' {
   interface PackageBuildVariants {
     [VARIANT]: boolean;
   }

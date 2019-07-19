@@ -1,9 +1,9 @@
 import {dirname, basename, join} from 'path';
 import {produce} from 'immer';
 import {Work} from '../work';
-import {BrowserBuildVariants} from '../build';
+import {BrowserBuildVariants} from '../tasks/build';
 
-declare module '../build' {
+declare module '../tasks/build/types' {
   interface BrowserBuildVariants {
     browserTarget: 'baseline' | 'latest';
   }

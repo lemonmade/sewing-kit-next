@@ -7,7 +7,7 @@ import {
   Dependencies,
   FileSystem,
   SewingKitFileSystem,
-} from './concepts';
+} from '../../workspace';
 import { basename } from 'path';
 
 export class WorkspaceDiscovery {
@@ -33,7 +33,7 @@ export class WorkspaceDiscovery {
     this.sewingKit = new SewingKitFileSystem(root);
   }
 
-  async discover(): Promise<Workspace> {
+  async run(): Promise<Workspace> {
     const [apps, services, packages] = await Promise.all([
       this.hooks.apps.promise([]),
       this.hooks.services.promise([]),
