@@ -6,9 +6,5 @@
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
-  "references": [
-    {"path": "../sewing-kit-workspace"},
-    {"path": "../sewing-kit-task-build"},
-    {"path": "../sewing-kit-plugin-package-commonjs"}
-  ]
+  "references": []
 }

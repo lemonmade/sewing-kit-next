@@ -2,9 +2,6 @@
   "files": [],
   "include": [],
   "references": [
-    {"path": "./packages/sewing-kit"},
-    {"path": "./packages/sewing-kit-workspace"},
-    {"path": "./packages/sewing-kit-task-build"},
-    {"path": "./packages/sewing-kit-plugin-package-commonjs"}
+    {"path": "./packages/sewing-kit"}
   ]
 }
