@@ -14,6 +14,12 @@ export default function javascript(work: Work) {
         }),
       );
 
+      configuration.babel.tap(PLUGIN, (babelPlugin) => {
+        return produce(babelPlugin, (babelPlugin) => {
+          babelPlugin.presets.push('babel-preset-shopify');
+        });
+      });
+
       configuration.webpackRules.tapPromise(PLUGIN, async (rules, target) => {
         const options = await configuration.babel.promise(
           {presets: []},

@@ -20,7 +20,7 @@ export default function packages(work: Work) {
             dependencies: new Dependencies(discovery.root),
             entries: [
               {
-                name: 'main',
+                name: 'index',
                 options: {},
                 root: fs.resolvePath('src'),
               },
@@ -41,7 +41,7 @@ export default function packages(work: Work) {
             dependencies: new Dependencies(root),
             entries: [
               {
-                name: 'main',
+                name: 'index',
                 options: {},
                 root: fs.resolvePath(root, 'src'),
               },

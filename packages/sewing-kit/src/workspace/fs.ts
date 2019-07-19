@@ -1,9 +1,19 @@
 import {resolve, join, dirname} from 'path';
-import {writeFile, mkdirp} from 'fs-extra';
+import {writeFile, readFile, mkdirp} from 'fs-extra';
 import glob, {IOptions as GlobOptions} from 'glob';
 
 export class FileSystem {
   constructor(protected readonly root: string) {}
+
+  read(file: string) {
+    return readFile(this.resolvePath(file), 'utf8');
+  }
+
+  async write(file: string, contents: string) {
+    const resolved = this.resolvePath(file);
+    await mkdirp(dirname(resolved));
+    await writeFile(resolved, contents);
+  }
 
   async hasFile(file: string) {
     const matches = await this.glob(file, {nodir: true});
@@ -31,12 +41,6 @@ export class FileSystem {
 export class SewingKitFileSystem extends FileSystem {
   constructor(projectRoot: string) {
     super(join(projectRoot, '.sewing-kit'));
-  }
-
-  async write(file: string, contents: string) {
-    const resolved = this.resolvePath(file);
-    await mkdirp(dirname(resolved));
-    await writeFile(resolved, contents);
   }
 
   configPath(...paths: string[]) {

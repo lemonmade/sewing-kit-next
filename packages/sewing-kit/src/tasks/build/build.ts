@@ -1,4 +1,3 @@
-import {exec} from 'child_process';
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {
   AsyncSeriesWaterfallHook,
@@ -10,42 +9,76 @@ import {Env} from '../../types';
 import {WebApp, Package, Workspace} from '../../workspace';
 
 import {
+  Configuration,
   Environment,
   WebAppBuild,
   PackageBuild,
   BrowserBuildVariants,
   PackageBuildVariants,
 } from './types';
-import {VariantBuilder} from './variants';
+import {VariantBuilder, Variant} from './variants';
 
-export interface BabelConfig {
-  presets: any[];
+export interface BuildStep {
+  run(): Promise<void>;
 }
 
-export class Configuration {
-  readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
-  readonly output = new AsyncSeriesWaterfallHook<string>(['output']);
-  readonly entries = new AsyncSeriesWaterfallHook<string[]>(['entries']);
-  readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
-  readonly filename = new AsyncSeriesWaterfallHook<string>(['filename']);
-
-  readonly webpackRules = new AsyncSeriesWaterfallHook<any[]>(['rules']);
-  readonly webpackConfig = new AsyncSeriesWaterfallHook<WebpackConfiguration>([
-    'config',
+export class BuildSteps<T> {
+  readonly beforeAll = new AsyncSeriesWaterfallHook<BuildStep[], T[]>([
+    'steps',
+    'builds',
   ]);
+  readonly beforeEach = new AsyncSeriesWaterfallHook<BuildStep[], T>([
+    'steps',
+    'build',
+  ]);
+  readonly each = new AsyncSeriesWaterfallHook<BuildStep[], T>([
+    'steps',
+    'build',
+  ]);
+  readonly afterEach = new AsyncSeriesWaterfallHook<BuildStep[], T>([
+    'steps',
+    'build',
+  ]);
+  readonly afterAll = new AsyncSeriesWaterfallHook<BuildStep[], T[]>([
+    'steps',
+    'builds',
+  ]);
+
+  async run(builds: T[]) {
+    const [beforeAll, afterAll] = await Promise.all([
+      this.beforeAll.promise([], builds),
+      this.afterAll.promise([], builds),
+    ]);
+
+    const each = await Promise.all(
+      builds.map(async (build) => {
+        const [before, during, after] = await Promise.all([
+          this.beforeEach.promise([], build),
+          this.each.promise([], build),
+          this.afterEach.promise([], build),
+        ]);
+
+        return [...before, ...during, ...after];
+      }),
+    );
+
+    return [...beforeAll, ...each.flat(), ...afterAll];
+  }
 }
 
 export class BuildTask {
   readonly configure = {
     common: new AsyncParallelHook<Configuration>(['configuration']),
-    browser: new AsyncParallelHook<Configuration, WebAppBuild>([
-      'configuration',
-      'webAppBuild',
-    ]),
-    package: new AsyncParallelHook<Configuration, PackageBuild>([
-      'configuration',
-      'packageBuild',
-    ]),
+    browser: new AsyncParallelHook<
+      Configuration,
+      WebApp,
+      Variant<BrowserBuildVariants>
+    >(['configuration', 'app', 'variant']),
+    package: new AsyncParallelHook<
+      Configuration,
+      Package,
+      Variant<PackageBuildVariants>
+    >(['configuration', 'pkg', 'variant']),
   };
 
   readonly variants = {
@@ -59,6 +92,11 @@ export class BuildTask {
     >(['variants', 'pkg']),
   };
 
+  readonly steps = {
+    app: new BuildSteps<PackageBuild>(),
+    package: new BuildSteps<PackageBuild>(),
+  };
+
   constructor(
     public readonly env: Environment,
     private readonly workspace: Workspace,
@@ -69,7 +107,15 @@ export class BuildTask {
       this.workspace.apps.map(async (app) => {
         const variants = new VariantBuilder<BrowserBuildVariants>();
         await this.variants.apps.promise(variants, app);
-        return variants.all.map<WebAppBuild>((variant) => ({app, variant}));
+
+        return Promise.all(
+          variants.all.map<Promise<WebAppBuild>>(async (variant) => {
+            const config = new Configuration();
+            await this.configure.common.promise(config);
+            await this.configure.browser.promise(config, app, variant);
+            return {app, variant, config};
+          }),
+        );
       }),
     )).flat();
 
@@ -77,43 +123,33 @@ export class BuildTask {
       this.workspace.packages.map(async (pkg) => {
         const variants = new VariantBuilder<PackageBuildVariants>();
         await this.variants.packages.promise(variants, pkg);
-        return variants.all.map<PackageBuild>((variant) => ({pkg, variant}));
+
+        return Promise.all(
+          variants.all.map<Promise<PackageBuild>>(async (variant) => {
+            const config = new Configuration();
+            await this.configure.common.promise(config);
+            await this.configure.package.promise(config, pkg, variant);
+            return {pkg, variant, config};
+          }),
+        );
       }),
     )).flat();
 
-    const babelConfig = this.workspace.sewingKit.configPath(
-      'build/packages/babel.esnext.js',
-    );
-
-    await this.workspace.sewingKit.write(
-      babelConfig,
-      `module.exports = ${JSON.stringify({
-        presets: [
-          [
-            require.resolve('babel-preset-shopify'),
-            {typescript: true, modules: false},
-          ],
-        ],
-      })};`,
-    );
+    const packageSteps = await this.steps.package.run(packageBuilds);
 
     await Promise.all([
       ...webAppBuilds.map(async (webAppBuild) => {
-        const {app} = webAppBuild;
+        const {app, config} = webAppBuild;
 
-        const configuration = new Configuration();
-        await this.configure.common.promise(configuration);
-        await this.configure.browser.promise(configuration, webAppBuild);
-
-        const rules = await configuration.webpackRules.promise([]);
-        const extensions = await configuration.extensions.promise([]);
-        const outputPath = await configuration.output.promise(
-          app.fs.buildPath(),
+        const rules = await config.webpackRules.promise([]);
+        const extensions = await config.extensions.promise([]);
+        const outputPath = await config.output.promise(
+          this.workspace.fs.buildPath(),
         );
-        const filename = await configuration.filename.promise('[name].js');
+        const filename = await config.filename.promise('[name].js');
 
-        const config = await configuration.webpackConfig.promise({
-          entry: await configuration.entries.promise([app.entry]),
+        const webpackConfig = await config.webpackConfig.promise({
+          entry: await config.entries.promise([app.entry]),
           mode: toMode(this.env.simulate),
           resolve: {extensions},
           module: {rules},
@@ -123,39 +159,9 @@ export class BuildTask {
           },
         });
 
-        await buildWebpack(config);
+        await buildWebpack(webpackConfig);
       }),
-      ...packageBuilds.map(async (packageBuild) => {
-        const {pkg} = packageBuild;
-
-        const configuration = new Configuration();
-        await this.configure.common.promise(configuration);
-        await this.configure.package.promise(configuration, packageBuild);
-
-        const extensions = await configuration.extensions.promise([]);
-        const outputPath = await configuration.output.promise(
-          pkg.fs.buildPath(),
-        );
-
-        return new Promise((resolve, reject) => {
-          exec(
-            `node_modules/.bin/babel ${
-              pkg.entries[0].root
-            } --out-dir ${JSON.stringify(
-              outputPath,
-            )} --verbose --no-babelrc --extensions ${JSON.stringify(
-              extensions.join(','),
-            )} --config-file ${JSON.stringify(babelConfig)}`,
-            (error) => {
-              if (error) {
-                reject(error);
-              } else {
-                resolve();
-              }
-            },
-          );
-        });
-      }),
+      ...packageSteps.map((step) => step.run()),
     ]);
   }
 }

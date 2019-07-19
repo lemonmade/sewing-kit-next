@@ -1,7 +1,6 @@
 import {produce} from 'immer';
-
 import {Work} from '../work';
-import {BabelConfig} from '../build';
+import {updateBabelPreset} from './utilities';
 
 const PLUGIN = 'SewingKit.typescript';
 
@@ -15,21 +14,19 @@ export default function typescript(work: Work) {
         }),
       );
 
-      configuration.babel.tap(
-        PLUGIN,
-        produce((babelConfig: BabelConfig) => {
-          for (const preset of babelConfig.presets) {
-            if (
-              Array.isArray(preset) &&
-              (preset[0] === 'babel-preset-shopify/web' ||
-                preset[0] === 'babel-preset-shopify/node')
-            ) {
-              preset[1] = preset[1] || {};
-              preset[1].typescript = true;
-            }
-          }
-        }),
-      );
+      configuration.babel.tap(PLUGIN, (babelConfig) => {
+        return produce(
+          babelConfig,
+          updateBabelPreset(
+            [
+              'babel-preset-shopify',
+              'babel-preset-shopify/web',
+              'babel-preset-shopify/node',
+            ],
+            {typescript: true},
+          ),
+        );
+      });
 
       configuration.webpackRules.tapPromise(PLUGIN, async (rules) => {
         const options = await configuration.babel.promise({

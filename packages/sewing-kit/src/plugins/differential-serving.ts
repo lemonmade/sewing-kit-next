@@ -1,7 +1,10 @@
 import {dirname, basename, join} from 'path';
 import {produce} from 'immer';
+
 import {Work} from '../work';
 import {BrowserBuildVariants} from '../tasks/build';
+
+import {updateBabelPreset} from './utilities';
 
 declare module '../tasks/build/types' {
   interface BrowserBuildVariants {
@@ -24,8 +27,8 @@ export default function differentialServing(work: Work) {
       variants.add('browserTarget', ['baseline', 'latest']);
     });
 
-    build.configure.browser.tap(PLUGIN, (configuration, browserBuild) => {
-      const browserTarget = browserBuild.variant.get('browserTarget');
+    build.configure.browser.tap(PLUGIN, (configuration, _, variant) => {
+      const browserTarget = variant.get('browserTarget');
 
       if (!browserTarget) {
         return;
@@ -36,17 +39,13 @@ export default function differentialServing(work: Work) {
       });
 
       configuration.babel.tap(PLUGIN, (babelConfig) => {
-        return produce(babelConfig, (babelConfig) => {
-          for (const preset of babelConfig.presets) {
-            if (
-              Array.isArray(preset) &&
-              preset[0] === 'babel-preset-shopify/web'
-            ) {
-              preset[1] = preset[1] || {};
-              preset[1].browsers = BROWSER_TARGETS[browserTarget];
-            }
-          }
-        });
+        return produce(
+          babelConfig,
+          updateBabelPreset(
+            ['babel-preset-shopify', 'babel-preset-shopify/web'],
+            {browsers: BROWSER_TARGETS[browserTarget]},
+          ),
+        );
       });
     });
   });
