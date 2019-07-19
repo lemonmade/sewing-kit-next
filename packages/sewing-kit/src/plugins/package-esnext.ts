@@ -10,6 +10,7 @@ import {
 
 const PLUGIN = 'SewingKit.package-commonjs';
 const VARIANT = 'esnext';
+const EXTENSION = '.esnext';
 
 declare module '../tasks/build/types' {
   interface PackageBuildVariants {
@@ -19,6 +20,15 @@ declare module '../tasks/build/types' {
 
 export default function packageEsnext(work: Work) {
   work.tasks.build.tap(PLUGIN, (build, workspace) => {
+    build.configure.browser.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
+        PLUGIN,
+        produce((extensions: string[]) => {
+          extensions.unshift(EXTENSION);
+        }),
+      );
+    });
+
     build.variants.packages.tap(PLUGIN, (variants) => {
       variants.add(VARIANT);
     });
@@ -63,8 +73,8 @@ export default function packageEsnext(work: Work) {
             configFile: 'babel.esnext.js',
           }),
           new WriteEntriesStep(packageBuild, {
-            extension: '.esnext',
             outputPath,
+            extension: EXTENSION,
             contents: (relative) => `export * from ${JSON.stringify(relative)}`,
           }),
         );
