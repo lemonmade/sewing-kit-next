@@ -81,6 +81,7 @@ export class TestTask {
     await workspace.sewingKit.write(
       rootConfigPath,
       `module.exports = ${JSON.stringify({
+        rootDir: workspace.root,
         projects,
         watchPlugins: ['jest-watch-yarn-workspaces'],
         watchPathIgnorePatterns: ['/tmp/', '/dist/'],
