@@ -5,6 +5,9 @@ import {Package, Workspace} from '../../workspace';
 class Configuration {
   readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
   readonly environment = new AsyncSeriesWaterfallHook<string>(['environment']);
+  readonly transforms = new AsyncSeriesWaterfallHook<{[key: string]: string}>([
+    'transforms',
+  ]);
 }
 
 export class TestTask {
@@ -21,17 +24,13 @@ export class TestTask {
   async run() {
     const {workspace} = this;
 
-    const transform = {
-      '^.+\\.[m|j]s$': require.resolve('./transforms/javascript'),
-      '^.+\\.tsx?$': require.resolve('./transforms/typescript'),
-    };
-
     await Promise.all(
       workspace.packages.map(async (pkg) => {
         const configuration = new Configuration();
         await this.configure.common.promise(configuration);
         await this.configure.package.promise(configuration, pkg);
 
+        const transform = await configuration.transforms.promise({});
         const environment = await configuration.environment.promise('node');
         const extensions = (await configuration.extensions.promise([])).map(
           (extension) => extension.replace('.', ''),
@@ -64,14 +63,17 @@ export class TestTask {
       rootConfigPath,
       `module.exports = ${JSON.stringify({
         rootDir: workspace.root,
-        testRegex: [],
+        testRegex: '.+\\.test\\.\\w+$',
         projects: [workspace.sewingKit.configPath('jest/packages/*.config.js')],
         watchPlugins: ['jest-watch-yarn-workspaces'],
+        watchPathIgnorePatterns: ['/tmp/', '/dist/'],
       })};`,
     );
 
     execSync(
-      `node_modules/.bin/jest --config ${JSON.stringify(rootConfigPath)}`,
+      `node_modules/.bin/jest --watch --config ${JSON.stringify(
+        rootConfigPath,
+      )}`,
       {
         stdio: 'inherit',
       },
