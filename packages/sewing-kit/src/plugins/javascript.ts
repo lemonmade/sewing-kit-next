@@ -5,12 +5,23 @@ import {Work} from '../work';
 const PLUGIN = 'SewingKit.javascript';
 
 export default function javascript(work: Work) {
+  work.tasks.test.tap(PLUGIN, (test) => {
+    test.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
+        PLUGIN,
+        produce((extensions: string[]) => {
+          extensions.unshift('.js', '.mjs');
+        }),
+      );
+    });
+  });
+
   work.tasks.build.tap(PLUGIN, (build) => {
     build.configure.common.tap(PLUGIN, (configuration) => {
       configuration.extensions.tap(
         PLUGIN,
         produce((extensions: string[]) => {
-          extensions.unshift('.js', '.jsx', '.mjs');
+          extensions.unshift('.js', '.mjs');
         }),
       );
 

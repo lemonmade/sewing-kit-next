@@ -3,3 +3,5 @@ tsconfig.tsbuildinfo
 dist
 tmp
 ~
+yarn-error.log
+.sewing-kit

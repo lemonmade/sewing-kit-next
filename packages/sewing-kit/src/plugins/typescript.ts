@@ -5,6 +5,17 @@ import {updateBabelPreset} from './utilities';
 const PLUGIN = 'SewingKit.typescript';
 
 export default function typescript(work: Work) {
+  work.tasks.test.tap(PLUGIN, (test) => {
+    test.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.extensions.tap(
+        PLUGIN,
+        produce((extensions: string[]) => {
+          extensions.unshift('.ts', '.tsx');
+        }),
+      );
+    });
+  });
+
   work.tasks.build.tap(PLUGIN, (buildTask) => {
     buildTask.configure.common.tap(PLUGIN, (configuration) => {
       configuration.extensions.tap(
