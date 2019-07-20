@@ -2,12 +2,22 @@ import {execSync} from 'child_process';
 import {AsyncSeriesWaterfallHook, AsyncParallelHook} from 'tapable';
 import {Package, Workspace} from '../../workspace';
 
+interface BabelConfig {
+  presets?: (string | [string, object?])[];
+}
+
+interface TransformOptions {
+  babelTransform: string;
+}
+
 class Configuration {
+  readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
   readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
   readonly environment = new AsyncSeriesWaterfallHook<string>(['environment']);
-  readonly transforms = new AsyncSeriesWaterfallHook<{[key: string]: string}>([
-    'transforms',
-  ]);
+  readonly transforms = new AsyncSeriesWaterfallHook<
+    {[key: string]: string},
+    TransformOptions
+  >(['transforms', 'options']);
 }
 
 export class TestTask {
@@ -30,7 +40,17 @@ export class TestTask {
         await this.configure.common.promise(configuration);
         await this.configure.package.promise(configuration, pkg);
 
-        const transform = await configuration.transforms.promise({});
+        const babelTransform = workspace.sewingKit.configPath(
+          'jest/packages',
+          pkg.name,
+          'babel-transformer.js',
+        );
+
+        const babelConfig = await configuration.babel.promise({});
+        const transform = await configuration.transforms.promise(
+          {},
+          {babelTransform},
+        );
         const environment = await configuration.environment.promise('node');
         const extensions = (await configuration.extensions.promise([])).map(
           (extension) => extension.replace('.', ''),
@@ -39,16 +59,24 @@ export class TestTask {
         const config = {
           displayName: pkg.name,
           rootDir: pkg.root,
-          testRegex: `index\\.test\\.(${extensions.join('|')})$`,
+          testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
           moduleFileExtensions: extensions,
           testEnvironment: environment,
           transform,
         };
 
         await workspace.sewingKit.write(
+          babelTransform,
+          `const {createTransformer} = require('babel-jest'); module.exports = createTransformer(${JSON.stringify(
+            babelConfig,
+          )})`,
+        );
+
+        await workspace.sewingKit.write(
           workspace.sewingKit.configPath(
             'jest/packages',
-            `${pkg.name}.config.js`,
+            pkg.name,
+            'jest.config.js',
           ),
           `module.exports = ${JSON.stringify(config)};`,
         );
@@ -64,7 +92,9 @@ export class TestTask {
       `module.exports = ${JSON.stringify({
         rootDir: workspace.root,
         testRegex: '.+\\.test\\.\\w+$',
-        projects: [workspace.sewingKit.configPath('jest/packages/*.config.js')],
+        projects: [
+          workspace.sewingKit.configPath('jest/packages/*/jest.config.js'),
+        ],
         watchPlugins: ['jest-watch-yarn-workspaces'],
         watchPathIgnorePatterns: ['/tmp/', '/dist/'],
       })};`,

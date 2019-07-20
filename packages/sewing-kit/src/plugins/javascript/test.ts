@@ -11,11 +11,19 @@ export default function testJavaScript(test: TestTask) {
       }),
     );
 
-    configuration.transforms.tap(PLUGIN, (transforms) => {
+    configuration.babel.tap(PLUGIN, (babelConfig) => {
+      return produce(babelConfig, (babelConfig) => {
+        babelConfig.presets = babelConfig.presets || [];
+        babelConfig.presets.push([
+          'babel-preset-shopify/node',
+          {modules: 'commonjs'},
+        ]);
+      });
+    });
+
+    configuration.transforms.tap(PLUGIN, (transforms, {babelTransform}) => {
       return produce(transforms, (transforms) => {
-        transforms['^.+\\.[m|j]s$'] = require.resolve(
-          './transforms/javascript',
-        );
+        transforms['^.+\\.[m|j]s$'] = babelTransform;
       });
     });
   });
