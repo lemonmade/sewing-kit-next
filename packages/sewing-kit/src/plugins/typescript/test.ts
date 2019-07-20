@@ -1,5 +1,6 @@
 import {produce} from 'immer';
 import {TestTask} from '../../tasks/testing';
+import {updateBabelPreset} from '../utilities';
 import {PLUGIN} from './common';
 
 export default function testTypeScript(test: TestTask) {
@@ -11,9 +12,16 @@ export default function testTypeScript(test: TestTask) {
       }),
     );
 
-    configuration.transforms.tap(PLUGIN, (transforms) => {
+    configuration.babel.tap(PLUGIN, (babelConfig) => {
+      return produce(
+        babelConfig,
+        updateBabelPreset('babel-preset-shopify/node', {typescript: true}),
+      );
+    });
+
+    configuration.transforms.tap(PLUGIN, (transforms, {babelTransform}) => {
       return produce(transforms, (transforms) => {
-        transforms['^.+\\.tsx?$'] = require.resolve('./transforms/jest');
+        transforms['^.+\\.tsx?$'] = babelTransform;
       });
     });
   });
