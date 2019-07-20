@@ -2,8 +2,10 @@
   "name": "sewing-kit-next",
   "private": true,
   "scripts": {
-    "test": "./packages/sewing-kit/bin/sk test",
-    "build": "yarn tsc --build"
+    "sk": "ts-node --project ./packages/sewing-kit/tsconfig.json ./packages/sewing-kit/src/cli",
+    "sewing-kit": "sk",
+    "build": "sk build",
+    "test": "sk test"
   },
   "workspaces": [
     "packages/*"
@@ -17,6 +19,7 @@
     "jest-watch-yarn-workspaces": "^1.1.0",
     "prettier": "^1.18.2",
     "tree-node-cli": "^1.2.5",
+    "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
   },
   "dependencies": {}
