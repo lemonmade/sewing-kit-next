@@ -1,3 +1,6 @@
+import 'core-js/features/array/flat';
+import 'core-js/features/array/flat-map';
+
 import {resolve, dirname} from 'path';
 import {
   mkdirp,
@@ -8,39 +11,59 @@ import {
   emptyDir,
 } from 'fs-extra';
 import toTree from 'tree-node-cli';
-import {run, Options} from '../src';
+import {
+  IfAllOptionalKeys,
+  FirstArgument,
+  ThenType,
+} from '@shopify/useful-types';
+
+const commandMap = {
+  build: () => import('../src/cli/build').then(({build}) => build),
+};
+
+type CommandMap = typeof commandMap;
+type CommandType<T extends keyof CommandMap> = ThenType<
+  ReturnType<CommandMap[T]>
+>;
 
 export class Workspace {
-  constructor(public readonly directory: string) {}
+  constructor(public readonly root: string) {}
 
-  async run(options: Options) {
-    await run(options);
+  async run<K extends keyof CommandMap>(
+    ...args: IfAllOptionalKeys<
+      FirstArgument<CommandType<K>>,
+      [K, FirstArgument<CommandType<K>>?],
+      [K, FirstArgument<CommandType<K>>]
+    >
+  ) {
+    const [command, options = {}] = args;
+    await (await commandMap[command]())({...options, root: this.root});
   }
 
   async writeConfig(contents: string) {
-    await writeFile(resolve(this.directory, 'sewing-kit.config.ts'), contents);
+    await writeFile(resolve(this.root, 'sewing-kit.config.ts'), contents);
   }
 
   async writeFile(file: string, contents: string) {
-    const path = this.resolve(file);
+    const path = this.resolvePath(file);
     await mkdirp(dirname(path));
     await writeFile(path, contents);
   }
 
   contents(file: string) {
-    return readFile(this.resolve(file), 'utf8');
+    return readFile(this.resolvePath(file), 'utf8');
   }
 
   contains(file: string) {
-    return pathExists(this.resolve(file));
+    return pathExists(this.resolvePath(file));
   }
 
-  resolve(file: string) {
-    return resolve(this.directory, file);
+  resolvePath(file: string) {
+    return resolve(this.root, file);
   }
 
   debug() {
-    console.log(toTree(this.directory, {allFiles: true}));
+    console.log(toTree(this.root, {allFiles: true}));
   }
 }
 
