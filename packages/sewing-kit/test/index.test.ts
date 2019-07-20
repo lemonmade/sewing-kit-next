@@ -63,9 +63,7 @@ describe('sewing-kit', () => {
       await workspace.run({root: workspace.directory, plugins: [debugPlugin]});
 
       expect(
-        await workspace.contents(
-          'build/browser/baseline/main.js',
-        ),
+        await workspace.contents('build/browser/baseline/main.js'),
       ).toContain('function main(message) {');
     });
   });

@@ -34,7 +34,7 @@ export class TestTask {
   async run() {
     const {workspace} = this;
 
-    await Promise.all(
+    const projects = await Promise.all(
       workspace.packages.map(async (pkg) => {
         const configuration = new Configuration();
         await this.configure.common.promise(configuration);
@@ -56,15 +56,6 @@ export class TestTask {
           (extension) => extension.replace('.', ''),
         );
 
-        const config = {
-          displayName: pkg.name,
-          rootDir: pkg.root,
-          testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
-          moduleFileExtensions: extensions,
-          testEnvironment: environment,
-          transform,
-        };
-
         await workspace.sewingKit.write(
           babelTransform,
           `const {createTransformer} = require('babel-jest'); module.exports = createTransformer(${JSON.stringify(
@@ -72,14 +63,14 @@ export class TestTask {
           )})`,
         );
 
-        await workspace.sewingKit.write(
-          workspace.sewingKit.configPath(
-            'jest/packages',
-            pkg.name,
-            'jest.config.js',
-          ),
-          `module.exports = ${JSON.stringify(config)};`,
-        );
+        return {
+          displayName: pkg.name,
+          rootDir: pkg.root,
+          testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
+          moduleFileExtensions: extensions,
+          testEnvironment: environment,
+          transform,
+        };
       }),
     );
 
@@ -90,11 +81,7 @@ export class TestTask {
     await workspace.sewingKit.write(
       rootConfigPath,
       `module.exports = ${JSON.stringify({
-        rootDir: workspace.root,
-        testRegex: '.+\\.test\\.\\w+$',
-        projects: [
-          workspace.sewingKit.configPath('jest/packages/*/jest.config.js'),
-        ],
+        projects,
         watchPlugins: ['jest-watch-yarn-workspaces'],
         watchPathIgnorePatterns: ['/tmp/', '/dist/'],
       })};`,
