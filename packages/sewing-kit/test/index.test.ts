@@ -1,5 +1,4 @@
 import {withWorkspace} from './utilities';
-import {Work} from '../src/work';
 
 describe('sewing-kit', () => {
   describe('packages', () => {
@@ -14,7 +13,7 @@ describe('sewing-kit', () => {
           `,
         );
 
-        await workspace.run({root: workspace.directory});
+        await workspace.run('build');
 
         expect(await workspace.contents('build/esm/index.js')).toContain(
           'export function pkg(',
@@ -34,7 +33,7 @@ describe('sewing-kit', () => {
           `export function two() {}`,
         );
 
-        await workspace.run({root: workspace.directory});
+        await workspace.run('build');
 
         expect(
           await workspace.contents('packages/one/build/esm/index.js'),
@@ -60,7 +59,7 @@ describe('sewing-kit', () => {
         `,
       );
 
-      await workspace.run({root: workspace.directory, plugins: [debugPlugin]});
+      await workspace.run('build');
 
       expect(
         await workspace.contents('build/browser/baseline/main.js'),
@@ -68,15 +67,3 @@ describe('sewing-kit', () => {
     });
   });
 });
-
-function debugPlugin(work: Work) {
-  work.tasks.build.tap('debug', (buildTask) => {
-    buildTask.configure.common.tap('debug', (configuration) => {
-      configuration.webpackConfig.tap('debug', (config) => {
-        // console.log(JSON.stringify(config, null, 2));
-
-        return config;
-      });
-    });
-  });
-}
