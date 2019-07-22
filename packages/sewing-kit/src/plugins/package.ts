@@ -1,52 +1,54 @@
-import {basename} from 'path';
+import {basename, join} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../work';
-import {FileSystem, Dependencies} from '../workspace';
+import {Package} from '../workspace';
 
 const PLUGIN = 'SewingKit.packages';
 
 export default function packages(work: Work) {
+  work.tasks.test.tap(PLUGIN, (test, workspace) => {
+    test.configureRoot.watchIgnore.tap(
+      PLUGIN,
+      produce((watchIgnore: string[]) => {
+        watchIgnore.push(workspace.fs.resolvePath('packages/.*/build'));
+      }),
+    );
+
+    test.configure.common.tap(PLUGIN, (configuration) => {
+      configuration.moduleMapper.tap(PLUGIN, (moduleMap) => {
+        return workspace.packages.reduce((all, pkg) => ({
+          ...all,
+          ...packageEntryMatcherMap(pkg),
+        }), moduleMap);
+      });
+    });
+  });
+
   work.tasks.discovery.tap(PLUGIN, (discovery) => {
     discovery.hooks.packages.tapPromise(PLUGIN, async (packages) => {
       if (await discovery.fs.hasFile('src/index.*')) {
-        const fs = new FileSystem(discovery.root);
-
         return produce(packages, (packages) => {
-          packages.push({
-            fs,
-            root: discovery.root,
-            name: discovery.name,
-            dependencies: new Dependencies(discovery.root),
-            entries: [
-              {
-                name: 'index',
-                options: {},
-                root: fs.resolvePath('src'),
-              },
-            ],
-          });
+          packages.push(
+            new Package({
+              root: discovery.root,
+              name: discovery.name,
+              binaries: [],
+              entries: [{root: 'src'}],
+            }),
+          );
         });
       }
 
       const packageMatches = await discovery.fs.glob('packages/*/');
       const newPackages = await Promise.all(
-        packageMatches.map((root) => {
-          const fs = new FileSystem(root);
-
-          return {
-            fs,
+        packageMatches.map(async (root) => {
+          return new Package({
             root,
             name: basename(root),
-            dependencies: new Dependencies(root),
-            entries: [
-              {
-                name: 'index',
-                options: {},
-                root: fs.resolvePath(root, 'src'),
-              },
-            ],
-          };
+            binaries: [],
+            entries: [{root: 'src'}],
+          });
         }),
       );
 
@@ -55,4 +57,16 @@ export default function packages(work: Work) {
       });
     });
   });
+}
+
+function packageEntryMatcherMap({runtimeName, entries, fs}: Package) {
+  const map: Record<string, string> = Object.create(null);
+
+  for (const {name, root} of entries) {
+    map[
+      name ? join(runtimeName, `${name}$`) : `${runtimeName}$`
+    ] = fs.resolvePath(root);
+  }
+
+  return map;
 }

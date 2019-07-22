@@ -4,17 +4,15 @@ import {
   Service,
   Package,
   Workspace,
-  Dependencies,
   FileSystem,
   SewingKitFileSystem,
 } from '../../workspace';
-import { basename } from 'path';
+import {basename} from 'path';
 
 export class WorkspaceDiscovery {
   readonly name: string;
   readonly fs: FileSystem;
-  readonly sewingKit: SewingKitFileSystem;
-  readonly dependencies: Dependencies;
+  readonly internal: SewingKitFileSystem;
 
   readonly hooks = {
     apps: new AsyncSeriesWaterfallHook<WebApp[], never, never>(['apps']),
@@ -29,8 +27,7 @@ export class WorkspaceDiscovery {
   constructor(public readonly root: string) {
     this.name = basename(root);
     this.fs = new FileSystem(root);
-    this.dependencies = new Dependencies(root);
-    this.sewingKit = new SewingKitFileSystem(root);
+    this.internal = new SewingKitFileSystem(root);
   }
 
   async run(): Promise<Workspace> {
@@ -40,15 +37,12 @@ export class WorkspaceDiscovery {
       this.hooks.packages.promise([]),
     ]);
 
-    return {
+    return new Workspace({
       name: this.name,
       root: this.root,
-      fs: this.fs,
-      sewingKit: this.sewingKit,
-      dependencies: this.dependencies,
       apps,
       services,
       packages,
-    };
+    });
   }
 }

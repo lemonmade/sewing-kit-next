@@ -134,7 +134,7 @@ export class WriteEntriesStep {
       );
 
       await pkg.fs.write(
-        `${entry.name}${extension}`,
+        `${entry.name || 'index'}${extension}`,
         contents(relativeFromRoot),
       );
     }
@@ -160,11 +160,11 @@ export class CompileBabelStep {
       packageBuild: {pkg, config},
     } = this;
 
-    const babelConfigPath = workspace.sewingKit.configPath(
+    const babelConfigPath = workspace.internal.configPath(
       `build/packages/${pkg.name}/${configFile}`,
     );
 
-    await workspace.sewingKit.write(
+    await workspace.internal.write(
       babelConfigPath,
       `module.exports=${JSON.stringify(
         await config.babel.promise({presets: []}),

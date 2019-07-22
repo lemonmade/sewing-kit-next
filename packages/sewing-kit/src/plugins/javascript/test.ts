@@ -21,7 +21,7 @@ export default function testJavaScript(test: TestTask) {
       });
     });
 
-    configuration.transforms.tap(PLUGIN, (transforms, {babelTransform}) => {
+    configuration.jestTransforms.tap(PLUGIN, (transforms, {babelTransform}) => {
       return produce(transforms, (transforms) => {
         transforms['^.+\\.[m|j]s$'] = babelTransform;
       });

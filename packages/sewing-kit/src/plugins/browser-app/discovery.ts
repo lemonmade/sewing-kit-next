@@ -2,6 +2,7 @@ import {resolve} from 'path';
 import {produce} from 'immer';
 
 import {WorkspaceDiscovery} from '../../tasks/discovery';
+import {WebApp} from '../../workspace';
 import {PLUGIN} from './common';
 
 export default function browserAppDiscovery(discovery: WorkspaceDiscovery) {
@@ -11,15 +12,13 @@ export default function browserAppDiscovery(discovery: WorkspaceDiscovery) {
     }
 
     return produce(apps, (apps) => {
-      apps.push({
-        fs: discovery.fs,
-        name: discovery.name,
-        root: discovery.root,
-        dependencies: discovery.dependencies,
-        options: {},
-        entry: resolve(discovery.root, 'client'),
-        assets: {scripts: true, styles: true, images: true, files: true},
-      });
+      apps.push(
+        new WebApp({
+          name: discovery.name,
+          root: discovery.root,
+          entry: resolve(discovery.root, 'client'),
+        }),
+      );
     });
   });
 }
