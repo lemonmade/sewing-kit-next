@@ -14,10 +14,17 @@ class Configuration {
   readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
   readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
   readonly environment = new AsyncSeriesWaterfallHook<string>(['environment']);
-  readonly transforms = new AsyncSeriesWaterfallHook<
+  readonly moduleMapper = new AsyncSeriesWaterfallHook<{[key: string]: string}>(
+    ['moduleMapper'],
+  );
+
+  readonly jestTransforms = new AsyncSeriesWaterfallHook<
     {[key: string]: string},
     TransformOptions
   >(['transforms', 'options']);
+  readonly jestFinalize = new AsyncSeriesWaterfallHook<jest.InitialOptions>([
+    'jestConfig',
+  ]);
 }
 
 export class TestTask {
@@ -26,6 +33,14 @@ export class TestTask {
     package: new AsyncParallelHook<Configuration, Package>([
       'configuration',
       'pkg',
+    ]),
+  };
+
+  readonly configureRoot = {
+    watchIgnore: new AsyncSeriesWaterfallHook<string[]>(['watchIgnore']),
+    jestWatchPlugins: new AsyncSeriesWaterfallHook<string[]>(['watchPlugins']),
+    jestFinalize: new AsyncSeriesWaterfallHook<jest.InitialOptions>([
+      'jestConfig',
     ]),
   };
 
@@ -40,14 +55,14 @@ export class TestTask {
         await this.configure.common.promise(configuration);
         await this.configure.package.promise(configuration, pkg);
 
-        const babelTransform = workspace.sewingKit.configPath(
+        const babelTransform = workspace.internal.configPath(
           'jest/packages',
           pkg.name,
           'babel-transformer.js',
         );
 
         const babelConfig = await configuration.babel.promise({});
-        const transform = await configuration.transforms.promise(
+        const transform = await configuration.jestTransforms.promise(
           {},
           {babelTransform},
         );
@@ -55,43 +70,50 @@ export class TestTask {
         const extensions = (await configuration.extensions.promise([])).map(
           (extension) => extension.replace('.', ''),
         );
+        const moduleMapper = await configuration.moduleMapper.promise({});
 
-        await workspace.sewingKit.write(
+        await workspace.internal.write(
           babelTransform,
           `const {createTransformer} = require('babel-jest'); module.exports = createTransformer(${JSON.stringify(
             babelConfig,
           )})`,
         );
 
-        return {
+        const config = await configuration.jestFinalize.promise({
           displayName: pkg.name,
           rootDir: pkg.root,
           testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
           moduleFileExtensions: extensions,
           testEnvironment: environment,
+          moduleNameMapper: moduleMapper,
           transform,
-        };
+        });
+
+        return config;
       }),
     );
 
-    const rootConfigPath = workspace.sewingKit.configPath(
-      'jest/root.config.js',
+    const watchPlugins = await this.configureRoot.jestWatchPlugins.promise([]);
+    const watchIgnorePatterns = await this.configureRoot.watchIgnore.promise(
+      [],
     );
 
-    await workspace.sewingKit.write(
+    const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
+
+    const rootConfig = await this.configureRoot.jestFinalize.promise({
+      rootDir: workspace.root,
+      projects,
+      watchPlugins,
+      watchPathIgnorePatterns: watchIgnorePatterns,
+    } as any);
+
+    await workspace.internal.write(
       rootConfigPath,
-      `module.exports = ${JSON.stringify({
-        rootDir: workspace.root,
-        projects,
-        watchPlugins: ['jest-watch-yarn-workspaces'],
-        watchPathIgnorePatterns: ['/tmp/', '/dist/'],
-      })};`,
+      `module.exports = ${JSON.stringify(rootConfig)};`,
     );
 
     execSync(
-      `node_modules/.bin/jest --watch --config ${JSON.stringify(
-        rootConfigPath,
-      )}`,
+      `node_modules/.bin/jest --config ${JSON.stringify(rootConfigPath)}`,
       {
         stdio: 'inherit',
       },

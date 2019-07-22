@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "sk": "ts-node --project ./packages/sewing-kit/tsconfig.json ./packages/sewing-kit/src/cli",
-    "sewing-kit": "sk",
-    "build": "sk build",
-    "test": "sk test"
+    "sewing-kit": "yarn sk",
+    "build": "yarn sk build",
+    "test": "yarn sk test"
   },
   "workspaces": [
     "packages/*"
@@ -16,7 +16,6 @@
     "babel-preset-shopify": "^20.0.0",
     "fs-extra": "^8.1.0",
     "jest": "^24.8.0",
-    "jest-watch-yarn-workspaces": "^1.1.0",
     "prettier": "^1.18.2",
     "tree-node-cli": "^1.2.5",
     "ts-node": "^8.3.0",
