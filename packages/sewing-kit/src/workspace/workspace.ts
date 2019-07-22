@@ -101,7 +101,7 @@ export class WebApp extends Project {
 
 export interface WebAppOptions {}
 
-interface PackageCreateOptions extends ProjectOptions {
+export interface PackageCreateOptions extends ProjectOptions {
   entries: PackageEntry[];
   binaries: PackageBinary[];
 }

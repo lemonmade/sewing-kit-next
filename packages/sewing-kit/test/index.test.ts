@@ -1,3 +1,4 @@
+import {resolve} from 'path';
 import {withWorkspace} from './utilities';
 
 describe('sewing-kit', () => {
@@ -17,6 +18,39 @@ describe('sewing-kit', () => {
 
         expect(await workspace.contents('build/esm/index.js')).toContain(
           'export function pkg(',
+        );
+      });
+    });
+
+    it.only('allows customization of the entrypoint for a package', async () => {
+      await withWorkspace('simple-package', async (workspace) => {
+        await workspace.writeFile(
+          'src/custom.ts',
+          `
+            export function pkg(greet: string) {
+              console.log(\`Hello, \${greet}!\`);
+            }
+          `,
+        );
+
+        await workspace.writeFile(
+          'sewing-kit.config.ts',
+          `
+            import {createPackage} from ${JSON.stringify(
+              resolve(__dirname, '../src/index'),
+            )};
+            export default createPackage((pkg) => {
+              pkg.entry({root: 'src/custom'});
+            });
+          `,
+        );
+
+        await workspace.run('build');
+
+        workspace.debug();
+
+        expect(await workspace.contents('index.js')).toContain(
+          'module.exports = require("./build/cjs/custom")',
         );
       });
     });

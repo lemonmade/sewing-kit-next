@@ -75,7 +75,7 @@ export default function packageEsnext(work: Work) {
           new WriteEntriesStep(packageBuild, {
             outputPath,
             extension: EXTENSION,
-            contents: (relative) => `export * from ${JSON.stringify(relative)}`,
+            contents: (relative) => `export * from ${JSON.stringify(relative)};`,
           }),
         );
       });

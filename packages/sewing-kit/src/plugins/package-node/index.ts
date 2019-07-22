@@ -75,7 +75,7 @@ export default function packageNode(work: Work) {
             outputPath,
             extension: EXTENSION,
             contents: (relative) =>
-              `module.exports = require(${JSON.stringify(relative)})`,
+              `module.exports = require(${JSON.stringify(relative)});`,
           }),
         );
       });

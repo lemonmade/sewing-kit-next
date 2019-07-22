@@ -125,7 +125,7 @@ export class WriteEntriesStep {
     for (const entry of pkg.entries) {
       const relativeFromSourceRoot = relative(
         sourceRoot,
-        resolve(sourceRoot, entry.root),
+        pkg.fs.resolvePath(entry.root),
       );
       const destinationInOutput = resolve(outputPath, relativeFromSourceRoot);
       const relativeFromRoot = normalizedRelative(

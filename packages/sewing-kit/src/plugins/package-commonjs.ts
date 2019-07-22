@@ -63,7 +63,7 @@ export default function packageCommonJs(work: Work) {
             outputPath,
             extension: '.js',
             contents: (relative) =>
-              `module.exports = require(${JSON.stringify(relative)})`,
+              `module.exports = require(${JSON.stringify(relative)});`,
           }),
         );
       });
