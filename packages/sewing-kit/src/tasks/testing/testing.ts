@@ -53,6 +53,9 @@ export class TestTask {
   async run() {
     const {workspace} = this;
 
+    const rootSetupEnvFiles = await this.configureRoot.setupEnv.promise([]);
+    const rootSetupTestsFiles = await this.configureRoot.setupTests.promise([]);
+
     const projects = await Promise.all(
       workspace.packages.map(async (pkg) => {
         const configuration = new Configuration();
@@ -75,8 +78,8 @@ export class TestTask {
           (extension) => extension.replace('.', ''),
         );
         const moduleMapper = await configuration.moduleMapper.promise({});
-        const setupEnvFiles = await configuration.setupEnv.promise([]);
-        const setupTestsFiles = await configuration.setupTests.promise([]);
+        const setupEnvFiles = await configuration.setupEnv.promise(rootSetupEnvFiles);
+        const setupTestsFiles = await configuration.setupTests.promise(rootSetupTestsFiles);
 
         await workspace.internal.write(
           babelTransform,
@@ -105,8 +108,6 @@ export class TestTask {
     const watchIgnorePatterns = await this.configureRoot.watchIgnore.promise(
       [],
     );
-    const setupEnvFiles = await this.configureRoot.setupEnv.promise([]);
-    const setupTestsFiles = await this.configureRoot.setupEnv.promise([]);
 
     const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
 
@@ -115,8 +116,6 @@ export class TestTask {
       projects,
       watchPlugins,
       watchPathIgnorePatterns: watchIgnorePatterns,
-      setupEnv: setupEnvFiles,
-      setupFilesAfterEnv: setupTestsFiles,
     } as any);
 
     await workspace.internal.write(

@@ -16,36 +16,51 @@ export default function json(work: Work) {
     );
 
     test.configureRoot.setupEnv.tapPromise(PLUGIN, async (setupEnvFiles) => {
-      if (!(await workspace.fs.hasFile('tests/setup/env.*'))) {
-        return setupEnvFiles;
-      }
+      const packageSetupEnvFiles = ([] as string[]).concat(
+        ...(await Promise.all([
+          workspace.fs.glob('tests/setup/env.*'),
+          workspace.fs.glob('tests/setup/env/index.*'),
+        ])),
+      );
 
-      return [...setupEnvFiles, workspace.fs.resolvePath('tests/setup/env')];
+      return [...setupEnvFiles, ...packageSetupEnvFiles];
     });
 
-    test.configureRoot.setupTests.tapPromise(PLUGIN, async (setupTestsFiles) => {
-      if (!(await workspace.fs.hasFile('tests/setup/tests.*'))) {
-        return setupTestsFiles;
-      }
+    test.configureRoot.setupTests.tapPromise(
+      PLUGIN,
+      async (setupTestsFiles) => {
+        const packageSetupTestsFiles = ([] as string[]).concat(
+          ...(await Promise.all([
+            workspace.fs.glob('tests/setup/env.*'),
+            workspace.fs.glob('tests/setup/env/index.*'),
+          ])),
+        );
 
-      return [...setupTestsFiles, workspace.fs.resolvePath('tests/setup/tests')];
-    });
+        return [...setupTestsFiles, ...packageSetupTestsFiles];
+      },
+    );
 
     test.configure.package.tap(PLUGIN, (configuration, pkg) => {
       configuration.setupEnv.tapPromise(PLUGIN, async (setupEnvFiles) => {
-        if (!(await pkg.fs.hasFile('tests/setup/env.*'))) {
-          return setupEnvFiles;
-        }
-  
-        return [...setupEnvFiles, pkg.fs.resolvePath('tests/setup/env')];
+        const packageSetupEnvFiles = ([] as string[]).concat(
+          ...(await Promise.all([
+            pkg.fs.glob('tests/setup/env.*'),
+            pkg.fs.glob('tests/setup/env/index.*'),
+          ])),
+        );
+
+        return [...setupEnvFiles, ...packageSetupEnvFiles];
       });
-  
+
       configuration.setupTests.tapPromise(PLUGIN, async (setupTestsFiles) => {
-        if (!(await pkg.fs.hasFile('tests/setup/tests.*'))) {
-          return setupTestsFiles;
-        }
-  
-        return [...setupTestsFiles, pkg.fs.resolvePath('tests/setup/tests')];
+        const packageSetupTestsFiles = ([] as string[]).concat(
+          ...(await Promise.all([
+            pkg.fs.glob('tests/setup/env.*'),
+            pkg.fs.glob('tests/setup/env/index.*'),
+          ])),
+        );
+
+        return [...setupTestsFiles, ...packageSetupTestsFiles];
       });
     });
   });
