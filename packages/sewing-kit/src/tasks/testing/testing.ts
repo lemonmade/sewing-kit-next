@@ -17,6 +17,8 @@ class Configuration {
   readonly moduleMapper = new AsyncSeriesWaterfallHook<{[key: string]: string}>(
     ['moduleMapper'],
   );
+  readonly setupEnv = new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']);
+  readonly setupTests = new AsyncSeriesWaterfallHook<string[]>(['setupTestFiles']);
 
   readonly jestTransforms = new AsyncSeriesWaterfallHook<
     {[key: string]: string},
@@ -38,6 +40,8 @@ export class TestTask {
 
   readonly configureRoot = {
     watchIgnore: new AsyncSeriesWaterfallHook<string[]>(['watchIgnore']),
+    setupEnv: new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']),
+    setupTests: new AsyncSeriesWaterfallHook<string[]>(['setupTestFiles']),
     jestWatchPlugins: new AsyncSeriesWaterfallHook<string[]>(['watchPlugins']),
     jestFinalize: new AsyncSeriesWaterfallHook<jest.InitialOptions>([
       'jestConfig',
@@ -71,6 +75,8 @@ export class TestTask {
           (extension) => extension.replace('.', ''),
         );
         const moduleMapper = await configuration.moduleMapper.promise({});
+        const setupEnvFiles = await configuration.setupEnv.promise([]);
+        const setupTestsFiles = await configuration.setupTests.promise([]);
 
         await workspace.internal.write(
           babelTransform,
@@ -86,6 +92,8 @@ export class TestTask {
           moduleFileExtensions: extensions,
           testEnvironment: environment,
           moduleNameMapper: moduleMapper,
+          setupFiles: setupEnvFiles,
+          setupFilesAfterEnv: setupTestsFiles,
           transform,
         });
 
@@ -97,6 +105,8 @@ export class TestTask {
     const watchIgnorePatterns = await this.configureRoot.watchIgnore.promise(
       [],
     );
+    const setupEnvFiles = await this.configureRoot.setupEnv.promise([]);
+    const setupTestsFiles = await this.configureRoot.setupEnv.promise([]);
 
     const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
 
@@ -105,6 +115,8 @@ export class TestTask {
       projects,
       watchPlugins,
       watchPathIgnorePatterns: watchIgnorePatterns,
+      setupEnv: setupEnvFiles,
+      setupFilesAfterEnv: setupTestsFiles,
     } as any);
 
     await workspace.internal.write(

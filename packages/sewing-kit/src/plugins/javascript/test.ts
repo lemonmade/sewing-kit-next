@@ -7,7 +7,10 @@ export default function testJavaScript(test: TestTask) {
     configuration.extensions.tap(
       PLUGIN,
       produce((extensions: string[]) => {
-        extensions.unshift('.mjs', '.js');
+        // Unfortunately, some packages (like `graphql`) use `.mjs` for esmodule
+        // versions of the file, which Jest can't parse. To avoid transforming
+        // those otherwise-fine files, we prefer .js for tests only.
+        extensions.unshift('.js', '.mjs');
       }),
     );
 
