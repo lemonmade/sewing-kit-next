@@ -1,7 +1,34 @@
+import arg from 'arg';
 import {loadWork} from '../work';
+import {Options} from './common';
 
-export async function test() {
+export async function test({argv}: Options) {
   const work = await loadWork();
+
+  const args = arg(
+    {
+      '--help': Boolean,
+      '--watch': Boolean,
+      '--coverage': Boolean,
+      '--debug': Boolean,
+      '--updateSnapshot': Boolean,
+      '--maxWorkers': Number,
+      '--testNamePattern': String,
+      '--pre': Boolean,
+    },
+    {argv},
+  );
+
+  const {
+    _: [testPattern],
+    '--debug': debug,
+    '--coverage': coverage,
+    '--maxWorkers': maxWorkers,
+    '--pre': pre,
+    '--testNamePattern': testNamePattern,
+    '--updateSnapshot': updateSnapshot,
+    '--watch': watch,
+  } = args;
 
   const {WorkspaceDiscovery} = await import('../tasks/discovery');
   const {TestTask} = await import('../tasks/testing');
@@ -10,7 +37,10 @@ export async function test() {
   await work.tasks.discovery.promise(discovery);
   const workspace = await discovery.run();
 
-  const test = new TestTask(workspace);
+  const test = new TestTask(
+    {debug, coverage, maxWorkers, pre, testPattern, testNamePattern, updateSnapshot, watch},
+    workspace,
+  );
   await work.tasks.test.promise(test, workspace);
   await test.run();
 }

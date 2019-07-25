@@ -14,7 +14,7 @@ async function run() {
   const commandModule = commands.get(command);
 
   if (commandModule) {
-    await commandModule();
+    await commandModule({argv: rest});
   } else {
     console.log(`Command not found: ${command} (${rest.join(' ')})`);
     process.exitCode = 1;
