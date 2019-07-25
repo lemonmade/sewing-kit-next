@@ -8,7 +8,7 @@ export async function test({argv}: Options) {
   const args = arg(
     {
       '--help': Boolean,
-      '--watch': Boolean,
+      '--noWatch': Boolean,
       '--coverage': Boolean,
       '--debug': Boolean,
       '--updateSnapshot': Boolean,
@@ -27,7 +27,7 @@ export async function test({argv}: Options) {
     '--pre': pre,
     '--testNamePattern': testNamePattern,
     '--updateSnapshot': updateSnapshot,
-    '--watch': watch,
+    '--noWatch': noWatch,
   } = args;
 
   const {WorkspaceDiscovery} = await import('../tasks/discovery');
@@ -38,7 +38,16 @@ export async function test({argv}: Options) {
   const workspace = await discovery.run();
 
   const test = new TestTask(
-    {debug, coverage, maxWorkers, pre, testPattern, testNamePattern, updateSnapshot, watch},
+    {
+      debug,
+      coverage,
+      maxWorkers,
+      pre,
+      testPattern,
+      testNamePattern,
+      updateSnapshot,
+      watch: noWatch == null ? noWatch : !noWatch,
+    },
     workspace,
   );
   await work.tasks.test.promise(test, workspace);
