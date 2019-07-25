@@ -1,4 +1,4 @@
-import {execSync} from 'child_process';
+import jest from 'jest';
 import {AsyncSeriesWaterfallHook, AsyncParallelHook} from 'tapable';
 import {Package, Workspace} from '../../workspace';
 
@@ -18,7 +18,9 @@ class Configuration {
     ['moduleMapper'],
   );
   readonly setupEnv = new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']);
-  readonly setupTests = new AsyncSeriesWaterfallHook<string[]>(['setupTestFiles']);
+  readonly setupTests = new AsyncSeriesWaterfallHook<string[]>([
+    'setupTestFiles',
+  ]);
 
   readonly jestTransforms = new AsyncSeriesWaterfallHook<
     {[key: string]: string},
@@ -27,6 +29,31 @@ class Configuration {
   readonly jestFinalize = new AsyncSeriesWaterfallHook<jest.InitialOptions>([
     'jestConfig',
   ]);
+}
+
+interface Options {
+  pre?: boolean;
+  watch?: boolean;
+  debug?: boolean;
+  coverage?: boolean;
+  testPattern?: string;
+  testNamePattern?: string;
+  maxWorkers?: number;
+  updateSnapshot?: boolean;
+}
+
+interface JestFlags {
+  config?: string;
+  watch?: boolean;
+  watchAll?: boolean;
+  testNamePattern?: string;
+  testPathPattern?: string;
+  runInBand?: boolean;
+  forceExit?: boolean;
+  maxWorkers?: number;
+  onlyChanged?: boolean;
+  coverage?: boolean;
+  updateSnapshot?: boolean;
 }
 
 export class TestTask {
@@ -42,13 +69,19 @@ export class TestTask {
     watchIgnore: new AsyncSeriesWaterfallHook<string[]>(['watchIgnore']),
     setupEnv: new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']),
     setupTests: new AsyncSeriesWaterfallHook<string[]>(['setupTestFiles']),
+    cacheDirectory: new AsyncSeriesWaterfallHook<string>(['cacheDirectory']),
+
     jestWatchPlugins: new AsyncSeriesWaterfallHook<string[]>(['watchPlugins']),
     jestFinalize: new AsyncSeriesWaterfallHook<jest.InitialOptions>([
       'jestConfig',
     ]),
+    jestFlags: new AsyncSeriesWaterfallHook<JestFlags>(['jestFlags']),
   };
 
-  constructor(private readonly workspace: Workspace) {}
+  constructor(
+    public readonly options: Options,
+    private readonly workspace: Workspace,
+  ) {}
 
   async run() {
     const {workspace} = this;
@@ -78,8 +111,12 @@ export class TestTask {
           (extension) => extension.replace('.', ''),
         );
         const moduleMapper = await configuration.moduleMapper.promise({});
-        const setupEnvFiles = await configuration.setupEnv.promise(rootSetupEnvFiles);
-        const setupTestsFiles = await configuration.setupTests.promise(rootSetupTestsFiles);
+        const setupEnvFiles = await configuration.setupEnv.promise(
+          rootSetupEnvFiles,
+        );
+        const setupTestsFiles = await configuration.setupTests.promise(
+          rootSetupTestsFiles,
+        );
 
         await workspace.internal.write(
           babelTransform,
@@ -123,11 +160,42 @@ export class TestTask {
       `module.exports = ${JSON.stringify(rootConfig)};`,
     );
 
-    execSync(
-      `node_modules/.bin/jest --config ${JSON.stringify(rootConfigPath)}`,
-      {
-        stdio: 'inherit',
-      },
-    );
+    const {
+      coverage = false,
+      debug = false,
+      watch = true,
+      testPattern,
+      testNamePattern,
+      maxWorkers,
+      updateSnapshot,
+    } = this.options;
+
+    const flags = await this.configureRoot.jestFlags.promise({
+      config: JSON.stringify(rootConfigPath),
+      coverage,
+      watch: watch && testPattern == null,
+      watchAll: watch && testPattern != null,
+      onlyChanged: testPattern == null,
+      testNamePattern,
+      testPathPattern: testPattern,
+      maxWorkers,
+      updateSnapshot,
+      runInBand: debug,
+      forceExit: debug,
+    });
+
+    const args = Object.entries(flags).reduce<string[]>((all, [key, value]) => {
+      let newArgs: string[] = [];
+
+      if (typeof value === 'boolean') {
+        newArgs.push(value ? `--${key}` : `--no${key[0]}${key.substring(1)}`);
+      } else if (value != null) {
+        newArgs.push(`--${key}`, value);
+      }
+
+      return [...all, ...newArgs];
+    }, []);
+
+    jest.run(args);
   }
 }
