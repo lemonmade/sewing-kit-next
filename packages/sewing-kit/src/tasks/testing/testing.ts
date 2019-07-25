@@ -171,7 +171,7 @@ export class TestTask {
     } = this.options;
 
     const flags = await this.configureRoot.jestFlags.promise({
-      config: JSON.stringify(rootConfigPath),
+      config: rootConfigPath,
       coverage,
       watch: watch && testPattern == null,
       watchAll: watch && testPattern != null,
@@ -188,7 +188,9 @@ export class TestTask {
       let newArgs: string[] = [];
 
       if (typeof value === 'boolean') {
-        newArgs.push(value ? `--${key}` : `--no${key[0]}${key.substring(1)}`);
+        if (value) {
+          newArgs.push(`--${key}`);
+        }
       } else if (value != null) {
         newArgs.push(`--${key}`, value);
       }
