@@ -18,8 +18,8 @@ export default function json(work: Work) {
     test.configureRoot.setupEnv.tapPromise(PLUGIN, async (setupEnvFiles) => {
       const packageSetupEnvFiles = ([] as string[]).concat(
         ...(await Promise.all([
-          workspace.fs.glob('tests/setup/env.*'),
-          workspace.fs.glob('tests/setup/env/index.*'),
+          workspace.fs.glob('tests/setup/environment.*'),
+          workspace.fs.glob('tests/setup/environment/index.*'),
         ])),
       );
 
@@ -31,8 +31,8 @@ export default function json(work: Work) {
       async (setupTestsFiles) => {
         const packageSetupTestsFiles = ([] as string[]).concat(
           ...(await Promise.all([
-            workspace.fs.glob('tests/setup/env.*'),
-            workspace.fs.glob('tests/setup/env/index.*'),
+            workspace.fs.glob('tests/setup/tests.*'),
+            workspace.fs.glob('tests/setup/tests/index.*'),
           ])),
         );
 
@@ -44,8 +44,8 @@ export default function json(work: Work) {
       configuration.setupEnv.tapPromise(PLUGIN, async (setupEnvFiles) => {
         const packageSetupEnvFiles = ([] as string[]).concat(
           ...(await Promise.all([
-            pkg.fs.glob('tests/setup/env.*'),
-            pkg.fs.glob('tests/setup/env/index.*'),
+            pkg.fs.glob('tests/setup/environment.*'),
+            pkg.fs.glob('tests/setup/environment/index.*'),
           ])),
         );
 
@@ -55,8 +55,8 @@ export default function json(work: Work) {
       configuration.setupTests.tapPromise(PLUGIN, async (setupTestsFiles) => {
         const packageSetupTestsFiles = ([] as string[]).concat(
           ...(await Promise.all([
-            pkg.fs.glob('tests/setup/env.*'),
-            pkg.fs.glob('tests/setup/env/index.*'),
+            pkg.fs.glob('tests/setup/tests.*'),
+            pkg.fs.glob('tests/setup/tests/index.*'),
           ])),
         );
 
