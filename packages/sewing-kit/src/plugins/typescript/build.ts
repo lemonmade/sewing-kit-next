@@ -1,42 +1,52 @@
 import {produce} from 'immer';
-import {BuildTask} from '../../tasks/build';
+import {Workspace} from '../../workspace';
+import {BuildTaskHooks} from '../../tasks/build';
 import {updateBabelPreset} from '../utilities';
 import {PLUGIN} from './common';
 
-export default function buildTypeScript(build: BuildTask) {
-  build.configure.common.tap(PLUGIN, (configuration) => {
-    configuration.extensions.tap(
-      PLUGIN,
-      produce((extensions: string[]) => {
-        extensions.unshift('.ts', '.tsx');
-      }),
-    );
+function addTsExtensions(extensions: string[]) {
+  return ['.ts', '.tsx', ...extensions];
+}
 
-    configuration.babel.tap(PLUGIN, (babelConfig) => {
-      return produce(
-        babelConfig,
-        updateBabelPreset(
-          [
-            'babel-preset-shopify',
-            'babel-preset-shopify/web',
-            'babel-preset-shopify/node',
-          ],
-          {typescript: true},
-        ),
-      );
+const updateBabelPresets = produce(
+  updateBabelPreset(
+    [
+      'babel-preset-shopify',
+      'babel-preset-shopify/web',
+      'babel-preset-shopify/node',
+    ],
+    {typescript: true},
+  ),
+);
+
+export default function buildTypeScript(
+  _: Workspace,
+  buildTaskHooks: BuildTaskHooks,
+) {
+  buildTaskHooks.package.tap(PLUGIN, (_, buildHooks) => {
+    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.babel.tap(PLUGIN, updateBabelPresets);
+      configurationHooks.extensions.tap(PLUGIN, addTsExtensions);
     });
+  });
 
-    configuration.webpackRules.tapPromise(PLUGIN, async (rules) => {
-      const options = await configuration.babel.promise({
-        presets: [],
-      });
+  buildTaskHooks.webApp.tap(PLUGIN, (_, buildHooks) => {
+    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.babel.tap(PLUGIN, updateBabelPresets);
+      configurationHooks.extensions.tap(PLUGIN, addTsExtensions);
 
-      return produce(rules, (rules) => {
-        rules.push({
-          test: /\.tsx?/,
-          exclude: /node_modules/,
-          loader: 'babel-loader',
-          options,
+      configurationHooks.webpackRules.tapPromise(PLUGIN, async (rules) => {
+        const options = await configurationHooks.babel.promise({
+          presets: [],
+        });
+
+        return produce(rules, (rules) => {
+          rules.push({
+            test: /\.tsx?/,
+            exclude: /node_modules/,
+            loader: 'babel-loader',
+            options,
+          });
         });
       });
     });

@@ -4,7 +4,7 @@ import {Work} from '../../work';
 const PLUGIN = 'SewingKit.jest';
 
 export default function json(work: Work) {
-  work.tasks.test.tap(PLUGIN, (test, workspace) => {
+  work.tasks.test.tap(PLUGIN, (workspace, test) => {
     test.configureRoot.jestWatchPlugins.tap(
       PLUGIN,
       produce((watchPlugins: string[]) => {

@@ -6,13 +6,16 @@ export class Work {
       import('./tasks/discovery').WorkspaceDiscovery
     >(['workspace']),
     build: new AsyncSeriesHook<
-      import('./tasks/build').BuildTask,
-      import('./workspace').Workspace
+      import('./workspace').Workspace,
+      import('./tasks/build').BuildTaskHooks
     >(['build', 'env', 'workspace']),
     test: new AsyncSeriesHook<
-      import('./tasks/testing').TestTask,
-      import('./workspace').Workspace
+      import('./workspace').Workspace,
+      import('./tasks/testing').TestTask
     >(['test', 'workspace']),
-    lint: new AsyncSeriesHook<import('./tasks/lint').LintTask>(['lint']),
+    lint: new AsyncSeriesHook<
+      import('./workspace').Workspace,
+      import('./tasks/lint').LintTask
+    >(['lint']),
   };
 }

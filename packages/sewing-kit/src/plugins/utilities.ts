@@ -1,7 +1,7 @@
 import {resolve, relative} from 'path';
 import {exec} from 'child_process';
 
-import {PackageBuild} from '../tasks/build';
+import {PackageBuildConfigurationHooks} from '../tasks/build';
 import {Workspace, Package, PackageEntry, Project} from '../workspace';
 
 export function lazy<T extends any[], R>(
@@ -109,15 +109,12 @@ interface WriteEntriesOptions {
 }
 
 export class WriteEntriesStep {
-  constructor(
-    private packageBuild: PackageBuild,
-    private options: WriteEntriesOptions,
-  ) {}
+  constructor(private pkg: Package, private options: WriteEntriesOptions) {}
 
   async run() {
     const {
+      pkg,
       options: {extension = '.js', outputPath, contents},
-      packageBuild: {pkg},
     } = this;
 
     const sourceRoot = resolve(pkg.root, 'src');
@@ -148,16 +145,18 @@ interface CompileBabelOptions {
 
 export class CompileBabelStep {
   constructor(
-    private packageBuild: PackageBuild,
+    private pkg: Package,
     private workspace: Workspace,
+    private config: PackageBuildConfigurationHooks,
     private options: CompileBabelOptions,
   ) {}
 
   async run(): Promise<void> {
     const {
+      pkg,
+      config,
       workspace,
       options: {configFile = 'babel.js', outputPath},
-      packageBuild: {pkg, config},
     } = this;
 
     const babelConfigPath = workspace.internal.configPath(

@@ -23,6 +23,6 @@ export async function lint({root = process.cwd(), argv}: Options) {
 
   const options = {fix};
   const lint = new LintTask(options, workspace);
-  await work.tasks.lint.promise(lint);
+  await work.tasks.lint.promise(workspace, lint);
   await lint.run();
 }

@@ -22,7 +22,7 @@ describe('sewing-kit', () => {
       });
     });
 
-    it.only('allows customization of the entrypoint for a package', async () => {
+    it('allows customization of the entrypoint for a package', async () => {
       await withWorkspace('simple-package', async (workspace) => {
         await workspace.writeFile(
           'src/custom.ts',
@@ -47,7 +47,7 @@ describe('sewing-kit', () => {
 
         await workspace.run('build');
 
-        workspace.debug();
+        // workspace.debug();
 
         expect(await workspace.contents('index.js')).toContain(
           'module.exports = require("./build/cjs/custom")',

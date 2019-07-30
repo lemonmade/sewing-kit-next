@@ -1,17 +1,17 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
-import {BuildTask} from '../../tasks/build';
+import {BuildTaskHooks} from '../../tasks/build';
 import {Workspace} from '../../workspace';
 import {changeBabelPreset, updateBabelPreset} from '../utilities';
 
 import {PLUGIN} from './common';
 
 export default function browserAppBuild(
-  build: BuildTask,
   workspace: Workspace,
+  build: BuildTaskHooks,
 ) {
-  build.configure.browser.tap(PLUGIN, (configuration, app) => {
+  build.webApp.tap(PLUGIN, (app, buildHooks) => {
     const changePreset = changeBabelPreset(
       'babel-preset-shopify',
       'babel-preset-shopify/web',
@@ -21,16 +21,23 @@ export default function browserAppBuild(
       modules: false,
     });
 
-    configuration.babel.tap(PLUGIN, (babelConfig) => {
-      return produce(babelConfig, (babelConfig) => {
-        changePreset(babelConfig);
-        updatePreset(babelConfig);
-      });
-    });
+    buildHooks.variants.tap(PLUGIN, () => [{}]);
 
-    configuration.output.tap(PLUGIN, () => workspace.fs.buildPath('browser'));
-    configuration.filename.tap(PLUGIN, (filename) =>
-      workspace.apps.length > 1 ? join(app.name, filename) : filename,
-    );
+    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
+        return produce(babelConfig, (babelConfig) => {
+          changePreset(babelConfig);
+          updatePreset(babelConfig);
+        });
+      });
+
+      configurationHooks.output.tap(PLUGIN, () =>
+        workspace.fs.buildPath('browser'),
+      );
+
+      configurationHooks.filename.tap(PLUGIN, (filename) =>
+        workspace.apps.length > 1 ? join(app.name, filename) : filename,
+      );
+    });
   });
 }

@@ -49,6 +49,6 @@ export async function test({argv}: Options) {
     },
     workspace,
   );
-  await work.tasks.test.promise(test, workspace);
+  await work.tasks.test.promise(workspace, test);
   await test.run();
 }
