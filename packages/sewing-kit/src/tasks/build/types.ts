@@ -1,13 +1,8 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 import {Configuration as WebpackConfiguration} from 'webpack';
 
-import {Package, WebApp} from '../../workspace';
+import {Package, WebApp, Workspace} from '../../workspace';
 import {Env} from '../../types';
-
-export interface Environment {
-  readonly actual: Env;
-  readonly simulate: Env;
-}
 
 export interface BabelConfig {
   presets?: (string | [string, object?])[];
@@ -22,20 +17,9 @@ export interface Step {
 export interface PackageBuildOptions {}
 
 export interface PackageBuildConfigurationHooks {
-  readonly babel: AsyncSeriesWaterfallHook<
-    BabelConfig,
-    Partial<PackageBuildOptions>
-  >;
-
-  readonly extensions: AsyncSeriesWaterfallHook<
-    string[],
-    Partial<PackageBuildOptions>
-  >;
-
-  readonly output: AsyncSeriesWaterfallHook<
-    string,
-    Partial<PackageBuildOptions>
-  >;
+  readonly babel: AsyncSeriesWaterfallHook<BabelConfig>;
+  readonly extensions: AsyncSeriesWaterfallHook<string[]>;
+  readonly output: AsyncSeriesWaterfallHook<string>;
 }
 
 export interface PackageBuildHooks {
@@ -60,34 +44,13 @@ export interface PackageBuildHooks {
 export interface WebAppBuildOptions {}
 
 export interface BrowserBuildConfigurationHooks {
-  readonly babel: AsyncSeriesWaterfallHook<
-    BabelConfig,
-    Partial<WebAppBuildOptions>
-  >;
-  readonly output: AsyncSeriesWaterfallHook<
-    string,
-    Partial<WebAppBuildOptions>
-  >;
-  readonly entries: AsyncSeriesWaterfallHook<
-    string[],
-    Partial<WebAppBuildOptions>
-  >;
-  readonly extensions: AsyncSeriesWaterfallHook<
-    string[],
-    Partial<WebAppBuildOptions>
-  >;
-  readonly filename: AsyncSeriesWaterfallHook<
-    string,
-    Partial<WebAppBuildOptions>
-  >;
-  readonly webpackRules: AsyncSeriesWaterfallHook<
-    any[],
-    Partial<WebAppBuildOptions>
-  >;
-  readonly webpackConfig: AsyncSeriesWaterfallHook<
-    WebpackConfiguration,
-    Partial<WebAppBuildOptions>
-  >;
+  readonly babel: AsyncSeriesWaterfallHook<BabelConfig>;
+  readonly output: AsyncSeriesWaterfallHook<string>;
+  readonly entries: AsyncSeriesWaterfallHook<string[]>;
+  readonly extensions: AsyncSeriesWaterfallHook<string[]>;
+  readonly filename: AsyncSeriesWaterfallHook<string>;
+  readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
+  readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
 }
 
 export interface ServiceWorkerBuildConfigurationHooks
@@ -119,15 +82,31 @@ export interface WebAppBuildHooks {
   >;
 }
 
+// TASK
+
+export interface BuildTaskOptions {
+  readonly env: Env;
+  readonly simulateEnv: Env;
+}
+
 export interface BuildTaskHooks {
   readonly pre: AsyncSeriesWaterfallHook<Step[]>;
 
   readonly project: AsyncSeriesHook<
-    WebApp | Package,
-    WebAppBuildHooks | PackageBuildHooks
+    | {
+        project: WebApp;
+        hooks: WebAppBuildHooks;
+      }
+    | {project: Package; hooks: PackageBuildHooks}
   >;
-  readonly package: AsyncSeriesHook<Package, PackageBuildHooks>;
-  readonly webApp: AsyncSeriesHook<WebApp, WebAppBuildHooks>;
+  readonly package: AsyncSeriesHook<{pkg: Package; hooks: PackageBuildHooks}>;
+  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: WebAppBuildHooks}>;
 
   readonly post: AsyncSeriesWaterfallHook<Step[]>;
+}
+
+export interface BuildTask {
+  readonly hooks: BuildTaskHooks;
+  readonly options: BuildTaskOptions;
+  readonly workspace: Workspace;
 }

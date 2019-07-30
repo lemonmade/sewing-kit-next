@@ -5,10 +5,9 @@ export class Work {
     discovery: new AsyncSeriesHook<
       import('./tasks/discovery').WorkspaceDiscovery
     >(['workspace']),
-    build: new AsyncSeriesHook<
-      import('./workspace').Workspace,
-      import('./tasks/build').BuildTaskHooks
-    >(['build', 'env', 'workspace']),
+    build: new AsyncSeriesHook<import('./tasks/build').BuildTask>([
+      'buildTask',
+    ]),
     test: new AsyncSeriesHook<
       import('./workspace').Workspace,
       import('./tasks/testing').TestTask

@@ -18,14 +18,14 @@ declare module '../tasks/build/types' {
 }
 
 export default function packageCommonJs(work: Work) {
-  work.tasks.build.tap(PLUGIN, (workspace, buildTaskHooks) => {
-    buildTaskHooks.package.tap(PLUGIN, (pkg, buildHooks) => {
-      buildHooks.variants.tap(PLUGIN, (variants) => [
+  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+      hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
         {[VARIANT]: true},
       ]);
 
-      buildHooks.configure.tap(PLUGIN, (configurationHooks, {commonjs}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks, {commonjs}) => {
         if (!commonjs) {
           return;
         }
@@ -47,7 +47,7 @@ export default function packageCommonJs(work: Work) {
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'cjs'));
       });
 
-      buildHooks.steps.tapPromise(
+      hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {commonjs}}) => {
           if (!commonjs) {

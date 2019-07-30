@@ -11,6 +11,6 @@ export async function build({root = process.cwd()} = {}) {
   await work.tasks.discovery.promise(discovery);
   const workspace = await discovery.run();
 
-  const env = {actual: Env.Development, simulate: Env.Development};
-  await runBuild(env, workspace, work);
+  const options = {env: Env.Development, simulateEnv: Env.Development};
+  await runBuild(options, workspace, work);
 }

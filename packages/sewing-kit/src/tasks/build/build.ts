@@ -7,7 +7,7 @@ import {Work} from '../../work';
 
 import {
   Step,
-  Environment,
+  BuildTaskOptions,
   BuildTaskHooks,
   PackageBuildHooks,
   PackageBuildConfigurationHooks,
@@ -16,7 +16,7 @@ import {
 } from './types';
 
 export async function runBuild(
-  env: Environment,
+  options: BuildTaskOptions,
   workspace: Workspace,
   work: Work,
 ) {
@@ -30,10 +30,14 @@ export async function runBuild(
     post: new AsyncSeriesWaterfallHook(['steps']),
   };
 
-  await work.tasks.build.promise(workspace, buildTaskHooks);
+  await work.tasks.build.promise({
+    hooks: buildTaskHooks,
+    options,
+    workspace,
+  });
 
   const webAppSteps: Step[] = (await Promise.all(
-    workspace.apps.map(async (app) => {
+    workspace.apps.map(async (webApp) => {
       const hooks: WebAppBuildHooks = {
         variants: new AsyncSeriesWaterfallHook(['variants']),
         steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
@@ -45,12 +49,12 @@ export async function runBuild(
         ]),
       };
 
-      await buildTaskHooks.project.promise(app, hooks);
-      await buildTaskHooks.webApp.promise(app, hooks);
+      await buildTaskHooks.project.promise({project: webApp, hooks});
+      await buildTaskHooks.webApp.promise({webApp, hooks});
 
-      const builds = await hooks.variants.promise([]);
+      const variants = await hooks.variants.promise([]);
 
-      return builds.map((options) => {
+      return variants.map((variant) => {
         return {
           async run() {
             const configurationHooks: BrowserBuildConfigurationHooks = {
@@ -66,33 +70,22 @@ export async function runBuild(
               webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
             };
 
-            await hooks.configure.promise(configurationHooks, options);
-            await hooks.configureBrowser.promise(configurationHooks, options);
+            await hooks.configure.promise(configurationHooks, variant);
+            await hooks.configureBrowser.promise(configurationHooks, variant);
 
-            const rules = await configurationHooks.webpackRules.promise(
-              [],
-              options,
-            );
-            const extensions = await configurationHooks.extensions.promise(
-              [],
-              options,
-            );
+            const rules = await configurationHooks.webpackRules.promise([]);
+            const extensions = await configurationHooks.extensions.promise([]);
             const outputPath = await configurationHooks.output.promise(
               workspace.fs.buildPath(),
-              options,
             );
             const filename = await configurationHooks.filename.promise(
               '[name].js',
-              options,
             );
 
             const webpackConfig = await configurationHooks.webpackConfig.promise(
               {
-                entry: await configurationHooks.entries.promise(
-                  [app.entry],
-                  options,
-                ),
-                mode: toMode(env.simulate),
+                entry: await configurationHooks.entries.promise([webApp.entry]),
+                mode: toMode(options.simulateEnv),
                 resolve: {extensions},
                 module: {rules},
                 output: {
@@ -100,7 +93,6 @@ export async function runBuild(
                   filename,
                 },
               },
-              options,
             );
 
             await buildWebpack(webpackConfig);
@@ -118,12 +110,12 @@ export async function runBuild(
         configure: new AsyncSeriesHook(['buildTarget', 'options']),
       };
 
-      await buildTaskHooks.project.promise(pkg, hooks);
-      await buildTaskHooks.package.promise(pkg, hooks);
+      await buildTaskHooks.project.promise({project: pkg, hooks});
+      await buildTaskHooks.package.promise({pkg, hooks});
 
-      const builds = await hooks.variants.promise([]);
+      const variants = await hooks.variants.promise([]);
 
-      return builds.map((options) => {
+      return variants.map((variant) => {
         return {
           async run() {
             const configurationHooks: PackageBuildConfigurationHooks = {
@@ -132,11 +124,11 @@ export async function runBuild(
               extensions: new AsyncSeriesWaterfallHook(['extensions']),
             };
 
-            await hooks.configure.promise(configurationHooks, options);
+            await hooks.configure.promise(configurationHooks, variant);
 
             const steps = await hooks.steps.promise([], {
+              variant,
               config: configurationHooks,
-              variant: options,
             });
 
             for (const step of steps) {

@@ -22,9 +22,9 @@ const BROWSER_TARGETS: {
 };
 
 export default function differentialServing(work: Work) {
-  work.tasks.build.tap(PLUGIN, (_, buildTaskHooks) => {
-    buildTaskHooks.webApp.tap(PLUGIN, (_, buildHooks) => {
-      buildHooks.variants.tap(PLUGIN, (variants) =>
+  work.tasks.build.tap(PLUGIN, ({hooks}) => {
+    hooks.webApp.tap(PLUGIN, ({hooks}) => {
+      hooks.variants.tap(PLUGIN, (variants) =>
         Object.keys(BROWSER_TARGETS).flatMap((browserTarget) =>
           variants.map((build) => ({
             ...build,
@@ -33,7 +33,7 @@ export default function differentialServing(work: Work) {
         ),
       );
 
-      buildHooks.configure.tap(PLUGIN, (configuration, {browserTarget}) => {
+      hooks.configure.tap(PLUGIN, (configuration, {browserTarget}) => {
         if (browserTarget == null) {
           return;
         }

@@ -1,6 +1,5 @@
 import {produce} from 'immer';
-import {Workspace} from '../../workspace';
-import {BuildTaskHooks, BabelConfig} from '../../tasks/build';
+import {BuildTask, BabelConfig} from '../../tasks/build';
 import {PLUGIN} from './common';
 
 function addBaseBabelPreset(babelConfig: BabelConfig) {
@@ -14,16 +13,16 @@ function addJsExtensions(extensions: string[]) {
   return ['.js', '.mjs', ...extensions];
 }
 
-export default function buildJavaScript(_: Workspace, build: BuildTaskHooks) {
-  build.package.tap(PLUGIN, (_, packageBuildHooks) => {
-    packageBuildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+export default function buildJavaScript({hooks}: BuildTask) {
+  hooks.package.tap(PLUGIN, ({hooks}) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
       configurationHooks.babel.tap(PLUGIN, addBaseBabelPreset);
       configurationHooks.extensions.tap(PLUGIN, addJsExtensions);
     });
   });
 
-  build.webApp.tap(PLUGIN, (_, webAppBuildHooks) => {
-    webAppBuildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+  hooks.webApp.tap(PLUGIN, ({hooks}) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
       configurationHooks.babel.tap(PLUGIN, addBaseBabelPreset);
       configurationHooks.extensions.tap(PLUGIN, addJsExtensions);
 
