@@ -27,18 +27,22 @@ export class BuildSteps<T> {
     'steps',
     'builds',
   ]);
+
   readonly beforeEach = new AsyncSeriesWaterfallHook<BuildStep[], T>([
     'steps',
     'build',
   ]);
+
   readonly each = new AsyncSeriesWaterfallHook<BuildStep[], T>([
     'steps',
     'build',
   ]);
+
   readonly afterEach = new AsyncSeriesWaterfallHook<BuildStep[], T>([
     'steps',
     'build',
   ]);
+
   readonly afterAll = new AsyncSeriesWaterfallHook<BuildStep[], T[]>([
     'steps',
     'builds',
@@ -179,8 +183,13 @@ function toMode(env: Env) {
 function buildWebpack(config: WebpackConfiguration) {
   const compiler = webpack(config);
 
-  return new Promise((resolve) => {
-    compiler.run((_error, _stats) => {
+  return new Promise((resolve, reject) => {
+    compiler.run((error, stats) => {
+      if (error) {
+        reject(new Error(stats.toString('errors-warnings')));
+        return;
+      }
+
       resolve();
     });
   });

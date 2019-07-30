@@ -1,6 +1,7 @@
 import jest from 'jest';
 import {AsyncSeriesWaterfallHook, AsyncParallelHook} from 'tapable';
 import {Package, Workspace} from '../../workspace';
+import {toArgs} from '../utilities';
 
 interface BabelConfig {
   presets?: (string | [string, object?])[];
@@ -17,6 +18,7 @@ class Configuration {
   readonly moduleMapper = new AsyncSeriesWaterfallHook<{[key: string]: string}>(
     ['moduleMapper'],
   );
+
   readonly setupEnv = new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']);
   readonly setupTests = new AsyncSeriesWaterfallHook<string[]>([
     'setupTestFiles',
@@ -26,6 +28,7 @@ class Configuration {
     {[key: string]: string},
     TransformOptions
   >(['transforms', 'options']);
+
   readonly jestFinalize = new AsyncSeriesWaterfallHook<jest.InitialOptions>([
     'jestConfig',
   ]);
@@ -84,6 +87,9 @@ export class TestTask {
   ) {}
 
   async run() {
+    process.env.BABEL_ENV = 'test';
+    process.env.NODE_ENV = 'test';
+
     const {workspace} = this;
 
     const rootSetupEnvFiles = await this.configureRoot.setupEnv.promise([]);
@@ -184,20 +190,6 @@ export class TestTask {
       forceExit: debug,
     });
 
-    const args = Object.entries(flags).reduce<string[]>((all, [key, value]) => {
-      let newArgs: string[] = [];
-
-      if (typeof value === 'boolean') {
-        if (value) {
-          newArgs.push(`--${key}`);
-        }
-      } else if (value != null) {
-        newArgs.push(`--${key}`, value);
-      }
-
-      return [...all, ...newArgs];
-    }, []);
-
-    jest.run(args);
+    jest.run(toArgs(flags));
   }
 }

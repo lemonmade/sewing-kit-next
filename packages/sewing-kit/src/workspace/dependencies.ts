@@ -10,7 +10,9 @@ export class PackageJson {
   static load(root: string) {
     try {
       return new PackageJson(require(join(root, 'package.json')));
-    } catch {}
+    } catch {
+      return undefined;
+    }
   }
 
   get name() {

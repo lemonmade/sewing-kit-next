@@ -63,6 +63,7 @@ export class Workspace {
   }
 
   debug() {
+    // eslint-disable-next-line no-console
     console.log(toTree(this.root, {allFiles: true}));
   }
 }

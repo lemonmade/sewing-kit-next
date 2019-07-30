@@ -1,6 +1,5 @@
 import arg from 'arg';
-import {loadWork} from '../work';
-import {Options} from './common';
+import {loadWork, Options} from './common';
 
 export async function test({argv}: Options) {
   const work = await loadWork();

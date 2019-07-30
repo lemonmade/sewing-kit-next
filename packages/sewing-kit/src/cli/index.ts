@@ -3,8 +3,9 @@ import 'core-js/features/array/flat-map';
 
 import {build} from './build';
 import {test} from './test';
+import {lint} from './lint';
 
-const commands = new Map([['build', build], ['test', test]]);
+const commands = new Map([['build', build], ['test', test], ['lint', lint]]);
 
 run();
 
@@ -16,6 +17,7 @@ async function run() {
   if (commandModule) {
     await commandModule({argv: rest});
   } else {
+    // eslint-disable-next-line no-console
     console.log(`Command not found: ${command} (${rest.join(' ')})`);
     process.exitCode = 1;
   }

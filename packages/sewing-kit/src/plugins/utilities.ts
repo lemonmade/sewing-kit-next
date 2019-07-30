@@ -16,7 +16,7 @@ interface BabelConfig {
   presets?: (string | [string, object?])[];
 }
 
-const PRESET_MATCHER = /(babel-preset-shopify(?:\/[^\.]*)?)/;
+const PRESET_MATCHER = /(babel-preset-shopify(?:\/[^.]*)?)/;
 
 function normalizePreset(preset: string) {
   const match = preset.match(PRESET_MATCHER);

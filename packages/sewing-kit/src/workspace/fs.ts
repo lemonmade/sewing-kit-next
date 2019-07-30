@@ -25,6 +25,7 @@ export class FileSystem {
     return matches.length > 0;
   }
 
+  // eslint-disable-next-line require-await
   async glob(pattern: string, options: Omit<GlobOptions, 'cwd'> = {}) {
     return glob.sync(pattern, {...options, cwd: this.root, absolute: true});
   }

@@ -1,0 +1,1 @@
+export {LintTask} from './lint';
