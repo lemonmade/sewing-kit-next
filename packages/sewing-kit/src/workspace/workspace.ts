@@ -43,6 +43,7 @@ export class Project {
     return dependencies;
   }
 
+  // eslint-disable-next-line require-await
   async hasDependency(
     name: string,
     _options?: DependencyOptions & {version?: string},

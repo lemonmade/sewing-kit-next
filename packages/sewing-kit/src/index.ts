@@ -1,8 +1,4 @@
-import {
-  PackageCreateOptions,
-  PackageEntry,
-  PackageBinary,
-} from './workspace';
+import {PackageCreateOptions, PackageEntry, PackageBinary} from './workspace';
 
 class PackageCreator {
   public readonly options: Partial<PackageCreateOptions> = {};

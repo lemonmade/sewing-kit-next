@@ -1,5 +1,5 @@
-import {loadWork} from '../work';
 import {Env} from '../types';
+import {loadWork} from './common';
 
 export async function build({root = process.cwd()} = {}) {
   const work = await loadWork();

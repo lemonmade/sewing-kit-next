@@ -1,3 +1,4 @@
+import {basename} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {
   WebApp,
@@ -7,7 +8,6 @@ import {
   FileSystem,
   SewingKitFileSystem,
 } from '../../workspace';
-import {basename} from 'path';
 
 export class WorkspaceDiscovery {
   readonly name: string;

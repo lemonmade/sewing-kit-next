@@ -1,0 +1,6 @@
+**/node_modules
+/packages/*/build
+/packages/*/*.js
+/packages/*/*.node
+/packages/*/*.d.ts
+/packages/*/*.esnext
