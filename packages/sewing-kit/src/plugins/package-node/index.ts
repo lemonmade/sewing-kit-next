@@ -31,14 +31,14 @@ export default function packageNode(work: Work) {
     });
   });
 
-  work.tasks.build.tap(PLUGIN, (workspace, buildTaskHooks) => {
-    buildTaskHooks.package.tap(PLUGIN, (pkg, buildHooks) => {
-      buildHooks.variants.tap(PLUGIN, (variants) => [
+  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+      hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
         {[VARIANT]: true},
       ]);
 
-      buildHooks.configure.tap(PLUGIN, (configurationHooks, {node}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks, {node}) => {
         if (!node) {
           return;
         }
@@ -59,7 +59,7 @@ export default function packageNode(work: Work) {
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'node'));
       });
 
-      buildHooks.steps.tapPromise(
+      hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {node}}) => {
           if (!node) {

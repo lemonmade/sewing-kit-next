@@ -19,9 +19,9 @@ declare module '../tasks/build/types' {
 }
 
 export default function packageEsnext(work: Work) {
-  work.tasks.build.tap(PLUGIN, (workspace, buildTaskHooks) => {
-    buildTaskHooks.webApp.tap(PLUGIN, (_, buildHooks) => {
-      buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.webApp.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks) => {
         configurationHooks.extensions.tap(PLUGIN, (extensions) => [
           EXTENSION,
           ...extensions,
@@ -29,13 +29,13 @@ export default function packageEsnext(work: Work) {
       });
     });
 
-    buildTaskHooks.package.tap(PLUGIN, (pkg, buildHooks) => {
-      buildHooks.variants.tap(PLUGIN, (variants) => [
+    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+      hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
         {[VARIANT]: true},
       ]);
 
-      buildHooks.configure.tap(PLUGIN, (configurationHooks, {esnext}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks, {esnext}) => {
         if (!esnext) {
           return;
         }
@@ -62,7 +62,7 @@ export default function packageEsnext(work: Work) {
         );
       });
 
-      buildHooks.steps.tapPromise(
+      hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {esnext}}) => {
           if (!esnext) {

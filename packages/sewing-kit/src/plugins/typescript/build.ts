@@ -1,6 +1,5 @@
 import {produce} from 'immer';
-import {Workspace} from '../../workspace';
-import {BuildTaskHooks} from '../../tasks/build';
+import {BuildTask} from '../../tasks/build';
 import {updateBabelPreset} from '../utilities';
 import {PLUGIN} from './common';
 
@@ -19,19 +18,16 @@ const updateBabelPresets = produce(
   ),
 );
 
-export default function buildTypeScript(
-  _: Workspace,
-  buildTaskHooks: BuildTaskHooks,
-) {
-  buildTaskHooks.package.tap(PLUGIN, (_, buildHooks) => {
-    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+export default function buildTypeScript({hooks}: BuildTask) {
+  hooks.package.tap(PLUGIN, ({hooks}) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
       configurationHooks.babel.tap(PLUGIN, updateBabelPresets);
       configurationHooks.extensions.tap(PLUGIN, addTsExtensions);
     });
   });
 
-  buildTaskHooks.webApp.tap(PLUGIN, (_, buildHooks) => {
-    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+  hooks.webApp.tap(PLUGIN, ({hooks}) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
       configurationHooks.babel.tap(PLUGIN, updateBabelPresets);
       configurationHooks.extensions.tap(PLUGIN, addTsExtensions);
 

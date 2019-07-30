@@ -1,17 +1,13 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
-import {BuildTaskHooks} from '../../tasks/build';
-import {Workspace} from '../../workspace';
+import {BuildTask} from '../../tasks/build';
 import {changeBabelPreset, updateBabelPreset} from '../utilities';
 
 import {PLUGIN} from './common';
 
-export default function browserAppBuild(
-  workspace: Workspace,
-  build: BuildTaskHooks,
-) {
-  build.webApp.tap(PLUGIN, (app, buildHooks) => {
+export default function browserAppBuild({hooks, workspace}: BuildTask) {
+  hooks.webApp.tap(PLUGIN, ({webApp, hooks}) => {
     const changePreset = changeBabelPreset(
       'babel-preset-shopify',
       'babel-preset-shopify/web',
@@ -21,9 +17,9 @@ export default function browserAppBuild(
       modules: false,
     });
 
-    buildHooks.variants.tap(PLUGIN, () => [{}]);
+    hooks.variants.tap(PLUGIN, () => [{}]);
 
-    buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
       configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
         return produce(babelConfig, (babelConfig) => {
           changePreset(babelConfig);
@@ -36,7 +32,7 @@ export default function browserAppBuild(
       );
 
       configurationHooks.filename.tap(PLUGIN, (filename) =>
-        workspace.apps.length > 1 ? join(app.name, filename) : filename,
+        workspace.apps.length > 1 ? join(webApp.name, filename) : filename,
       );
     });
   });

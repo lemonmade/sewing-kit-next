@@ -14,14 +14,14 @@ declare module '../tasks/build/types' {
 }
 
 export default function packageEsmodules(work: Work) {
-  work.tasks.build.tap(PLUGIN, (workspace, buildTaskHooks) => {
-    buildTaskHooks.package.tap(PLUGIN, (pkg, buildHooks) => {
-      buildHooks.variants.tap(PLUGIN, (variants) => [
+  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+      hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
         {[VARIANT]: true},
       ]);
 
-      buildHooks.configure.tap(PLUGIN, (configurationHooks, {esmodules}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks, {esmodules}) => {
         if (!esmodules) {
           return;
         }
@@ -43,7 +43,7 @@ export default function packageEsmodules(work: Work) {
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'esm'));
       });
 
-      buildHooks.steps.tapPromise(
+      hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {esmodules}}) => {
           if (!esmodules) {

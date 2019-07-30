@@ -9,15 +9,15 @@ function addJsonExtension(extensions: string[]) {
 }
 
 export default function json(work: Work) {
-  work.tasks.build.tap(PLUGIN, (_, buildTaskHooks) => {
-    buildTaskHooks.package.tap(PLUGIN, (_, buildHooks) => {
-      buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+  work.tasks.build.tap(PLUGIN, ({hooks}) => {
+    hooks.package.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks) => {
         configurationHooks.extensions.tap(PLUGIN, addJsonExtension);
       });
     });
 
-    buildTaskHooks.webApp.tap(PLUGIN, (_, buildHooks) => {
-      buildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+    hooks.webApp.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (configurationHooks) => {
         configurationHooks.extensions.tap(PLUGIN, addJsonExtension);
       });
     });
