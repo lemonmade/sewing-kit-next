@@ -8,15 +8,15 @@ import {Package} from '../workspace';
 const PLUGIN = 'SewingKit.packages';
 
 export default function packages(work: Work) {
-  work.tasks.test.tap(PLUGIN, (test, workspace) => {
-    test.configureRoot.watchIgnore.tap(
+  work.tasks.test.tap(PLUGIN, (workspace, testTaskHooks) => {
+    testTaskHooks.configureRoot.watchIgnore.tap(
       PLUGIN,
       produce((watchIgnore: string[]) => {
         watchIgnore.push(workspace.fs.resolvePath('packages/.*/build'));
       }),
     );
 
-    test.configure.common.tap(PLUGIN, (configuration) => {
+    testTaskHooks.configure.common.tap(PLUGIN, (configuration) => {
       configuration.moduleMapper.tap(PLUGIN, (moduleMap) => {
         return workspace.packages.reduce(
           (all, pkg) => ({

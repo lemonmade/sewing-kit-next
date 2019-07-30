@@ -1,33 +1,47 @@
 import {produce} from 'immer';
-import {BuildTask} from '../../tasks/build';
+import {Workspace} from '../../workspace';
+import {BuildTaskHooks, BabelConfig} from '../../tasks/build';
 import {PLUGIN} from './common';
 
-export default function buildJavaScript(build: BuildTask) {
-  build.configure.common.tap(PLUGIN, (configuration) => {
-    configuration.extensions.tap(
-      PLUGIN,
-      produce((extensions: string[]) => {
-        extensions.unshift('.js', '.mjs');
-      }),
-    );
+function addBaseBabelPreset(babelConfig: BabelConfig) {
+  return produce(babelConfig, (babelConfig) => {
+    babelConfig.presets = babelConfig.presets || [];
+    babelConfig.presets.push('babel-preset-shopify');
+  });
+}
 
-    configuration.babel.tap(PLUGIN, (babelPlugin) => {
-      return produce(babelPlugin, (babelPlugin) => {
-        babelPlugin.presets.push('babel-preset-shopify');
-      });
+function addJsExtensions(extensions: string[]) {
+  return ['.js', '.mjs', ...extensions];
+}
+
+export default function buildJavaScript(_: Workspace, build: BuildTaskHooks) {
+  build.package.tap(PLUGIN, (_, packageBuildHooks) => {
+    packageBuildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.babel.tap(PLUGIN, addBaseBabelPreset);
+      configurationHooks.extensions.tap(PLUGIN, addJsExtensions);
     });
+  });
 
-    configuration.webpackRules.tapPromise(PLUGIN, async (rules, target) => {
-      const options = await configuration.babel.promise({presets: []}, target);
+  build.webApp.tap(PLUGIN, (_, webAppBuildHooks) => {
+    webAppBuildHooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.babel.tap(PLUGIN, addBaseBabelPreset);
+      configurationHooks.extensions.tap(PLUGIN, addJsExtensions);
 
-      return produce(rules, (rules) => {
-        rules.push({
-          test: /\.m?js/,
-          exclude: /node_modules/,
-          loader: 'babel-loader',
-          options,
-        });
-      });
+      configurationHooks.webpackRules.tapPromise(
+        PLUGIN,
+        async (rules, target) => {
+          const options = await configurationHooks.babel.promise({}, target);
+
+          return produce(rules, (rules) => {
+            rules.push({
+              test: /\.m?js/,
+              exclude: /node_modules/,
+              loader: 'babel-loader',
+              options,
+            });
+          });
+        },
+      );
     });
   });
 }
