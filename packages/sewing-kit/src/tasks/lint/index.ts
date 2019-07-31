@@ -1,1 +1,1 @@
-export {LintTask} from './lint';
+export * from './lint';

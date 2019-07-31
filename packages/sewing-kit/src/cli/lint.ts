@@ -6,10 +6,7 @@ export const lint = createCommand(
     '--focus': [String],
   },
   async ({'--fix': fix}, workspace, work) => {
-    const {LintTask} = await import('../tasks/lint');
-
-    const lint = new LintTask({fix}, workspace);
-    await work.tasks.lint.promise(workspace, lint);
-    await lint.run();
+    const {runLint} = await import('../tasks/lint');
+    await runLint({fix}, workspace, work);
   },
 );

@@ -1,1 +1,1 @@
-export {TestTask} from './testing';
+export * from './testing';
