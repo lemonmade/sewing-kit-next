@@ -1,7 +1,6 @@
-import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
-import {Env, Step} from '../../types';
+import {Step} from '../../types';
 import {Workspace} from '../../workspace';
 import {Work} from '../../work';
 
@@ -40,11 +39,11 @@ export async function runBuild(
       const hooks: WebAppBuildHooks = {
         variants: new AsyncSeriesWaterfallHook(['variants']),
         steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
-        configure: new AsyncSeriesHook(['configuration', 'options']),
-        configureBrowser: new AsyncSeriesHook(['configuration', 'options']),
+        configure: new AsyncSeriesHook(['configuration', 'variant']),
+        configureBrowser: new AsyncSeriesHook(['configuration', 'variant']),
         configureServiceWorker: new AsyncSeriesHook([
           'configuration',
-          'options',
+          'variant',
         ]),
       };
 
@@ -72,62 +71,10 @@ export async function runBuild(
             await hooks.configure.promise(configurationHooks, variant);
             await hooks.configureBrowser.promise(configurationHooks, variant);
 
-            const rules = await configurationHooks.webpackRules.promise([]);
-            const extensions = await configurationHooks.extensions.promise([]);
-            const outputPath = await configurationHooks.output.promise(
-              workspace.fs.buildPath(),
-            );
-            const filename = await configurationHooks.filename.promise(
-              '[name].js',
-            );
-
-            const webpackConfig = await configurationHooks.webpackConfig.promise(
-              {
-                entry: await configurationHooks.entries.promise([webApp.entry]),
-                mode: toMode(options.simulateEnv),
-                resolve: {extensions},
-                module: {rules},
-                output: {
-                  path: outputPath,
-                  filename,
-                },
-              },
-            );
-
-            await buildWebpack(webpackConfig);
-          },
-        };
-      });
-    }),
-  )).flat();
-
-  const packageSteps: Step[] = (await Promise.all(
-    workspace.packages.map(async (pkg) => {
-      const hooks: PackageBuildHooks = {
-        variants: new AsyncSeriesWaterfallHook(['variants']),
-        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
-        configure: new AsyncSeriesHook(['buildTarget', 'options']),
-      };
-
-      await buildTaskHooks.project.promise({project: pkg, hooks});
-      await buildTaskHooks.package.promise({pkg, hooks});
-
-      const variants = await hooks.variants.promise([]);
-
-      return variants.map((variant) => {
-        return {
-          async run() {
-            const configurationHooks: PackageBuildConfigurationHooks = {
-              babel: new AsyncSeriesWaterfallHook(['babelConfig']),
-              output: new AsyncSeriesWaterfallHook(['output']),
-              extensions: new AsyncSeriesWaterfallHook(['extensions']),
-            };
-
-            await hooks.configure.promise(configurationHooks, variant);
-
             const steps = await hooks.steps.promise([], {
               variant,
-              config: configurationHooks,
+              browserConfig: configurationHooks,
+              serviceWorkerConfig: configurationHooks,
             });
 
             for (const step of steps) {
@@ -139,32 +86,47 @@ export async function runBuild(
     }),
   )).flat();
 
+  const packageSteps: Step[] = workspace.private
+    ? []
+    : (await Promise.all(
+        workspace.packages.map(async (pkg) => {
+          const hooks: PackageBuildHooks = {
+            variants: new AsyncSeriesWaterfallHook(['variants']),
+            steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+            configure: new AsyncSeriesHook(['buildTarget', 'options']),
+          };
+
+          await buildTaskHooks.project.promise({project: pkg, hooks});
+          await buildTaskHooks.package.promise({pkg, hooks});
+
+          const variants = await hooks.variants.promise([]);
+
+          return variants.map((variant) => {
+            return {
+              async run() {
+                const configurationHooks: PackageBuildConfigurationHooks = {
+                  babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+                  output: new AsyncSeriesWaterfallHook(['output']),
+                  extensions: new AsyncSeriesWaterfallHook(['extensions']),
+                };
+
+                await hooks.configure.promise(configurationHooks, variant);
+
+                const steps = await hooks.steps.promise([], {
+                  variant,
+                  config: configurationHooks,
+                });
+
+                for (const step of steps) {
+                  await step.run();
+                }
+              },
+            };
+          });
+        }),
+      )).flat();
+
   await Promise.all(
     [...webAppSteps, ...packageSteps].map((step) => step.run()),
   );
-}
-
-function toMode(env: Env) {
-  switch (env) {
-    case Env.Production:
-    case Env.Staging:
-      return 'production';
-    default:
-      return 'development';
-  }
-}
-
-function buildWebpack(config: WebpackConfiguration) {
-  const compiler = webpack(config);
-
-  return new Promise((resolve, reject) => {
-    compiler.run((error, stats) => {
-      if (error) {
-        reject(new Error(stats.toString('errors-warnings')));
-        return;
-      }
-
-      resolve();
-    });
-  });
 }

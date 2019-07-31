@@ -66,6 +66,10 @@ export class Workspace extends Project {
   readonly packages: readonly Package[];
   readonly services: readonly Service[];
 
+  get private() {
+    return this.webApps.length > 0 || this.services.length > 0;
+  }
+
   constructor({webApps, packages, services, ...rest}: WorkspaceCreateOptions) {
     super(rest);
 
