@@ -11,14 +11,14 @@ run();
 
 async function run() {
   const [, , ...args] = process.argv;
-  const [command, ...rest] = args;
+  const [command, ...argv] = args;
   const commandModule = commands.get(command);
 
   if (commandModule) {
-    await commandModule({argv: rest});
+    await commandModule(argv);
   } else {
     // eslint-disable-next-line no-console
-    console.log(`Command not found: ${command} (${rest.join(' ')})`);
+    console.log(`Command not found: ${command} (${argv.join(' ')})`);
     process.exitCode = 1;
   }
 }

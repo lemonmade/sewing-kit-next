@@ -11,11 +11,7 @@ import {
   emptyDir,
 } from 'fs-extra';
 import toTree from 'tree-node-cli';
-import {
-  IfAllOptionalKeys,
-  FirstArgument,
-  ThenType,
-} from '@shopify/useful-types';
+import {ThenType} from '@shopify/useful-types';
 
 const commandMap = {
   build: () => import('../src/cli/build').then(({build}) => build),
@@ -29,15 +25,8 @@ type CommandType<T extends keyof CommandMap> = ThenType<
 export class Workspace {
   constructor(public readonly root: string) {}
 
-  async run<K extends keyof CommandMap>(
-    ...args: IfAllOptionalKeys<
-      FirstArgument<CommandType<K>>,
-      [K, FirstArgument<CommandType<K>>?],
-      [K, FirstArgument<CommandType<K>>]
-    >
-  ) {
-    const [command, options = {}] = args;
-    await (await commandMap[command]())({...options, root: this.root});
+  async run<K extends keyof CommandMap>(command: K, args: string[] = []) {
+    await (await commandMap[command]())([...args, '--root', this.root]);
   }
 
   async writeConfig(contents: string) {
