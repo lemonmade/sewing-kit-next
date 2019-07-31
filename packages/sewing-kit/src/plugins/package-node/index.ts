@@ -20,14 +20,9 @@ declare module '../../tasks/build/types' {
 }
 
 export default function packageNode(work: Work) {
-  work.tasks.test.tap(PLUGIN, (_, test) => {
-    test.configure.common.tap(PLUGIN, (configuration) => {
-      configuration.extensions.tap(
-        PLUGIN,
-        produce((extensions: string[]) => {
-          extensions.unshift(EXTENSION);
-        }),
-      );
+  work.tasks.test.tap(PLUGIN, ({hooks}) => {
+    hooks.configureProject.tap(PLUGIN, ({hooks}) => {
+      hooks.extensions.tap(PLUGIN, (extensions) => [EXTENSION, ...extensions]);
     });
   });
 

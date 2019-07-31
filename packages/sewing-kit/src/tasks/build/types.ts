@@ -2,15 +2,7 @@ import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 import {Configuration as WebpackConfiguration} from 'webpack';
 
 import {Package, WebApp, Workspace} from '../../workspace';
-import {Env} from '../../types';
-
-export interface BabelConfig {
-  presets?: (string | [string, object?])[];
-}
-
-export interface Step {
-  run(): Promise<void>;
-}
+import {Env, BabelConfig, Step} from '../../types';
 
 // PACKAGE
 

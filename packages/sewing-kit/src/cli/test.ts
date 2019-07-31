@@ -3,12 +3,12 @@ import {createCommand} from './common';
 export const test = createCommand(
   {
     '--help': Boolean,
-    '--noWatch': Boolean,
+    '--no-watch': Boolean,
     '--coverage': Boolean,
     '--debug': Boolean,
-    '--updateSnapshot': Boolean,
-    '--maxWorkers': Number,
-    '--testNamePattern': String,
+    '--update-snapshot': Boolean,
+    '--max-workers': Number,
+    '--test-name-pattern': String,
     '--pre': Boolean,
   },
   async (
@@ -16,18 +16,18 @@ export const test = createCommand(
       _: [testPattern],
       '--debug': debug,
       '--coverage': coverage,
-      '--maxWorkers': maxWorkers,
+      '--max-workers': maxWorkers,
       '--pre': pre,
-      '--testNamePattern': testNamePattern,
-      '--updateSnapshot': updateSnapshot,
-      '--noWatch': noWatch,
+      '--test-name-pattern': testNamePattern,
+      '--update-snapshot': updateSnapshot,
+      '--no-watch': noWatch,
     },
     workspace,
     work,
   ) => {
-    const {TestTask} = await import('../tasks/testing');
+    const {runTests} = await import('../tasks/testing');
 
-    const test = new TestTask(
+    await runTests(
       {
         debug,
         coverage,
@@ -39,9 +39,7 @@ export const test = createCommand(
         watch: noWatch == null ? noWatch : !noWatch,
       },
       workspace,
+      work,
     );
-
-    await work.tasks.test.promise(workspace, test);
-    await test.run();
   },
 );

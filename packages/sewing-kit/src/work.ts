@@ -8,10 +8,7 @@ export class Work {
     build: new AsyncSeriesHook<import('./tasks/build').BuildTask>([
       'buildTask',
     ]),
-    test: new AsyncSeriesHook<
-      import('./workspace').Workspace,
-      import('./tasks/testing').TestTask
-    >(['test', 'workspace']),
+    test: new AsyncSeriesHook<import('./tasks/testing').TestTask>(['testTask']),
     lint: new AsyncSeriesHook<import('./tasks/lint').LintTask>(['lintTask']),
   };
 }

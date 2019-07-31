@@ -1,8 +1,5 @@
 {
-  "cSpell.ignoreWords": [
-    "dasherize",
-    "immer"
-  ],
+  "cSpell.ignoreWords": ["dasherize", "immer", "tapable"],
   "eslint.validate": [
     {"language": "javascript", "autoFix": true},
     {"language": "javascriptreact", "autoFix": true},
