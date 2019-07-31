@@ -1,6 +1,7 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
+import {Runtime} from '../types';
 import {Work} from '../work';
 import {
   updateBabelPreset,
@@ -65,7 +66,13 @@ export default function packageEsnext(work: Work) {
       hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {esnext}}) => {
-          if (!esnext) {
+          // If all the entries are Node entries, there is no point in producing
+          // an un-compiled build, because the CommonJS build will already be tailored
+          // to the baseline version of Node.
+          if (
+            !esnext ||
+            pkg.entries.every(({runtime}) => runtime === Runtime.Node)
+          ) {
             return steps;
           }
 
@@ -80,6 +87,7 @@ export default function packageEsnext(work: Work) {
               new WriteEntriesStep(pkg, {
                 outputPath,
                 extension: EXTENSION,
+                exclude: (entry) => entry.runtime === Runtime.Node,
                 contents: (relative) =>
                   `export * from ${JSON.stringify(relative)};`,
               }),

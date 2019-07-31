@@ -2,6 +2,7 @@ import {join} from 'path';
 import {produce} from 'immer';
 
 import {Work} from '../../work';
+import {Runtime} from '../../types';
 import {
   changeBabelPreset,
   updateBabelPreset,
@@ -57,7 +58,12 @@ export default function packageNode(work: Work) {
       hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {node}}) => {
-          if (!node) {
+          // If this isn't the node variant, or if all the entries already
+          // target node, there is no need to do a node-only build.
+          if (
+            !node ||
+            pkg.entries.every(({runtime}) => runtime === Runtime.Node)
+          ) {
             return steps;
           }
 
@@ -72,6 +78,7 @@ export default function packageNode(work: Work) {
               new WriteEntriesStep(pkg, {
                 outputPath,
                 extension: EXTENSION,
+                exclude: (entry) => entry.runtime === Runtime.Node,
                 contents: (relative) =>
                   `module.exports = require(${JSON.stringify(relative)});`,
               }),

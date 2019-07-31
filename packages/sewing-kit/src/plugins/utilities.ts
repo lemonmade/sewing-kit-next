@@ -105,8 +105,11 @@ export class UpdatePackageJsonStep {
 interface WriteEntriesOptions {
   extension?: string;
   outputPath: string;
+  exclude?(entry: PackageEntry): boolean;
   contents(relativePath: string): string;
 }
+
+const defaultExclude = () => false;
 
 export class WriteEntriesStep {
   constructor(private pkg: Package, private options: WriteEntriesOptions) {}
@@ -114,12 +117,21 @@ export class WriteEntriesStep {
   async run() {
     const {
       pkg,
-      options: {extension = '.js', outputPath, contents},
+      options: {
+        extension = '.js',
+        outputPath,
+        contents,
+        exclude = defaultExclude,
+      },
     } = this;
 
     const sourceRoot = resolve(pkg.root, 'src');
 
     for (const entry of pkg.entries) {
+      if (exclude(entry)) {
+        continue;
+      }
+
       const relativeFromSourceRoot = relative(
         sourceRoot,
         pkg.fs.resolvePath(entry.root),

@@ -73,7 +73,7 @@ export default function packages(work: Work) {
             name: basename(root),
             binaries: [],
             entries: [{root: 'src'}],
-            ...(await loadConfig(discovery.root)),
+            ...(await loadConfig(root)),
           });
         }),
       );
@@ -105,8 +105,10 @@ async function loadConfig(root: string) {
   }
 
   if (await pathExists(join(root, 'sewing-kit.config.ts'))) {
-    const {register} = await import('ts-node');
-    register();
+    require('@babel/register')({
+      extensions: ['.mjs', '.js', '.ts', '.tsx'],
+      presets: [['babel-preset-shopify/node', {typescript: true}]],
+    });
 
     return defaultOrCommonJsExport(
       require(join(root, 'sewing-kit.config.ts')),

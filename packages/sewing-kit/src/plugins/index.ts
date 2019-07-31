@@ -13,5 +13,6 @@ export {default as packageEsmodules} from './package-esmodules';
 export {default as packageEsnext} from './package-esnext';
 export {default as packageNode} from './package-node';
 export {default as packageTypeScript} from './package-typescript';
+export {default as packageBinaries} from './package-binaries';
 
 export {default as jest} from './jest';

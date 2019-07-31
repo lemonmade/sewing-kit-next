@@ -1,9 +1,11 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
+import {Runtime} from '../types';
 import {Work} from '../work';
 import {
   updateBabelPreset,
+  changeBabelPreset,
   CompileBabelStep,
   WriteEntriesStep,
 } from './utilities';
@@ -16,6 +18,20 @@ declare module '../tasks/build/types' {
     [VARIANT]: boolean;
   }
 }
+
+const setCommonJsModules = updateBabelPreset(
+  [
+    'babel-preset-shopify',
+    'babel-preset-shopify/web',
+    'babel-preset-shopify/node',
+  ],
+  {modules: 'commonjs'},
+);
+
+const setNodePreset = changeBabelPreset(
+  ['babel-preset-shopify', 'babel-preset-shopify/web'],
+  'babel-preset-shopify/node',
+);
 
 export default function packageCommonJs(work: Work) {
   work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
@@ -31,17 +47,17 @@ export default function packageCommonJs(work: Work) {
         }
 
         configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
-          return produce(
-            babelConfig,
-            updateBabelPreset(
-              [
-                'babel-preset-shopify',
-                'babel-preset-shopify/web',
-                'babel-preset-shopify/node',
-              ],
-              {modules: 'commonjs'},
-            ),
+          const allEntriesAreNode = pkg.entries.every(
+            ({runtime}) => runtime === Runtime.Node,
           );
+
+          return produce(babelConfig, (babelConfig) => {
+            if (allEntriesAreNode) {
+              setNodePreset(babelConfig);
+            }
+
+            setCommonJsModules(babelConfig);
+          });
         });
 
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'cjs'));

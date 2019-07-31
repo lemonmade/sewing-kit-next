@@ -1,3 +1,4 @@
+import {Runtime} from '../types';
 import {FileSystem, SewingKitFileSystem} from './fs';
 import {PackageJson} from './dependencies';
 
@@ -130,6 +131,7 @@ export class Package extends Project {
 export interface PackageBinary {
   readonly name: string;
   readonly root: string;
+  readonly aliases?: string[];
 }
 
 export interface PackageEntryOptions {}
@@ -152,11 +154,4 @@ export class Service extends Project {
     super(rest);
     this.entry = entry;
   }
-}
-
-export enum Runtime {
-  Node = 'node',
-  Browser = 'browser',
-  ServiceWorker = 'service-worker',
-  WebWorker = 'web-worker',
 }

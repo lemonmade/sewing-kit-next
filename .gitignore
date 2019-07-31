@@ -2,6 +2,7 @@ node_modules
 tsconfig.tsbuildinfo
 dist
 build
+bin
 tmp
 ~
 yarn-error.log

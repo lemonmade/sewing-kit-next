@@ -1,11 +1,20 @@
+import {Runtime} from './types';
 import {PackageCreateOptions, PackageEntry, PackageBinary} from './workspace';
 
+export {Runtime};
+
 class PackageCreator {
-  public readonly options: Partial<PackageCreateOptions> = {};
+  private defaultRuntime?: Runtime;
+
+  constructor(private readonly options: Partial<PackageCreateOptions>) {}
+
+  runtime(defaultRuntime: Runtime) {
+    this.defaultRuntime = defaultRuntime;
+  }
 
   entry(entry: PackageEntry) {
     this.options.entries = this.options.entries || [];
-    this.options.entries.push(entry);
+    this.options.entries.push({runtime: this.defaultRuntime, ...entry});
   }
 
   binary(binary: PackageBinary) {
@@ -18,8 +27,9 @@ export function createPackage(
   create: (pkg: PackageCreator) => void | Promise<void>,
 ) {
   return async () => {
-    const creator = new PackageCreator();
+    const options = {};
+    const creator = new PackageCreator(options);
     await create(creator);
-    return creator.options;
+    return options;
   };
 }

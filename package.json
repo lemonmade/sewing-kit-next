@@ -2,7 +2,7 @@
   "name": "sewing-kit-next",
   "private": true,
   "scripts": {
-    "sk": "ts-node --project ./packages/sewing-kit/tsconfig.json ./packages/sewing-kit/src/cli",
+    "sk": "node scripts/prep && babel-node --extensions .js,.ts,.tsx,.mjs ./packages/sewing-kit/src/cli",
     "sewing-kit": "yarn sk",
     "build": "yarn sk build",
     "test": "yarn sk test",

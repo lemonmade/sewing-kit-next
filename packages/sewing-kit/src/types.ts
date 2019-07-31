@@ -13,3 +13,10 @@ export interface BabelConfig {
 export interface Step {
   run(): Promise<void>;
 }
+
+export enum Runtime {
+  Node = 'node',
+  Browser = 'browser',
+  ServiceWorker = 'service-worker',
+  WebWorker = 'web-worker',
+}
