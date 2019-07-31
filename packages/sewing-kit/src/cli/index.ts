@@ -16,20 +16,15 @@ const commands = new Map([
 run();
 
 async function run() {
-  try {
-    const [, , ...args] = process.argv;
-    const [command, ...argv] = args;
-    const commandModule = commands.get(command);
+  const [, , ...args] = process.argv;
+  const [command, ...argv] = args;
+  const commandModule = commands.get(command);
 
-    if (commandModule) {
-      await commandModule(argv);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(`Command not found: ${command} (${argv.join(' ')})`);
-      process.exitCode = 1;
-    }
-  } catch (error) {
-    console.log(error.stack);
+  if (commandModule) {
+    await commandModule(argv);
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`Command not found: ${command} (${argv.join(' ')})`);
     process.exitCode = 1;
   }
 }
