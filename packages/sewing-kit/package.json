@@ -1,7 +1,9 @@
 {
   "name": "sewing-kit-of-lemons",
   "version": "1.0.0-beta.11",
+  "main": "index",
   "bin": {
+    "sewing-kit": "./bin/sewing-kit",
     "sk": "./bin/sk"
   },
   "dependencies": {

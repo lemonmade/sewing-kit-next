@@ -1,5 +1,6 @@
 **/node_modules
 /packages/*/build
+/packages/*/bin
 /packages/*/*.js
 /packages/*/*.node
 /packages/*/*.d.ts
