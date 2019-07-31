@@ -32,7 +32,7 @@ export default function browserAppBuild({hooks, workspace}: BuildTask) {
       );
 
       configurationHooks.filename.tap(PLUGIN, (filename) =>
-        workspace.apps.length > 1 ? join(webApp.name, filename) : filename,
+        workspace.webApps.length > 1 ? join(webApp.name, filename) : filename,
       );
     });
   });

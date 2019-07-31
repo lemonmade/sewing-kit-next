@@ -1,48 +1,56 @@
 import {basename} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
-import {
-  WebApp,
-  Service,
-  Package,
-  Workspace,
-  FileSystem,
-  SewingKitFileSystem,
-} from '../../workspace';
+import {WebApp, Service, Package, Workspace, FileSystem} from '../../workspace';
+import {Work} from '../../work';
 
-export class WorkspaceDiscovery {
-  readonly name: string;
-  readonly fs: FileSystem;
-  readonly internal: SewingKitFileSystem;
+export interface DiscoveryHooks {
+  readonly webApps: AsyncSeriesWaterfallHook<WebApp[]>;
+  readonly services: AsyncSeriesWaterfallHook<Service[]>;
+  readonly packages: AsyncSeriesWaterfallHook<Package[]>;
+}
 
-  readonly hooks = {
-    apps: new AsyncSeriesWaterfallHook<WebApp[], never, never>(['apps']),
-    services: new AsyncSeriesWaterfallHook<Service[], never, never>([
-      'service',
-    ]),
-    packages: new AsyncSeriesWaterfallHook<Package[], never, never>([
-      'packages',
-    ]),
+export interface DiscoveryTaskOptions {
+  root?: string;
+}
+
+export interface DiscoveryTask {
+  fs: FileSystem;
+  name: string;
+  root: string;
+  hooks: DiscoveryHooks;
+  options: DiscoveryTaskOptions;
+}
+
+export async function runDiscovery(options: DiscoveryTaskOptions, work: Work) {
+  const hooks: DiscoveryHooks = {
+    webApps: new AsyncSeriesWaterfallHook(['webApps']),
+    packages: new AsyncSeriesWaterfallHook(['packages']),
+    services: new AsyncSeriesWaterfallHook(['services']),
   };
 
-  constructor(public readonly root: string) {
-    this.name = basename(root);
-    this.fs = new FileSystem(root);
-    this.internal = new SewingKitFileSystem(root);
-  }
+  const {root = process.cwd()} = options;
+  const name = basename(root);
+  const fs = new FileSystem(root);
 
-  async run(): Promise<Workspace> {
-    const [apps, services, packages] = await Promise.all([
-      this.hooks.apps.promise([]),
-      this.hooks.services.promise([]),
-      this.hooks.packages.promise([]),
-    ]);
+  await work.tasks.discovery.promise({
+    fs,
+    name,
+    root,
+    hooks,
+    options,
+  });
 
-    return new Workspace({
-      name: this.name,
-      root: this.root,
-      apps,
-      services,
-      packages,
-    });
-  }
+  const [webApps, services, packages] = await Promise.all([
+    hooks.webApps.promise([]),
+    hooks.services.promise([]),
+    hooks.packages.promise([]),
+  ]);
+
+  return new Workspace({
+    name,
+    root,
+    webApps,
+    services,
+    packages,
+  });
 }

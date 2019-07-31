@@ -55,21 +55,21 @@ export class Project {
 }
 
 interface WorkspaceCreateOptions extends ProjectOptions {
-  apps: WebApp[];
+  webApps: WebApp[];
   packages: Package[];
   services: Service[];
 }
 
 export class Workspace extends Project {
   readonly internal = new SewingKitFileSystem(this.root);
-  readonly apps: readonly WebApp[];
+  readonly webApps: readonly WebApp[];
   readonly packages: readonly Package[];
   readonly services: readonly Service[];
 
-  constructor({apps, packages, services, ...rest}: WorkspaceCreateOptions) {
+  constructor({webApps, packages, services, ...rest}: WorkspaceCreateOptions) {
     super(rest);
 
-    this.apps = apps;
+    this.webApps = webApps;
     this.packages = packages;
     this.services = services;
   }

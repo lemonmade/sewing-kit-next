@@ -1,28 +1,15 @@
-import arg from 'arg';
-import {loadWork, Options} from './common';
+import {createCommand} from './common';
 
-export async function lint({root = process.cwd(), argv}: Options) {
-  const work = await loadWork();
+export const lint = createCommand(
+  {
+    '--fix': Boolean,
+    '--focus': [String],
+  },
+  async ({'--fix': fix}, workspace, work) => {
+    const {LintTask} = await import('../tasks/lint');
 
-  const {WorkspaceDiscovery} = await import('../tasks/discovery');
-  const {LintTask} = await import('../tasks/lint');
-
-  const discovery = new WorkspaceDiscovery(root);
-  await work.tasks.discovery.promise(discovery);
-  const workspace = await discovery.run();
-
-  const args = arg(
-    {
-      '--fix': Boolean,
-      '--focus': [String],
-    },
-    {argv},
-  );
-
-  const {'--fix': fix} = args;
-
-  const options = {fix};
-  const lint = new LintTask(options, workspace);
-  await work.tasks.lint.promise(workspace, lint);
-  await lint.run();
-}
+    const lint = new LintTask({fix}, workspace);
+    await work.tasks.lint.promise(workspace, lint);
+    await lint.run();
+  },
+);

@@ -1,16 +1,11 @@
 import {Env} from '../types';
-import {loadWork} from './common';
+import {createCommand} from './common';
 
-export async function build({root = process.cwd()} = {}) {
-  const work = await loadWork();
-
-  const {WorkspaceDiscovery} = await import('../tasks/discovery');
+export const build = createCommand({}, async (_, workspace, work) => {
   const {runBuild} = await import('../tasks/build');
-
-  const discovery = new WorkspaceDiscovery(root);
-  await work.tasks.discovery.promise(discovery);
-  const workspace = await discovery.run();
-
-  const options = {env: Env.Development, simulateEnv: Env.Development};
-  await runBuild(options, workspace, work);
-}
+  await runBuild(
+    {env: Env.Development, simulateEnv: Env.Development},
+    workspace,
+    work,
+  );
+});

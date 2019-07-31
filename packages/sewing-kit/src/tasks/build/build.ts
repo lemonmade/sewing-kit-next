@@ -37,7 +37,7 @@ export async function runBuild(
   });
 
   const webAppSteps: Step[] = (await Promise.all(
-    workspace.apps.map(async (webApp) => {
+    workspace.webApps.map(async (webApp) => {
       const hooks: WebAppBuildHooks = {
         variants: new AsyncSeriesWaterfallHook(['variants']),
         steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
