@@ -1,4 +1,4 @@
-import exec from 'execa';
+import exec, {ExecaError} from 'execa';
 
 import {Work} from '../../work';
 import {Workspace} from '../../workspace';
@@ -13,10 +13,18 @@ export async function runTypeCheck(
 
   const heapArguments = heap ? [`--max-old-space-size=${heap}`] : [];
 
-  await exec('node', [
-    ...heapArguments,
-    'node_modules/.bin/tsc',
-    '--noEmit',
-    '--pretty',
-  ]);
+  try {
+    const result = await exec('node', [
+      ...heapArguments,
+      'node_modules/.bin/tsc',
+      '--build',
+    ]);
+
+    // eslint-disable-next-line no-console
+    console.log(result.all);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log((error as ExecaError).all);
+    process.exitCode = 1;
+  }
 }
