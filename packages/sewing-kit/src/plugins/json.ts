@@ -1,5 +1,3 @@
-import {produce} from 'immer';
-
 import {Work} from '../work';
 
 const PLUGIN = 'SewingKit.json';
@@ -23,14 +21,9 @@ export default function json(work: Work) {
     });
   });
 
-  work.tasks.test.tap(PLUGIN, (_, testTaskHooks) => {
-    testTaskHooks.configure.common.tap(PLUGIN, (configuration) => {
-      configuration.extensions.tap(
-        PLUGIN,
-        produce((extensions: string[]) => {
-          extensions.unshift('.json');
-        }),
-      );
+  work.tasks.test.tap(PLUGIN, ({hooks}) => {
+    hooks.configureProject.tap(PLUGIN, ({hooks}) => {
+      hooks.extensions.tap(PLUGIN, addJsonExtension);
     });
   });
 }

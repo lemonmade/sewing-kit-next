@@ -1,102 +1,76 @@
 import jest from 'jest';
-import {
-  AsyncSeriesWaterfallHook,
-  AsyncParallelHook,
-  AsyncSeriesHook,
-} from 'tapable';
-import {Package, Workspace} from '../../workspace';
+import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
+
+import {Work} from '../../work';
+import {Workspace} from '../../workspace';
 import {toArgs} from '../utilities';
 
-interface BabelConfig {
-  presets?: (string | [string, object?])[];
-}
+import {
+  TestTaskHooks,
+  TestTaskOptions,
+  RootConfigurationHooks,
+  ProjectConfigurationHooks,
+} from './types';
 
-interface TransformOptions {
-  babelTransform: string;
-}
-
-class Configuration {
-  readonly babel = new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']);
-  readonly extensions = new AsyncSeriesWaterfallHook<string[]>(['extensions']);
-  readonly environment = new AsyncSeriesWaterfallHook<string>(['environment']);
-  readonly moduleMapper = new AsyncSeriesWaterfallHook<{[key: string]: string}>(
-    ['moduleMapper'],
-  );
-
-  readonly setupEnv = new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']);
-  readonly setupTests = new AsyncSeriesWaterfallHook<string[]>([
-    'setupTestFiles',
-  ]);
-
-  readonly jestTransforms = new AsyncSeriesWaterfallHook<
-    {[key: string]: string},
-    TransformOptions
-  >(['transforms', 'options']);
-
-  readonly jestFinalize = new AsyncSeriesWaterfallHook<jest.InitialOptions>([
-    'jestConfig',
-  ]);
-}
-
-interface TestTaskOptions {
-  pre?: boolean;
-  watch?: boolean;
-  debug?: boolean;
-  coverage?: boolean;
-  testPattern?: string;
-  testNamePattern?: string;
-  maxWorkers?: number;
-  updateSnapshot?: boolean;
-}
-
-interface JestFlags {
-  config?: string;
-  watch?: boolean;
-  watchAll?: boolean;
-  testNamePattern?: string;
-  testPathPattern?: string;
-  runInBand?: boolean;
-  forceExit?: boolean;
-  maxWorkers?: number;
-  onlyChanged?: boolean;
-  coverage?: boolean;
-  updateSnapshot?: boolean;
-}
-
-interface ProjectConfigurationHooks {}
-
-interface RootConfigurationHooks {}
-
-export interface TestTaskHooks {
-  readonly configureRoot: AsyncSeriesHook<RootConfigurationHooks>;
-  readonly configureProject: AsyncSeriesHook<{
-    project: Package;
-    hooks: ProjectConfigurationHooks;
-  }>;
-  readonly configurePackage: AsyncSeriesHook<{
-    pkg: Package;
-    hooks: ProjectConfigurationHooks;
-  }>;
-}
-
-export interface TestTask {
-  readonly hooks: TestTaskHooks;
-  readonly workspace: Workspace;
-  readonly options: TestTaskOptions;
-}
-
-export async function runTests(options: TestTaskOptions, workspace: Workspace, work: Work) {
+export async function runTests(
+  options: TestTaskOptions,
+  workspace: Workspace,
+  work: Work,
+) {
   process.env.BABEL_ENV = 'test';
   process.env.NODE_ENV = 'test';
 
-  const rootSetupEnvFiles = await this.configureRoot.setupEnv.promise([]);
-  const rootSetupTestsFiles = await this.configureRoot.setupTests.promise([]);
+  const hooks: TestTaskHooks = {
+    configureRoot: new AsyncSeriesHook(['rootConfigurationHooks']),
+    configureProject: new AsyncSeriesHook(['projectConfiguration']),
+    configurePackage: new AsyncSeriesHook(['packageConfiguration']),
+  };
+
+  await work.tasks.test.promise({hooks, workspace, options});
+
+  const rootConfigHooks: RootConfigurationHooks = {
+    setupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
+    setupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
+    watchIgnore: new AsyncSeriesWaterfallHook(['watchIgnore']),
+    jestWatchPlugins: new AsyncSeriesWaterfallHook(['jestWatchPlugins']),
+    jestConfig: new AsyncSeriesWaterfallHook(['jestConfig']),
+    jestFlags: new AsyncSeriesWaterfallHook(['jestFlags']),
+  };
+
+  await hooks.configureRoot.promise(rootConfigHooks);
+
+  const [rootSetupEnvFiles, rootSetupTestsFiles] = await Promise.all([
+    rootConfigHooks.setupEnv.promise([]),
+    rootConfigHooks.setupTests.promise([]),
+  ]);
 
   const projects = await Promise.all(
     workspace.packages.map(async (pkg) => {
-      const configuration = new Configuration();
-      await this.configure.common.promise(configuration);
-      await this.configure.package.promise(configuration, pkg);
+      const projectConfigHooks: ProjectConfigurationHooks = {
+        babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+        extensions: new AsyncSeriesWaterfallHook(['extensions']),
+        environment: new AsyncSeriesWaterfallHook(['environment']),
+        moduleMapper: new AsyncSeriesWaterfallHook(['moduleMapper']),
+
+        setupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
+        setupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
+
+        jestTransforms: new AsyncSeriesWaterfallHook([
+          'transform',
+          'transformOptions',
+        ]),
+        jestConfig: new AsyncSeriesWaterfallHook(['jestConfig']),
+      };
+
+      await hooks.configureProject.promise({
+        project: pkg,
+        hooks: projectConfigHooks,
+      });
+
+      await hooks.configurePackage.promise({
+        pkg,
+        hooks: projectConfigHooks,
+      });
 
       const babelTransform = workspace.internal.configPath(
         'jest/packages',
@@ -104,20 +78,20 @@ export async function runTests(options: TestTaskOptions, workspace: Workspace, w
         'babel-transformer.js',
       );
 
-      const babelConfig = await configuration.babel.promise({});
-      const transform = await configuration.jestTransforms.promise(
+      const babelConfig = await projectConfigHooks.babel.promise({});
+      const transform = await projectConfigHooks.jestTransforms.promise(
         {},
         {babelTransform},
       );
-      const environment = await configuration.environment.promise('node');
-      const extensions = (await configuration.extensions.promise([])).map(
+      const environment = await projectConfigHooks.environment.promise('node');
+      const extensions = (await projectConfigHooks.extensions.promise([])).map(
         (extension) => extension.replace('.', ''),
       );
-      const moduleMapper = await configuration.moduleMapper.promise({});
-      const setupEnvFiles = await configuration.setupEnv.promise(
+      const moduleMapper = await projectConfigHooks.moduleMapper.promise({});
+      const setupEnvFiles = await projectConfigHooks.setupEnv.promise(
         rootSetupEnvFiles,
       );
-      const setupTestsFiles = await configuration.setupTests.promise(
+      const setupTestsFiles = await projectConfigHooks.setupTests.promise(
         rootSetupTestsFiles,
       );
 
@@ -128,7 +102,7 @@ export async function runTests(options: TestTaskOptions, workspace: Workspace, w
         )})`,
       );
 
-      const config = await configuration.jestFinalize.promise({
+      const config = await projectConfigHooks.jestConfig.promise({
         displayName: pkg.name,
         rootDir: pkg.root,
         testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
@@ -144,12 +118,12 @@ export async function runTests(options: TestTaskOptions, workspace: Workspace, w
     }),
   );
 
-  const watchPlugins = await this.configureRoot.jestWatchPlugins.promise([]);
-  const watchIgnorePatterns = await this.configureRoot.watchIgnore.promise([]);
+  const watchPlugins = await rootConfigHooks.jestWatchPlugins.promise([]);
+  const watchIgnorePatterns = await rootConfigHooks.watchIgnore.promise([]);
 
   const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
 
-  const rootConfig = await this.configureRoot.jestFinalize.promise({
+  const rootConfig = await rootConfigHooks.jestConfig.promise({
     rootDir: workspace.root,
     projects,
     watchPlugins,
@@ -169,9 +143,9 @@ export async function runTests(options: TestTaskOptions, workspace: Workspace, w
     testNamePattern,
     maxWorkers,
     updateSnapshot,
-  } = this.options;
+  } = options;
 
-  const flags = await this.configureRoot.jestFlags.promise({
+  const flags = await rootConfigHooks.jestFlags.promise({
     config: rootConfigPath,
     coverage,
     watch: watch && testPattern == null,
@@ -186,139 +160,4 @@ export async function runTests(options: TestTaskOptions, workspace: Workspace, w
   });
 
   jest.run(toArgs(flags));
-}
-
-export class TestTask2 {
-  readonly configure = {
-    common: new AsyncParallelHook<Configuration>(['configuration']),
-    package: new AsyncParallelHook<Configuration, Package>([
-      'configuration',
-      'pkg',
-    ]),
-  };
-
-  readonly configureRoot = {
-    watchIgnore: new AsyncSeriesWaterfallHook<string[]>(['watchIgnore']),
-    setupEnv: new AsyncSeriesWaterfallHook<string[]>(['setupEnvFiles']),
-    setupTests: new AsyncSeriesWaterfallHook<string[]>(['setupTestFiles']),
-    cacheDirectory: new AsyncSeriesWaterfallHook<string>(['cacheDirectory']),
-
-    jestWatchPlugins: new AsyncSeriesWaterfallHook<string[]>(['watchPlugins']),
-    jestFinalize: new AsyncSeriesWaterfallHook<jest.InitialOptions>([
-      'jestConfig',
-    ]),
-    jestFlags: new AsyncSeriesWaterfallHook<JestFlags>(['jestFlags']),
-  };
-
-  constructor(
-    public readonly options: Options,
-    private readonly workspace: Workspace,
-  ) {}
-
-  async run() {
-    process.env.BABEL_ENV = 'test';
-    process.env.NODE_ENV = 'test';
-
-    const {workspace} = this;
-
-    const rootSetupEnvFiles = await this.configureRoot.setupEnv.promise([]);
-    const rootSetupTestsFiles = await this.configureRoot.setupTests.promise([]);
-
-    const projects = await Promise.all(
-      workspace.packages.map(async (pkg) => {
-        const configuration = new Configuration();
-        await this.configure.common.promise(configuration);
-        await this.configure.package.promise(configuration, pkg);
-
-        const babelTransform = workspace.internal.configPath(
-          'jest/packages',
-          pkg.name,
-          'babel-transformer.js',
-        );
-
-        const babelConfig = await configuration.babel.promise({});
-        const transform = await configuration.jestTransforms.promise(
-          {},
-          {babelTransform},
-        );
-        const environment = await configuration.environment.promise('node');
-        const extensions = (await configuration.extensions.promise([])).map(
-          (extension) => extension.replace('.', ''),
-        );
-        const moduleMapper = await configuration.moduleMapper.promise({});
-        const setupEnvFiles = await configuration.setupEnv.promise(
-          rootSetupEnvFiles,
-        );
-        const setupTestsFiles = await configuration.setupTests.promise(
-          rootSetupTestsFiles,
-        );
-
-        await workspace.internal.write(
-          babelTransform,
-          `const {createTransformer} = require('babel-jest'); module.exports = createTransformer(${JSON.stringify(
-            babelConfig,
-          )})`,
-        );
-
-        const config = await configuration.jestFinalize.promise({
-          displayName: pkg.name,
-          rootDir: pkg.root,
-          testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
-          moduleFileExtensions: extensions,
-          testEnvironment: environment,
-          moduleNameMapper: moduleMapper,
-          setupFiles: setupEnvFiles,
-          setupFilesAfterEnv: setupTestsFiles,
-          transform,
-        });
-
-        return config;
-      }),
-    );
-
-    const watchPlugins = await this.configureRoot.jestWatchPlugins.promise([]);
-    const watchIgnorePatterns = await this.configureRoot.watchIgnore.promise(
-      [],
-    );
-
-    const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
-
-    const rootConfig = await this.configureRoot.jestFinalize.promise({
-      rootDir: workspace.root,
-      projects,
-      watchPlugins,
-      watchPathIgnorePatterns: watchIgnorePatterns,
-    } as any);
-
-    await workspace.internal.write(
-      rootConfigPath,
-      `module.exports = ${JSON.stringify(rootConfig)};`,
-    );
-
-    const {
-      coverage = false,
-      debug = false,
-      watch = true,
-      testPattern,
-      testNamePattern,
-      maxWorkers,
-      updateSnapshot,
-    } = this.options;
-
-    const flags = await this.configureRoot.jestFlags.promise({
-      config: rootConfigPath,
-      coverage,
-      watch: watch && testPattern == null,
-      watchAll: watch && testPattern != null,
-      onlyChanged: testPattern == null,
-      testNamePattern,
-      testPathPattern: testPattern,
-      maxWorkers,
-      updateSnapshot,
-      runInBand: debug,
-      forceExit: debug,
-    });
-
-    jest.run(toArgs(flags));
-  }
 }
