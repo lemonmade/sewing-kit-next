@@ -1,45 +1,52 @@
 import exec, {ExecaError} from 'execa';
+import {Work} from '../../work';
 import {Workspace} from '../../workspace';
 import {toArgs} from '../utilities';
 
-interface Options {
+export interface LintTaskOptions {
   fix?: boolean;
 }
 
-export class LintTask {
-  readonly configure = {};
+export interface LintTaskHooks {}
 
-  constructor(
-    public readonly options: Options,
-    public readonly workspace: Workspace,
-  ) {}
+export interface LintTask {
+  readonly hooks: LintTaskHooks;
+  readonly options: LintTaskOptions;
+  readonly workspace: Workspace;
+}
 
-  async run() {
-    const {fix = false} = this.options;
-    const extensions = ['.js', '.mjs', '.ts', '.tsx'];
-    const args = toArgs(
-      {
-        fix,
-        maxWarnings: 0,
-        format: 'codeframe',
-        cache: true,
-        cacheLocation: this.workspace.internal.cachePath('eslint/'),
-        ext: extensions,
-      },
-      {dasherize: true},
-    );
+export async function runLint(
+  options: LintTaskOptions,
+  workspace: Workspace,
+  work: Work,
+) {
+  const {fix = false} = options;
 
-    try {
-      const result = await exec('node_modules/.bin/eslint', ['.', ...args], {
-        env: {FORCE_COLOR: '1'},
-      });
+  await work.tasks.lint.promise({hooks: {}, options, workspace});
 
-      // eslint-disable-next-line no-console
-      console.log(result.all);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log((error as ExecaError).all);
-      process.exitCode = 1;
-    }
+  const extensions = ['.js', '.mjs', '.ts', '.tsx'];
+  const args = toArgs(
+    {
+      fix,
+      maxWarnings: 0,
+      format: 'codeframe',
+      cache: true,
+      cacheLocation: workspace.internal.cachePath('eslint/'),
+      ext: extensions,
+    },
+    {dasherize: true},
+  );
+
+  try {
+    const result = await exec('node_modules/.bin/eslint', ['.', ...args], {
+      env: {FORCE_COLOR: '1'},
+    });
+
+    // eslint-disable-next-line no-console
+    console.log(result.all);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log((error as ExecaError).all);
+    process.exitCode = 1;
   }
 }

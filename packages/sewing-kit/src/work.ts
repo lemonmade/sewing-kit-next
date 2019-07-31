@@ -12,9 +12,6 @@ export class Work {
       import('./workspace').Workspace,
       import('./tasks/testing').TestTask
     >(['test', 'workspace']),
-    lint: new AsyncSeriesHook<
-      import('./workspace').Workspace,
-      import('./tasks/lint').LintTask
-    >(['lint']),
+    lint: new AsyncSeriesHook<import('./tasks/lint').LintTask>(['lintTask']),
   };
 }
