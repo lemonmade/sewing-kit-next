@@ -4,8 +4,14 @@ import 'core-js/features/array/flat-map';
 import {build} from './build';
 import {test} from './test';
 import {lint} from './lint';
+import {typeCheck} from './type-check';
 
-const commands = new Map([['build', build], ['test', test], ['lint', lint]]);
+const commands = new Map([
+  ['build', build],
+  ['test', test],
+  ['lint', lint],
+  ['type-check', typeCheck],
+]);
 
 run();
 

@@ -10,5 +10,8 @@ export class Work {
     ]),
     test: new AsyncSeriesHook<import('./tasks/testing').TestTask>(['testTask']),
     lint: new AsyncSeriesHook<import('./tasks/lint').LintTask>(['lintTask']),
+    typeCheck: new AsyncSeriesHook<import('./tasks/type-check').TypeCheckTask>([
+      'typeCheckTask',
+    ]),
   };
 }
