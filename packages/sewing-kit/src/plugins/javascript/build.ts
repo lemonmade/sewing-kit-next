@@ -1,5 +1,6 @@
 import {produce} from 'immer';
-import {BuildTask, BabelConfig} from '../../tasks/build';
+import {BabelConfig} from '../../types';
+import {BuildTask} from '../../tasks/build';
 import {PLUGIN} from './common';
 
 function addBaseBabelPreset(babelConfig: BabelConfig) {

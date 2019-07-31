@@ -1,12 +1,11 @@
 import webpack, {Configuration as WebpackConfiguration} from 'webpack';
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
-import {Env} from '../../types';
+import {Env, Step} from '../../types';
 import {Workspace} from '../../workspace';
 import {Work} from '../../work';
 
 import {
-  Step,
   BuildTaskOptions,
   BuildTaskHooks,
   PackageBuildHooks,
