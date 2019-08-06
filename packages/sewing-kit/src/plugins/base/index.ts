@@ -1,9 +1,9 @@
-import {Work} from '../../work';
+import {RunnerTasks} from '../../runner';
 
 const PLUGIN = 'SewingKit.base';
 
-export default function base(work: Work) {
-  work.tasks.test.tap(PLUGIN, ({hooks, workspace}) => {
+export default function base(tasks: RunnerTasks) {
+  tasks.test.tap(PLUGIN, ({hooks, workspace}) => {
     hooks.configureRoot.tap(PLUGIN, (hooks) => {
       hooks.watchIgnore.tap(PLUGIN, (watchIgnore) => [
         ...watchIgnore,

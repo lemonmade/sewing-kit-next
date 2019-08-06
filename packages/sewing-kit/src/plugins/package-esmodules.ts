@@ -1,7 +1,7 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
-import {Work} from '../work';
+import {RunnerTasks} from '../runner';
 import {updateBabelPreset, CompileBabelStep} from './utilities';
 
 const PLUGIN = 'SewingKit.package-esmodules';
@@ -13,8 +13,8 @@ declare module '../tasks/build/types' {
   }
 }
 
-export default function packageEsmodules(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+export default function packageEsmodules(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,

@@ -8,16 +8,17 @@ export function createCommand<Flags extends {[key: string]: any}>(
   run: (
     flags: Result<Flags>,
     workspace: import('../workspace').Workspace,
-    work: import('../work').Work,
+    runner: import('../runner').Runner,
   ) => Promise<void>,
 ) {
   return async (argv: string[]) => {
-    const {Work} = await import('../work');
+    const {Runner, Ui, DiagnosticError} = await import('../runner');
 
-    const work = new Work();
+    const ui = new Ui();
+    const runner = new Runner(ui);
 
     for (const plugin of DEFAULT_PLUGINS) {
-      plugin.call(work, work);
+      plugin.call(runner.tasks, runner.tasks);
     }
 
     const {runDiscovery} = await import('../tasks/discovery');
@@ -27,7 +28,21 @@ export function createCommand<Flags extends {[key: string]: any}>(
       {argv},
     );
 
-    const workspace = await runDiscovery({root: root as any}, work);
-    await run(flags as any, workspace, work);
+    try {
+      const workspace = await runDiscovery({root: root as any}, runner);
+      await run(flags as any, workspace, runner);
+    } catch (error) {
+      if (error instanceof DiagnosticError) {
+        ui.log(error.message);
+      } else {
+        ui.log(
+          'The following unexpected error occurred. Please raise an issue on [the sewing-kit repo](https://github.com/Shopify/sewing-kit).',
+        );
+        ui.log(error.message);
+        ui.log(error.stack);
+      }
+
+      process.exitCode = 1;
+    }
   };
 }

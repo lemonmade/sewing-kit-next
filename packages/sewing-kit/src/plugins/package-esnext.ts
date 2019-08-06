@@ -2,7 +2,7 @@ import {join} from 'path';
 import {produce} from 'immer';
 
 import {Runtime} from '../types';
-import {Work} from '../work';
+import {RunnerTasks} from '../runner';
 import {
   updateBabelPreset,
   CompileBabelStep,
@@ -19,8 +19,8 @@ declare module '../tasks/build/types' {
   }
 }
 
-export default function packageEsnext(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+export default function packageEsnext(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.webApp.tap(PLUGIN, ({hooks}) => {
       hooks.configure.tap(PLUGIN, (configurationHooks) => {
         configurationHooks.extensions.tap(PLUGIN, (extensions) => [

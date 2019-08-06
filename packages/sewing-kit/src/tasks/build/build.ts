@@ -2,7 +2,7 @@ import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
 import {Step} from '../../types';
 import {Workspace} from '../../workspace';
-import {Work} from '../../work';
+import {Runner} from '../../runner';
 
 import {
   BuildTaskOptions,
@@ -16,7 +16,7 @@ import {
 export async function runBuild(
   options: BuildTaskOptions,
   workspace: Workspace,
-  work: Work,
+  runner: Runner,
 ) {
   const buildTaskHooks: BuildTaskHooks = {
     pre: new AsyncSeriesWaterfallHook(['steps']),
@@ -28,7 +28,7 @@ export async function runBuild(
     post: new AsyncSeriesWaterfallHook(['steps']),
   };
 
-  await work.tasks.build.promise({
+  await runner.tasks.build.promise({
     hooks: buildTaskHooks,
     options,
     workspace,

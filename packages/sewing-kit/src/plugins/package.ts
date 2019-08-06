@@ -2,13 +2,13 @@ import {basename, join} from 'path';
 import {pathExists} from 'fs-extra';
 import {produce} from 'immer';
 
-import {Work} from '../work';
+import {RunnerTasks} from '../runner';
 import {Package} from '../workspace';
 
 const PLUGIN = 'SewingKit.packages';
 
-export default function packages(work: Work) {
-  work.tasks.test.tap(PLUGIN, ({hooks, workspace}) => {
+export default function packages(tasks: RunnerTasks) {
+  tasks.test.tap(PLUGIN, ({hooks, workspace}) => {
     hooks.configureRoot.tap(PLUGIN, (hooks) => {
       hooks.watchIgnore.tap(
         PLUGIN,
@@ -31,7 +31,7 @@ export default function packages(work: Work) {
     });
   });
 
-  work.tasks.discovery.tap(PLUGIN, (discovery) => {
+  tasks.discovery.tap(PLUGIN, (discovery) => {
     discovery.hooks.packages.tapPromise(PLUGIN, async (packages) => {
       if (await discovery.fs.hasFile('sewing-kit.config.*')) {
         const configOptions = await loadConfig(discovery.root);

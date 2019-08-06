@@ -1,11 +1,11 @@
-import {Work} from '../../work';
+import {RunnerTasks} from '../../runner';
 import {Package} from '../../workspace';
 import {WriteEntriesStep} from '../utilities';
 
 const PLUGIN = 'SewingKit.package-typescript';
 
-export default function packageTypeScript(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+export default function packageTypeScript(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     // We don’t build TypeScript definitions for projects that also include
     // web apps/ services.
     if (workspace.private) {

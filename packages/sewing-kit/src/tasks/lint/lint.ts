@@ -1,6 +1,6 @@
-import exec, {ExecaError} from 'execa';
-import {Work} from '../../work';
+import exec from 'execa';
 import {Workspace} from '../../workspace';
+import {Runner, createStep, DiagnosticError} from '../../runner';
 import {toArgs} from '../utilities';
 
 export interface LintTaskOptions {
@@ -18,11 +18,11 @@ export interface LintTask {
 export async function runLint(
   options: LintTaskOptions,
   workspace: Workspace,
-  work: Work,
+  runner: Runner,
 ) {
   const {fix = false} = options;
 
-  await work.tasks.lint.promise({hooks: {}, options, workspace});
+  await runner.tasks.lint.promise({hooks: {}, options, workspace});
 
   const extensions = ['.js', '.mjs', '.ts', '.tsx'];
   const args = toArgs(
@@ -37,16 +37,21 @@ export async function runLint(
     {dasherize: true},
   );
 
-  try {
-    const result = await exec('node_modules/.bin/eslint', ['.', ...args], {
-      env: {FORCE_COLOR: '1'},
-    });
+  const steps = [
+    createStep(async (ui) => {
+      try {
+        const result = await exec('node_modules/.bin/eslint', ['.', ...args], {
+          env: {FORCE_COLOR: '1'},
+        });
 
-    // eslint-disable-next-line no-console
-    console.log(result.all);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log((error as ExecaError).all);
-    process.exitCode = 1;
-  }
+        ui.log(result.all.trim() || 'Lint successfully completed.');
+      } catch (error) {
+        throw new DiagnosticError({
+          message: error.all,
+        });
+      }
+    }),
+  ];
+
+  await runner.run(steps);
 }

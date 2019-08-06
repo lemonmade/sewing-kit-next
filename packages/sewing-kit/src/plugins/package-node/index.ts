@@ -1,7 +1,7 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
-import {Work} from '../../work';
+import {RunnerTasks} from '../../runner';
 import {Runtime} from '../../types';
 import {
   changeBabelPreset,
@@ -20,14 +20,14 @@ declare module '../../tasks/build/types' {
   }
 }
 
-export default function packageNode(work: Work) {
-  work.tasks.test.tap(PLUGIN, ({hooks}) => {
+export default function packageNode(tasks: RunnerTasks) {
+  tasks.test.tap(PLUGIN, ({hooks}) => {
     hooks.configureProject.tap(PLUGIN, ({hooks}) => {
       hooks.extensions.tap(PLUGIN, (extensions) => [EXTENSION, ...extensions]);
     });
   });
 
-  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,

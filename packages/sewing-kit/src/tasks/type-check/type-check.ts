@@ -1,13 +1,13 @@
 import exec, {ExecaError} from 'execa';
 
-import {Work} from '../../work';
+import {Runner} from '../../runner';
 import {Workspace} from '../../workspace';
 import {TypeCheckOptions} from './types';
 
 export async function runTypeCheck(
   options: TypeCheckOptions,
   _workspace: Workspace,
-  _work: Work,
+  _runner: Runner,
 ) {
   const {heap} = options;
 

@@ -3,7 +3,10 @@
   "compilerOptions": {
     "outDir": "build/ts",
     "baseUrl": "src",
-    "rootDir": "src"
+    "rootDir": "src",
+    "typeRoots": [
+      "./config/typescript/typings"
+    ]
   },
   "include": ["src/**/*.ts"],
   "references": []

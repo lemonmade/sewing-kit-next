@@ -2,13 +2,13 @@ import {relative, dirname} from 'path';
 import exec from 'execa';
 
 import {Runtime} from '../../types';
-import {Work} from '../../work';
+import {RunnerTasks} from '../../runner';
 import {Package} from '../../workspace';
 
 const PLUGIN = 'SewingKit.package-binaries';
 
-export default function packageBinaries(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({hooks}) => {
+export default function packageBinaries(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.steps.tap(PLUGIN, (steps) => [
         ...steps,

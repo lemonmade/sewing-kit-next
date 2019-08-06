@@ -2,7 +2,7 @@ import {join} from 'path';
 import {produce} from 'immer';
 
 import {Runtime} from '../types';
-import {Work} from '../work';
+import {RunnerTasks} from '../runner';
 import {
   updateBabelPreset,
   changeBabelPreset,
@@ -33,8 +33,8 @@ const setNodePreset = changeBabelPreset(
   'babel-preset-shopify/node',
 );
 
-export default function packageCommonJs(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+export default function packageCommonJs(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,

@@ -23,7 +23,7 @@ export const test = createCommand(
       '--no-watch': noWatch,
     },
     workspace,
-    work,
+    runner,
   ) => {
     const {runTests} = await import('../tasks/testing');
 
@@ -39,7 +39,7 @@ export const test = createCommand(
         watch: noWatch == null ? noWatch : !noWatch,
       },
       workspace,
-      work,
+      runner,
     );
   },
 );

@@ -1,7 +1,7 @@
 import {dirname, basename, join} from 'path';
 import {produce} from 'immer';
 
-import {Work} from '../work';
+import {RunnerTasks} from '../runner';
 import {WebAppBuildOptions} from '../tasks/build';
 
 import {updateBabelPreset} from './utilities';
@@ -21,8 +21,8 @@ const BROWSER_TARGETS: {
   latest: [],
 };
 
-export default function differentialServing(work: Work) {
-  work.tasks.build.tap(PLUGIN, ({hooks}) => {
+export default function differentialServing(tasks: RunnerTasks) {
+  tasks.build.tap(PLUGIN, ({hooks}) => {
     hooks.webApp.tap(PLUGIN, ({hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) =>
         Object.keys(BROWSER_TARGETS).flatMap((browserTarget) =>

@@ -1,10 +1,10 @@
 import {produce} from 'immer';
-import {Work} from '../../work';
+import {RunnerTasks} from '../../runner';
 
 const PLUGIN = 'SewingKit.jest';
 
-export default function json(work: Work) {
-  work.tasks.test.tap(PLUGIN, ({workspace, hooks}) => {
+export default function json(tasks: RunnerTasks) {
+  tasks.test.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.configureRoot.tap(PLUGIN, (hooks) => {
       hooks.jestWatchPlugins.tap(
         PLUGIN,

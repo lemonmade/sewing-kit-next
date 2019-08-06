@@ -1,6 +1,7 @@
 {
   "cSpell.ignoreWords": [
     "dasherize",
+    "esmodules",
     "execa",
     "immer",
     "tapable"

@@ -1,7 +1,7 @@
 import {basename} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {WebApp, Service, Package, Workspace, FileSystem} from '../../workspace';
-import {Work} from '../../work';
+import {Runner} from '../../runner';
 
 export interface DiscoveryHooks {
   readonly webApps: AsyncSeriesWaterfallHook<WebApp[]>;
@@ -21,7 +21,10 @@ export interface DiscoveryTask {
   options: DiscoveryTaskOptions;
 }
 
-export async function runDiscovery(options: DiscoveryTaskOptions, work: Work) {
+export async function runDiscovery(
+  options: DiscoveryTaskOptions,
+  runner: Runner,
+) {
   const hooks: DiscoveryHooks = {
     webApps: new AsyncSeriesWaterfallHook(['webApps']),
     packages: new AsyncSeriesWaterfallHook(['packages']),
@@ -32,7 +35,7 @@ export async function runDiscovery(options: DiscoveryTaskOptions, work: Work) {
   const name = basename(root);
   const fs = new FileSystem(root);
 
-  await work.tasks.discovery.promise({
+  await runner.tasks.discovery.promise({
     fs,
     name,
     root,

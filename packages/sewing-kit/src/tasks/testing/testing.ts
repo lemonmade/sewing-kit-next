@@ -1,7 +1,7 @@
 import jest from 'jest';
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
-import {Work} from '../../work';
+import {Runner} from '../../runner';
 import {Workspace} from '../../workspace';
 import {toArgs} from '../utilities';
 
@@ -15,7 +15,7 @@ import {
 export async function runTests(
   options: TestTaskOptions,
   workspace: Workspace,
-  work: Work,
+  runner: Runner,
 ) {
   process.env.BABEL_ENV = 'test';
   process.env.NODE_ENV = 'test';
@@ -26,7 +26,7 @@ export async function runTests(
     configurePackage: new AsyncSeriesHook(['packageConfiguration']),
   };
 
-  await work.tasks.test.promise({hooks, workspace, options});
+  await runner.tasks.test.promise({hooks, workspace, options});
 
   const rootConfigHooks: RootConfigurationHooks = {
     setupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
