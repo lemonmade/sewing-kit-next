@@ -44,9 +44,9 @@ export class Runner {
       }
     } catch (error) {
       if (error instanceof DiagnosticError) {
-        ui.log(error.message);
+        ui.error(error.message);
       } else {
-        ui.log(
+        ui.error(
           (fmt) =>
             `🧵 The following unexpected error occurred. We want to provide more useful suggestions when errors occur, so please open an issue on ${fmt.link(
               'the sewing-kit repo',
@@ -58,9 +58,9 @@ export class Runner {
         // ui.log(error.message);
 
         if (error.all == null) {
-          ui.log(error.stack);
+          ui.error(error.stack);
         } else {
-          ui.log(error.all);
+          ui.error(error.all);
         }
       }
 

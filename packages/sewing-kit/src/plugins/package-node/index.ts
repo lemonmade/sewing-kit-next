@@ -6,8 +6,8 @@ import {Runtime} from '../../types';
 import {
   changeBabelPreset,
   updateBabelPreset,
-  CompileBabelStep,
-  WriteEntriesStep,
+  createCompileBabelStep,
+  createWriteEntriesStep,
 } from '../utilities';
 
 const PLUGIN = 'SewingKit.package-commonjs';
@@ -71,11 +71,11 @@ export default function packageNode(tasks: RunnerTasks) {
 
           return produce(steps, (steps) => {
             steps.push(
-              new CompileBabelStep(pkg, workspace, config, {
+              createCompileBabelStep(pkg, workspace, config, {
                 outputPath,
                 configFile: 'babel.node.js',
               }),
-              new WriteEntriesStep(pkg, {
+              createWriteEntriesStep(pkg, {
                 outputPath,
                 extension: EXTENSION,
                 exclude: (entry) => entry.runtime === Runtime.Node,

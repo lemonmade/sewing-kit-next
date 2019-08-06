@@ -10,10 +10,6 @@ export interface BabelConfig {
   plugins?: string[];
 }
 
-export interface Step {
-  run(): Promise<void>;
-}
-
 export enum Runtime {
   Node = 'node',
   Browser = 'browser',

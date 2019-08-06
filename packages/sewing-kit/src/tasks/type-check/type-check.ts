@@ -1,30 +1,39 @@
-import exec, {ExecaError} from 'execa';
+import exec from 'execa';
 
-import {Runner} from '../../runner';
+import {Runner, createStep, DiagnosticError} from '../../runner';
 import {Workspace} from '../../workspace';
 import {TypeCheckOptions} from './types';
 
 export async function runTypeCheck(
   options: TypeCheckOptions,
-  _workspace: Workspace,
-  _runner: Runner,
+  workspace: Workspace,
+  runner: Runner,
 ) {
-  const {heap} = options;
+  await runner.tasks.typeCheck.promise({
+    hooks: {},
+    options,
+    workspace,
+  });
 
+  const {heap} = options;
   const heapArguments = heap ? [`--max-old-space-size=${heap}`] : [];
 
-  try {
-    const result = await exec('node', [
-      ...heapArguments,
-      'node_modules/.bin/tsc',
-      '--build',
-    ]);
+  await runner.run([
+    createStep(async (ui) => {
+      try {
+        const result = await exec('node', [
+          ...heapArguments,
+          'node_modules/.bin/tsc',
+          '--build',
+          '--pretty',
+        ]);
 
-    // eslint-disable-next-line no-console
-    console.log(result.all);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log((error as ExecaError).all);
-    process.exitCode = 1;
-  }
+        ui.log(result.all.trim() || 'Type check completed successfully.');
+      } catch (error) {
+        throw new DiagnosticError({
+          message: error.all,
+        });
+      }
+    }),
+  ]);
 }

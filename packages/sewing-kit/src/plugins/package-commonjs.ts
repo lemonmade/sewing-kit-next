@@ -6,8 +6,8 @@ import {RunnerTasks} from '../runner';
 import {
   updateBabelPreset,
   changeBabelPreset,
-  CompileBabelStep,
-  WriteEntriesStep,
+  createCompileBabelStep,
+  createWriteEntriesStep,
 } from './utilities';
 
 const PLUGIN = 'SewingKit.package-commonjs';
@@ -74,11 +74,11 @@ export default function packageCommonJs(tasks: RunnerTasks) {
 
           return produce(steps, (steps) => {
             steps.push(
-              new CompileBabelStep(pkg, workspace, config, {
+              createCompileBabelStep(pkg, workspace, config, {
                 outputPath,
                 configFile: 'babel.cjs.js',
               }),
-              new WriteEntriesStep(pkg, {
+              createWriteEntriesStep(pkg, {
                 outputPath,
                 extension: '.js',
                 contents: (relative) =>

@@ -1,8 +1,9 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 import {Configuration as WebpackConfiguration} from 'webpack';
 
+import {Step} from '../../runner';
 import {Package, WebApp, Workspace} from '../../workspace';
-import {Env, BabelConfig, Step} from '../../types';
+import {Env, BabelConfig} from '../../types';
 
 // PACKAGE
 

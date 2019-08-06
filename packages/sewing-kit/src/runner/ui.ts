@@ -7,40 +7,52 @@ interface Options {
   stderr: NodeJS.WriteStream;
 }
 
-interface Formatter {
-  link(text: string, url: string): string;
+class Formatter {
+  readonly link: typeof link;
+
+  constructor(stream: NodeJS.WriteStream) {
+    this.link = supportsHyperlink(stream)
+      ? link
+      : (text, url) => `${text} (${url})`;
+  }
 }
 
 interface LogFunction {
   (format: Formatter): string;
 }
 
+class FormattedStream {
+  private readonly formatter: Formatter;
+
+  constructor(private readonly stream: NodeJS.WriteStream) {
+    this.formatter = new Formatter(stream);
+  }
+
+  write(value: LogFunction | string) {
+    const logged =
+      typeof value === 'function' ? value(this.formatter) : String(value);
+
+    this.stream.write(`${logged}\n`);
+  }
+}
+
 export class Ui {
-  private stdin: Options['stdin'];
-  private stdout: Options['stdout'];
-  private stderr: Options['stderr'];
+  private readonly stdout: FormattedStream;
+  private readonly stderr: FormattedStream;
 
   constructor({
-    stdin = process.stdin,
     stdout = process.stdout,
     stderr = process.stderr,
   }: Partial<Options> = {}) {
-    this.stdin = stdin;
-    this.stdout = stdout;
-    this.stderr = stderr;
+    this.stdout = new FormattedStream(stdout);
+    this.stderr = new FormattedStream(stderr);
   }
 
   log(value: LogFunction | string) {
-    const logged =
-      typeof value === 'function'
-        ? value({
-            link: (text, url) =>
-              supportsHyperlink(this.stdout)
-                ? link(text, url)
-                : `${text} (${url})`,
-          })
-        : String(value);
+    this.stdout.write(value);
+  }
 
-    this.stdout.write(`${logged}\n`);
+  error(value: LogFunction | string) {
+    this.stderr.write(value);
   }
 }

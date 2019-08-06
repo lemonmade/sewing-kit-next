@@ -5,8 +5,8 @@ import {Runtime} from '../types';
 import {RunnerTasks} from '../runner';
 import {
   updateBabelPreset,
-  CompileBabelStep,
-  WriteEntriesStep,
+  createCompileBabelStep,
+  createWriteEntriesStep,
 } from './utilities';
 
 const PLUGIN = 'SewingKit.package-commonjs';
@@ -80,11 +80,11 @@ export default function packageEsnext(tasks: RunnerTasks) {
 
           return produce(steps, (steps) => {
             steps.push(
-              new CompileBabelStep(pkg, workspace, config, {
+              createCompileBabelStep(pkg, workspace, config, {
                 outputPath,
                 configFile: 'babel.esnext.js',
               }),
-              new WriteEntriesStep(pkg, {
+              createWriteEntriesStep(pkg, {
                 outputPath,
                 extension: EXTENSION,
                 exclude: (entry) => entry.runtime === Runtime.Node,

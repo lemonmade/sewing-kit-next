@@ -2,7 +2,7 @@ import {join} from 'path';
 import {produce} from 'immer';
 
 import {RunnerTasks} from '../runner';
-import {updateBabelPreset, CompileBabelStep} from './utilities';
+import {updateBabelPreset, createCompileBabelStep} from './utilities';
 
 const PLUGIN = 'SewingKit.package-esmodules';
 const VARIANT = 'esmodules';
@@ -54,7 +54,7 @@ export default function packageEsmodules(tasks: RunnerTasks) {
 
           return produce(steps, (steps) => {
             steps.push(
-              new CompileBabelStep(pkg, workspace, config, {
+              createCompileBabelStep(pkg, workspace, config, {
                 outputPath,
                 configFile: 'babel.esm.js',
               }),

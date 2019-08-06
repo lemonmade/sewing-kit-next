@@ -2,6 +2,7 @@ import {resolve, relative} from 'path';
 import {exec} from 'child_process';
 
 import {PackageBuildConfigurationHooks} from '../tasks/build';
+import {createStep} from '../runner';
 import {Workspace, Package, PackageEntry, Project} from '../workspace';
 
 export function lazy<T extends any[], R>(
@@ -111,19 +112,17 @@ interface WriteEntriesOptions {
 
 const defaultExclude = () => false;
 
-export class WriteEntriesStep {
-  constructor(private pkg: Package, private options: WriteEntriesOptions) {}
-
-  async run() {
+export function createWriteEntriesStep(
+  pkg: Package,
+  options: WriteEntriesOptions,
+) {
+  return createStep(async () => {
     const {
-      pkg,
-      options: {
-        extension = '.js',
-        outputPath,
-        contents,
-        exclude = defaultExclude,
-      },
-    } = this;
+      extension = '.js',
+      outputPath,
+      contents,
+      exclude = defaultExclude,
+    } = options;
 
     const sourceRoot = resolve(pkg.root, 'src');
 
@@ -147,7 +146,7 @@ export class WriteEntriesStep {
         contents(relativeFromRoot),
       );
     }
-  }
+  });
 }
 
 interface CompileBabelOptions {
@@ -155,21 +154,14 @@ interface CompileBabelOptions {
   outputPath: string;
 }
 
-export class CompileBabelStep {
-  constructor(
-    private pkg: Package,
-    private workspace: Workspace,
-    private config: PackageBuildConfigurationHooks,
-    private options: CompileBabelOptions,
-  ) {}
-
-  async run(): Promise<void> {
-    const {
-      pkg,
-      config,
-      workspace,
-      options: {configFile = 'babel.js', outputPath},
-    } = this;
+export function createCompileBabelStep(
+  pkg: Package,
+  workspace: Workspace,
+  config: PackageBuildConfigurationHooks,
+  options: CompileBabelOptions,
+) {
+  return createStep(async () => {
+    const {configFile = 'babel.js', outputPath} = options;
 
     const babelConfigPath = workspace.internal.configPath(
       `build/packages/${pkg.name}/${configFile}`,
@@ -201,7 +193,7 @@ export class CompileBabelStep {
         },
       );
     });
-  }
+  });
 }
 
 function normalizedRelative(from: string, to: string) {

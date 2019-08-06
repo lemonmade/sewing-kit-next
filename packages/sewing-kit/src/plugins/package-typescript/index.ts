@@ -1,6 +1,6 @@
 import {RunnerTasks} from '../../runner';
 import {Package} from '../../workspace';
-import {WriteEntriesStep} from '../utilities';
+import {createWriteEntriesStep} from '../utilities';
 
 const PLUGIN = 'SewingKit.package-typescript';
 
@@ -15,7 +15,7 @@ export default function packageTypeScript(tasks: RunnerTasks) {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.steps.tapPromise(PLUGIN, async (steps) => [
         ...steps,
-        new WriteEntriesStep(pkg, {
+        createWriteEntriesStep(pkg, {
           outputPath: await getOutputPath(pkg),
           extension: '.d.ts',
           contents: (relative) => `export * from ${JSON.stringify(relative)};`,
