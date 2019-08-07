@@ -29,10 +29,15 @@ export default function packageNode(tasks: RunnerTasks) {
 
   tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
-      hooks.variants.tap(PLUGIN, (variants) => [
-        ...variants,
-        {[VARIANT]: true},
-      ]);
+      hooks.variants.tap(PLUGIN, (variants) => {
+        // If all the entries already target node, there is no need to do a
+        // node-only build (it will match the CommonJS build).
+        if (pkg.entries.every(({runtime}) => runtime === Runtime.Node)) {
+          return variants;
+        }
+
+        return [...variants, {[VARIANT]: true}];
+      });
 
       hooks.configure.tap(PLUGIN, (configurationHooks, {node}) => {
         if (!node) {
@@ -58,12 +63,7 @@ export default function packageNode(tasks: RunnerTasks) {
       hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {node}}) => {
-          // If this isn't the node variant, or if all the entries already
-          // target node, there is no need to do a node-only build.
-          if (
-            !node ||
-            pkg.entries.every(({runtime}) => runtime === Runtime.Node)
-          ) {
+          if (!node) {
             return steps;
           }
 

@@ -1,4 +1,6 @@
+import {clearLine, cursorTo} from 'readline';
 import {link} from 'ansi-escapes';
+import chalk from 'chalk';
 import {supportsHyperlink} from 'supports-hyperlinks';
 
 interface Options {
@@ -14,6 +16,26 @@ class Formatter {
     this.link = supportsHyperlink(stream)
       ? link
       : (text, url) => `${text} (${url})`;
+  }
+
+  emphasis(text: string) {
+    return chalk.bold(text);
+  }
+
+  code(text: string) {
+    return chalk.gray(text);
+  }
+
+  info(text: string) {
+    return chalk.cyan(text);
+  }
+
+  success(text: string) {
+    return chalk.green(text);
+  }
+
+  failure(text: string) {
+    return chalk.red(text);
   }
 }
 
@@ -34,13 +56,18 @@ class FormattedStream {
     const logged =
       typeof value === 'function' ? value(this.formatter) : String(value);
 
-    this.stream.write(`${logged}\n`);
+    this.stream.write(logged);
+  }
+
+  clear() {
+    clearLine(this.stream, 0);
+    cursorTo(this.stream, 0);
   }
 }
 
 export class Ui {
-  private readonly stdout: FormattedStream;
-  private readonly stderr: FormattedStream;
+  readonly stdout: FormattedStream;
+  readonly stderr: FormattedStream;
 
   constructor({
     stdout = process.stdout,
@@ -50,20 +77,17 @@ export class Ui {
     this.stderr = new FormattedStream(stderr);
   }
 
-  async spin(label: Loggable, wait: () => void) {
-    this.log(label);
+  async spin(_label: Loggable, wait: () => void) {
     await wait();
-    this.log(
-      (...args) =>
-        `${typeof label === 'function' ? label(...args) : label} finished`,
-    );
   }
 
   log(value: Loggable) {
     this.stdout.write(value);
+    this.stdout.write('\n');
   }
 
   error(value: Loggable) {
     this.stderr.write(value);
+    this.stderr.write('\n');
   }
 }

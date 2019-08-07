@@ -20,6 +20,31 @@ export interface StepRunner {
   run(steps: Step[]): Promise<void>;
 }
 
+class StepUi {
+  constructor(private ui: Ui) {}
+
+  toString() {}
+
+  done(sucess = true) {}
+}
+
+class RunnerUi {
+  private interval: any;
+  private spinnerIndex = 0;
+  private steps: StepUi[] = [];
+  private lastContentHeight = 0;
+
+  constructor(private readonly ui: Ui) {}
+
+  start() {
+    this.interval = setTimeout(this.update, 60);
+  }
+
+  private update = () => {
+    this.ui.stdout.clear();
+  };
+}
+
 export class Runner {
   readonly tasks: RunnerTasks = {
     discovery: new AsyncSeriesHook<import('../tasks/discovery').DiscoveryTask>([
@@ -39,21 +64,72 @@ export class Runner {
 
   constructor(private readonly ui: Ui) {}
 
-  async run(steps: Step[]) {
+  async run(steps: Step[], root = true) {
     const {ui} = this;
     const stepRunner: StepRunner = {
       run: (steps) => {
-        return this.run(steps);
+        return this.run(steps, false);
       },
     };
 
+    let currentIndex = 0;
+    let label: any;
+    let interval: any;
+    const symbols = '⠄⠆⠇⠋⠙⠸⠰⠠⠰⠸⠙⠋⠇⠆';
+    const indent = root ? '' : '   ';
+    const update = () => {
+      ui.stdout.clear();
+      ui.stdout.write(
+        (fmt) =>
+          `${indent}${fmt.info(symbols[currentIndex])} ${
+            typeof label === 'function' ? label(fmt) : label
+          }`,
+      );
+    };
+
+    const iteration = () => {
+      update();
+      currentIndex = (currentIndex + 1) % symbols.length;
+    };
+
+    if (root) {
+      iteration();
+      interval = setInterval(iteration, 60);
+    }
+
     try {
       for (const step of steps) {
+        label = step.label;
+
+        if (label) {
+          update();
+        }
+
         await step.run(ui, stepRunner);
+
+        if (label) {
+          ui.stdout.clear();
+          ui.log(
+            (fmt) =>
+              `${indent}${fmt.success('✓')} ${
+                typeof step.label === 'function' ? step.label(fmt) : step.label
+              }`,
+          );
+        }
+      }
+
+      if (interval) {
+        clearInterval(interval);
       }
     } catch (error) {
+      clearInterval(interval);
+
       if (error instanceof DiagnosticError) {
         ui.error(error.message);
+
+        if (error.suggestion) {
+          ui.error(error.suggestion);
+        }
       } else {
         ui.error(
           (fmt) =>

@@ -31,10 +31,16 @@ export default function packageEsnext(tasks: RunnerTasks) {
     });
 
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
-      hooks.variants.tap(PLUGIN, (variants) => [
-        ...variants,
-        {[VARIANT]: true},
-      ]);
+      hooks.variants.tap(PLUGIN, (variants) => {
+        // If all the entries are Node entries, there is no point in producing
+        // an un-compiled build, because the CommonJS build will already be tailored
+        // to the baseline version of Node.
+        if (pkg.entries.every(({runtime}) => runtime === Runtime.Node)) {
+          return variants;
+        }
+
+        return [...variants, {[VARIANT]: true}];
+      });
 
       hooks.configure.tap(PLUGIN, (configurationHooks, {esnext}) => {
         if (!esnext) {
@@ -66,13 +72,7 @@ export default function packageEsnext(tasks: RunnerTasks) {
       hooks.steps.tapPromise(
         PLUGIN,
         async (steps, {config, variant: {esnext}}) => {
-          // If all the entries are Node entries, there is no point in producing
-          // an un-compiled build, because the CommonJS build will already be tailored
-          // to the baseline version of Node.
-          if (
-            !esnext ||
-            pkg.entries.every(({runtime}) => runtime === Runtime.Node)
-          ) {
+          if (!esnext) {
             return steps;
           }
 

@@ -52,7 +52,7 @@ export async function runBuild(
       const variants = await hooks.variants.promise([]);
 
       return variants.map((variant) => {
-        return createStep(async (_, runner) => {
+        return createStep({label: `Building variant`}, async (_, runner) => {
           const configurationHooks: BrowserBuildConfigurationHooks = {
             babel: new AsyncSeriesWaterfallHook(['babelConfig']),
             entries: new AsyncSeriesWaterfallHook(['entries']),
@@ -93,30 +93,37 @@ export async function runBuild(
 
           const variants = await hooks.variants.promise([]);
 
-          return createStep(async (ui, runner) => {
-            await ui.spin(`Building package ${pkg.name}`, async () => {
+          return createStep(
+            {label: (fmt) => `Build package ${fmt.emphasis(pkg.name)}`},
+            async (_ui, runner) => {
               const steps = variants.map((variant) =>
-                createStep(async (_, runner) => {
-                  const configurationHooks: PackageBuildConfigurationHooks = {
-                    babel: new AsyncSeriesWaterfallHook(['babelConfig']),
-                    output: new AsyncSeriesWaterfallHook(['output']),
-                    extensions: new AsyncSeriesWaterfallHook(['extensions']),
-                  };
+                createStep(
+                  {
+                    label: (fmt) =>
+                      `Build ${fmt.code(Object.keys(variant)[0])} variant`,
+                  },
+                  async (_, runner) => {
+                    const configurationHooks: PackageBuildConfigurationHooks = {
+                      babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+                      output: new AsyncSeriesWaterfallHook(['output']),
+                      extensions: new AsyncSeriesWaterfallHook(['extensions']),
+                    };
 
-                  await hooks.configure.promise(configurationHooks, variant);
+                    await hooks.configure.promise(configurationHooks, variant);
 
-                  const steps = await hooks.steps.promise([], {
-                    variant,
-                    config: configurationHooks,
-                  });
+                    const steps = await hooks.steps.promise([], {
+                      variant,
+                      config: configurationHooks,
+                    });
 
-                  await runner.run(steps);
-                }),
+                    await runner.run(steps);
+                  },
+                ),
               );
 
               await runner.run(steps);
-            });
-          });
+            },
+          );
         }),
       );
 
