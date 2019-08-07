@@ -16,6 +16,10 @@ export interface RunnerTasks {
   >;
 }
 
+export interface StepRunner {
+  run(steps: Step[]): Promise<void>;
+}
+
 export class Runner {
   readonly tasks: RunnerTasks = {
     discovery: new AsyncSeriesHook<import('../tasks/discovery').DiscoveryTask>([
@@ -37,10 +41,15 @@ export class Runner {
 
   async run(steps: Step[]) {
     const {ui} = this;
+    const stepRunner: StepRunner = {
+      run: (steps) => {
+        return this.run(steps);
+      },
+    };
 
     try {
       for (const step of steps) {
-        await step.run(ui);
+        await step.run(ui, stepRunner);
       }
     } catch (error) {
       if (error instanceof DiagnosticError) {

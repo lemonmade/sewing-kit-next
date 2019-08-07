@@ -52,7 +52,7 @@ export async function runBuild(
       const variants = await hooks.variants.promise([]);
 
       return variants.map((variant) => {
-        return createStep(async (...args) => {
+        return createStep(async (_, runner) => {
           const configurationHooks: BrowserBuildConfigurationHooks = {
             babel: new AsyncSeriesWaterfallHook(['babelConfig']),
             entries: new AsyncSeriesWaterfallHook(['entries']),
@@ -72,9 +72,7 @@ export async function runBuild(
             serviceWorkerConfig: configurationHooks,
           });
 
-          for (const step of steps) {
-            await step.run(...args);
-          }
+          await runner.run(steps);
         });
       });
     }),
@@ -82,7 +80,7 @@ export async function runBuild(
 
   const packageSteps: Step[] = workspace.private
     ? []
-    : (await Promise.all(
+    : await Promise.all(
         workspace.packages.map(async (pkg) => {
           const hooks: PackageBuildHooks = {
             variants: new AsyncSeriesWaterfallHook(['variants']),
@@ -95,28 +93,32 @@ export async function runBuild(
 
           const variants = await hooks.variants.promise([]);
 
-          return variants.map((variant) => {
-            return createStep(async (...args) => {
-              const configurationHooks: PackageBuildConfigurationHooks = {
-                babel: new AsyncSeriesWaterfallHook(['babelConfig']),
-                output: new AsyncSeriesWaterfallHook(['output']),
-                extensions: new AsyncSeriesWaterfallHook(['extensions']),
-              };
+          return createStep(async (ui, runner) => {
+            await ui.spin(`Building package ${pkg.name}`, async () => {
+              const steps = variants.map((variant) =>
+                createStep(async (_, runner) => {
+                  const configurationHooks: PackageBuildConfigurationHooks = {
+                    babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+                    output: new AsyncSeriesWaterfallHook(['output']),
+                    extensions: new AsyncSeriesWaterfallHook(['extensions']),
+                  };
 
-              await hooks.configure.promise(configurationHooks, variant);
+                  await hooks.configure.promise(configurationHooks, variant);
 
-              const steps = await hooks.steps.promise([], {
-                variant,
-                config: configurationHooks,
-              });
+                  const steps = await hooks.steps.promise([], {
+                    variant,
+                    config: configurationHooks,
+                  });
 
-              for (const step of steps) {
-                await step.run(...args);
-              }
+                  await runner.run(steps);
+                }),
+              );
+
+              await runner.run(steps);
             });
           });
         }),
-      )).flat();
+      );
 
   await runner.run([...webAppSteps, ...packageSteps]);
 }

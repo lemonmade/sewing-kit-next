@@ -21,6 +21,8 @@ interface LogFunction {
   (format: Formatter): string;
 }
 
+type Loggable = LogFunction | string;
+
 class FormattedStream {
   private readonly formatter: Formatter;
 
@@ -28,7 +30,7 @@ class FormattedStream {
     this.formatter = new Formatter(stream);
   }
 
-  write(value: LogFunction | string) {
+  write(value: Loggable) {
     const logged =
       typeof value === 'function' ? value(this.formatter) : String(value);
 
@@ -48,11 +50,20 @@ export class Ui {
     this.stderr = new FormattedStream(stderr);
   }
 
-  log(value: LogFunction | string) {
+  async spin(label: Loggable, wait: () => void) {
+    this.log(label);
+    await wait();
+    this.log(
+      (...args) =>
+        `${typeof label === 'function' ? label(...args) : label} finished`,
+    );
+  }
+
+  log(value: Loggable) {
     this.stdout.write(value);
   }
 
-  error(value: LogFunction | string) {
+  error(value: Loggable) {
     this.stderr.write(value);
   }
 }

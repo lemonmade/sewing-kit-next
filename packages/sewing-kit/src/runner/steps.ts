@@ -1,7 +1,8 @@
-import {Ui} from './ui';
-
 export interface Step {
-  run(ui: Ui): void | Promise<void>;
+  run(
+    ui: import('./ui').Ui,
+    runner: import('./runner').StepRunner,
+  ): void | Promise<void>;
 }
 
 export function createStep(run: Step['run']): Step {
