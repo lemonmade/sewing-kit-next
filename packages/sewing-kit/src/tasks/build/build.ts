@@ -94,13 +94,13 @@ export async function runBuild(
           const variants = await hooks.variants.promise([]);
 
           return createStep(
-            {label: (fmt) => `Build package ${fmt.emphasis(pkg.name)}`},
+            {label: (fmt) => fmt`Build package {emphasis ${pkg.name}}`},
             async (_ui, runner) => {
               const steps = variants.map((variant) =>
                 createStep(
                   {
                     label: (fmt) =>
-                      `Build ${fmt.code(Object.keys(variant)[0])} variant`,
+                      fmt`Build {code ${Object.keys(variant)[0]}} variant`,
                   },
                   async (_, runner) => {
                     const configurationHooks: PackageBuildConfigurationHooks = {

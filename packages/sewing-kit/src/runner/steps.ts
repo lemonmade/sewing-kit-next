@@ -4,7 +4,7 @@ export interface Step {
   label?: FirstArgument<import('./ui').Ui['log']>;
   run(
     ui: import('./ui').Ui,
-    runner: import('./runner').StepRunner,
+    runner: import('./runner').NestedStepRunner,
   ): void | Promise<void>;
 }
 

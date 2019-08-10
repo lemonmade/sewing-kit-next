@@ -1,4 +1,4 @@
-import {clearLine, cursorTo} from 'readline';
+import {clearScreenDown, clearLine, moveCursor, cursorTo} from 'readline';
 import {link} from 'ansi-escapes';
 import chalk from 'chalk';
 import {supportsHyperlink} from 'supports-hyperlinks';
@@ -9,59 +9,80 @@ interface Options {
   stderr: NodeJS.WriteStream;
 }
 
-class Formatter {
-  readonly link: typeof link;
+const CHALK_MAPPINGS = new Map([
+  ['success', 'green'],
+  ['error', 'red'],
+  ['info', 'blue'],
+  ['subdued', 'dim'],
+  ['emphasis', 'bold'],
+  ['code', 'inverse'],
+]);
 
-  constructor(stream: NodeJS.WriteStream) {
-    this.link = supportsHyperlink(stream)
-      ? link
-      : (text, url) => `${text} (${url})`;
-  }
+function createFormatter(stream: NodeJS.WriteStream) {
+  const supportsLinks = supportsHyperlink(stream);
 
-  emphasis(text: string) {
-    return chalk.bold(text);
-  }
+  const formatString = (str: string) => {
+    const formattingRegex = /\{(success|error|info|subdued|emphasis|code)/g;
+    const linkRegex = /\{link\s+(.*?)(?=http)([^}])*\}/;
 
-  code(text: string) {
-    return chalk.gray(text);
-  }
+    return str
+      .replace(formattingRegex, (_, format) => {
+        return `{${CHALK_MAPPINGS.get(format)}`;
+      })
+      .replace(linkRegex, (_, text: string, url: string) => {
+        return supportsLinks
+          ? link(text.trim(), url)
+          : `${text.trim()} (${url})`;
+      });
+  };
 
-  info(text: string) {
-    return chalk.cyan(text);
-  }
+  const processInterpolation = (interpolated: Loggable) => {
+    return typeof interpolated === 'function'
+      ? interpolated(formatter)
+      : interpolated || '';
+  };
 
-  success(text: string) {
-    return chalk.green(text);
-  }
+  const formatter = (
+    strings: TemplateStringsArray,
+    ...interpolated: Loggable[]
+  ): string => {
+    const newStrings = strings.map(formatString);
+    (newStrings as any).raw = newStrings;
 
-  failure(text: string) {
-    return chalk.red(text);
-  }
+    return chalk(newStrings as any, ...interpolated.map(processInterpolation));
+  };
+
+  return formatter;
 }
 
-interface LogFunction {
-  (format: Formatter): string;
-}
-
-type Loggable = LogFunction | string;
+type Formatter = ReturnType<typeof createFormatter>;
+export type Loggable = ((format: Formatter) => string) | string;
 
 class FormattedStream {
   private readonly formatter: Formatter;
 
   constructor(private readonly stream: NodeJS.WriteStream) {
-    this.formatter = new Formatter(stream);
+    this.formatter = createFormatter(stream);
+  }
+
+  stringify(value: Loggable) {
+    return typeof value === 'function' ? value(this.formatter) : String(value);
   }
 
   write(value: Loggable) {
-    const logged =
-      typeof value === 'function' ? value(this.formatter) : String(value);
-
-    this.stream.write(logged);
+    const stringified = this.stringify(value);
+    this.stream.write(stringified);
+    return stringified;
   }
 
-  clear() {
+  moveCursor(x = 0, y = 0) {
+    moveCursor(this.stream, x, y);
+    cursorTo(this.stream, x);
+  }
+
+  clearDown() {
+    clearScreenDown(this.stream);
     clearLine(this.stream, 0);
-    cursorTo(this.stream, 0);
   }
 }
 
