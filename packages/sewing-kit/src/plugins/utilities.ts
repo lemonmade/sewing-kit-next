@@ -2,7 +2,7 @@ import {resolve, relative} from 'path';
 import {exec} from 'child_process';
 
 import {PackageBuildConfigurationHooks} from '../tasks/build';
-import {createStep} from '../runner';
+import {createStep, MissingPluginError} from '../runner';
 import {Workspace, Package, PackageEntry, Project} from '../workspace';
 
 export function lazy<T extends any[], R>(
@@ -10,6 +10,20 @@ export function lazy<T extends any[], R>(
 ) {
   return async (...args: T) => {
     return (await asyncImport()).default(...args);
+  };
+}
+
+type OptionalKeys<T> = {
+  [K in keyof T]-?: undefined extends T[K] ? K : never;
+}[keyof T];
+
+type HookAdder<T> = () => {
+  [K in OptionalKeys<T>]?: T[K];
+};
+
+export function addHooks<T>(adder: HookAdder<T>): (hooks: T) => void {
+  return (hooks) => {
+    Object.assign(hooks, adder());
   };
 }
 
@@ -167,10 +181,14 @@ export function createCompileBabelStep(
       `build/packages/${pkg.name}/${configFile}`,
     );
 
+    if (config.babelConfig == null) {
+      throw new MissingPluginError('@sewing-kit/plugin-babel');
+    }
+
     await workspace.internal.write(
       babelConfigPath,
       `module.exports=${JSON.stringify(
-        await config.babel.promise({presets: []}),
+        await config.babelConfig.promise({presets: []}),
       )};`,
     );
 

@@ -42,15 +42,17 @@ export default function differentialServing(tasks: RunnerTasks) {
           return join(dirname(filename), browserTarget, basename(filename));
         });
 
-        configuration.babel.tap(PLUGIN, (babelConfig) => {
-          return produce(
-            babelConfig,
-            updateBabelPreset(
-              ['babel-preset-shopify', 'babel-preset-shopify/web'],
-              {browsers: BROWSER_TARGETS[browserTarget]},
-            ),
-          );
-        });
+        if (configuration.babelConfig) {
+          configuration.babelConfig.tap(PLUGIN, (babelConfig) => {
+            return produce(
+              babelConfig,
+              updateBabelPreset(
+                ['babel-preset-shopify', 'babel-preset-shopify/web'],
+                {browsers: BROWSER_TARGETS[browserTarget]},
+              ),
+            );
+          });
+        }
       });
     });
   });

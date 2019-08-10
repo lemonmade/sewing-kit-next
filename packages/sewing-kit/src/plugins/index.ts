@@ -1,5 +1,8 @@
 export {default as base} from './base';
 
+export {default as babel} from './babel';
+export {default as webpack} from './webpack';
+
 export {default as json} from './json';
 export {default as javascript} from './javascript';
 export {default as typescript} from './typescript';

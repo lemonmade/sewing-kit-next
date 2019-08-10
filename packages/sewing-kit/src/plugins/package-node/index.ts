@@ -44,18 +44,20 @@ export default function packageNode(tasks: RunnerTasks) {
           return;
         }
 
-        configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
-          return produce(babelConfig, (babelConfig) => {
-            changeBabelPreset(
-              ['babel-preset-shopify', 'babel-preset-shopify/web'],
-              'babel-preset-shopify/node',
-            )(babelConfig);
+        if (configurationHooks.babelConfig) {
+          configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
+            return produce(babelConfig, (babelConfig) => {
+              changeBabelPreset(
+                ['babel-preset-shopify', 'babel-preset-shopify/web'],
+                'babel-preset-shopify/node',
+              )(babelConfig);
 
-            updateBabelPreset('babel-preset-shopify/node', {
-              modules: 'commonjs',
-            })(babelConfig);
+              updateBabelPreset('babel-preset-shopify/node', {
+                modules: 'commonjs',
+              })(babelConfig);
+            });
           });
-        });
+        }
 
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'node'));
       });

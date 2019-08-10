@@ -46,19 +46,21 @@ export default function packageCommonJs(tasks: RunnerTasks) {
           return;
         }
 
-        configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
-          const allEntriesAreNode = pkg.entries.every(
-            ({runtime}) => runtime === Runtime.Node,
-          );
+        if (configurationHooks.babelConfig) {
+          configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
+            const allEntriesAreNode = pkg.entries.every(
+              ({runtime}) => runtime === Runtime.Node,
+            );
 
-          return produce(babelConfig, (babelConfig) => {
-            if (allEntriesAreNode) {
-              setNodePreset(babelConfig);
-            }
+            return produce(babelConfig, (babelConfig) => {
+              if (allEntriesAreNode) {
+                setNodePreset(babelConfig);
+              }
 
-            setCommonJsModules(babelConfig);
+              setCommonJsModules(babelConfig);
+            });
           });
-        });
+        }
 
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'cjs'));
       });

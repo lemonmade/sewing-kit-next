@@ -1,19 +1,23 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {Configuration as WebpackConfiguration} from 'webpack';
 
 import {Step} from '../../runner';
 import {Package, WebApp, Workspace} from '../../workspace';
-import {Env, BabelConfig} from '../../types';
+import {Env} from '../../types';
 
 // PACKAGE
 
 export interface PackageBuildOptions {}
 
-export interface PackageBuildConfigurationHooks {
-  readonly babel: AsyncSeriesWaterfallHook<BabelConfig>;
+export interface PackageBuildConfigurationCustomHooks {}
+
+export interface PackageBuildConfigurationCoreHooks {
   readonly extensions: AsyncSeriesWaterfallHook<string[]>;
   readonly output: AsyncSeriesWaterfallHook<string>;
 }
+
+export interface PackageBuildConfigurationHooks
+  extends PackageBuildConfigurationCoreHooks,
+    Partial<PackageBuildConfigurationCustomHooks> {}
 
 export interface PackageBuildHooks {
   readonly variants: AsyncSeriesWaterfallHook<Partial<PackageBuildOptions>[]>;
@@ -36,18 +40,28 @@ export interface PackageBuildHooks {
 
 export interface WebAppBuildOptions {}
 
-export interface BrowserBuildConfigurationHooks {
-  readonly babel: AsyncSeriesWaterfallHook<BabelConfig>;
+export interface BrowserBuildConfigurationCoreHooks {
   readonly output: AsyncSeriesWaterfallHook<string>;
   readonly entries: AsyncSeriesWaterfallHook<string[]>;
   readonly extensions: AsyncSeriesWaterfallHook<string[]>;
   readonly filename: AsyncSeriesWaterfallHook<string>;
-  readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
-  readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
 }
 
+export interface BrowserBuildConfigurationCustomHooks {}
+
+export interface BrowserBuildConfigurationHooks
+  extends BrowserBuildConfigurationCoreHooks,
+    Partial<BrowserBuildConfigurationCustomHooks> {}
+
+export interface ServiceWorkerBuildConfigurationCoreHooks
+  extends BrowserBuildConfigurationCoreHooks {}
+
+export interface ServiceWorkerBuildConfigurationCustomHooks
+  extends BrowserBuildConfigurationCustomHooks {}
+
 export interface ServiceWorkerBuildConfigurationHooks
-  extends BrowserBuildConfigurationHooks {}
+  extends ServiceWorkerBuildConfigurationCoreHooks,
+    Partial<ServiceWorkerBuildConfigurationCustomHooks> {}
 
 export interface WebAppBuildHooks {
   readonly variants: AsyncSeriesWaterfallHook<Partial<WebAppBuildOptions>[]>;

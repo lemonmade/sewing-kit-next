@@ -16,13 +16,14 @@ const CHALK_MAPPINGS = new Map([
   ['subdued', 'dim'],
   ['emphasis', 'bold'],
   ['code', 'inverse'],
+  ['command', 'bold'],
 ]);
 
 function createFormatter(stream: NodeJS.WriteStream) {
   const supportsLinks = supportsHyperlink(stream);
 
   const formatString = (str: string) => {
-    const formattingRegex = /\{(success|error|info|subdued|emphasis|code)/g;
+    const formattingRegex = /\{(success|error|info|subdued|emphasis|code|command)/g;
     const linkRegex = /\{link\s+(.*?)(?=http)([^}])*\}/;
 
     return str

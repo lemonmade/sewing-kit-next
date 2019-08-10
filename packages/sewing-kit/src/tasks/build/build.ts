@@ -54,7 +54,7 @@ export async function runBuild(
       return variants.map((variant) => {
         return createStep({label: `Building variant`}, async (_, runner) => {
           const configurationHooks: BrowserBuildConfigurationHooks = {
-            babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+            babelConfig: new AsyncSeriesWaterfallHook(['babelConfig']),
             entries: new AsyncSeriesWaterfallHook(['entries']),
             extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
             filename: new AsyncSeriesWaterfallHook(['filename']),
@@ -104,7 +104,9 @@ export async function runBuild(
                   },
                   async (_, runner) => {
                     const configurationHooks: PackageBuildConfigurationHooks = {
-                      babel: new AsyncSeriesWaterfallHook(['babelConfig']),
+                      babelConfig: new AsyncSeriesWaterfallHook([
+                        'babelConfig',
+                      ]),
                       output: new AsyncSeriesWaterfallHook(['output']),
                       extensions: new AsyncSeriesWaterfallHook(['extensions']),
                     };

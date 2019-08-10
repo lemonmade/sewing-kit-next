@@ -26,19 +26,21 @@ export default function packageEsmodules(tasks: RunnerTasks) {
           return;
         }
 
-        configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
-          return produce(
-            babelConfig,
-            updateBabelPreset(
-              [
-                'babel-preset-shopify',
-                'babel-preset-shopify/web',
-                'babel-preset-shopify/node',
-              ],
-              {modules: false},
-            ),
-          );
-        });
+        if (configurationHooks.babelConfig) {
+          configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
+            return produce(
+              babelConfig,
+              updateBabelPreset(
+                [
+                  'babel-preset-shopify',
+                  'babel-preset-shopify/web',
+                  'babel-preset-shopify/node',
+                ],
+                {modules: false},
+              ),
+            );
+          });
+        }
 
         configurationHooks.output.tap(PLUGIN, (output) => join(output, 'esm'));
       });

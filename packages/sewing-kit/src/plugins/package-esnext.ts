@@ -47,22 +47,24 @@ export default function packageEsnext(tasks: RunnerTasks) {
           return;
         }
 
-        configurationHooks.babel.tap(PLUGIN, (babelConfig) => {
-          return produce(
-            babelConfig,
-            updateBabelPreset(
-              [
-                'babel-preset-shopify',
-                'babel-preset-shopify/web',
-                'babel-preset-shopify/node',
-              ],
-              {
-                modules: false,
-                browsers: ['last 1 chrome version'],
-              },
-            ),
-          );
-        });
+        if (configurationHooks.babelConfig) {
+          configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
+            return produce(
+              babelConfig,
+              updateBabelPreset(
+                [
+                  'babel-preset-shopify',
+                  'babel-preset-shopify/web',
+                  'babel-preset-shopify/node',
+                ],
+                {
+                  modules: false,
+                  browsers: ['last 1 chrome version'],
+                },
+              ),
+            );
+          });
+        }
 
         configurationHooks.output.tap(PLUGIN, (output) =>
           join(output, 'esnext'),
