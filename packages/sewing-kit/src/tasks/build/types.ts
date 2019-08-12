@@ -97,8 +97,6 @@ export interface BuildTaskOptions {
 }
 
 export interface BuildTaskHooks {
-  readonly pre: AsyncSeriesWaterfallHook<Step[]>;
-
   readonly project: AsyncSeriesHook<
     | {
         project: WebApp;
@@ -109,6 +107,7 @@ export interface BuildTaskHooks {
   readonly package: AsyncSeriesHook<{pkg: Package; hooks: PackageBuildHooks}>;
   readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: WebAppBuildHooks}>;
 
+  readonly pre: AsyncSeriesWaterfallHook<Step[]>;
   readonly post: AsyncSeriesWaterfallHook<Step[]>;
 }
 

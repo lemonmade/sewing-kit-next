@@ -1,6 +1,7 @@
 export {default as base} from './base';
 
 export {default as babel} from './babel';
+export {default as jest} from './jest';
 export {default as webpack} from './webpack';
 
 export {default as json} from './json';
@@ -17,5 +18,3 @@ export {default as packageEsnext} from './package-esnext';
 export {default as packageNode} from './package-node';
 export {default as packageTypeScript} from './package-typescript';
 export {default as packageBinaries} from './package-binaries';
-
-export {default as jest} from './jest';

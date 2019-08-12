@@ -17,6 +17,7 @@ export class Project {
   readonly name: string;
   readonly root: string;
   readonly fs: FileSystem;
+  readonly id = this.name;
   protected readonly packageJson?: PackageJson;
 
   constructor({name, root}: ProjectOptions) {
@@ -91,6 +92,10 @@ export class WebApp extends Project {
   readonly options: Partial<WebAppOptions>;
   readonly serviceWorker?: string;
 
+  get id() {
+    return `webApp-${this.name}`;
+  }
+
   constructor({
     entry,
     options = {},
@@ -115,6 +120,10 @@ export interface PackageCreateOptions extends ProjectOptions {
 export class Package extends Project {
   readonly entries: PackageEntry[];
   readonly binaries: PackageBinary[];
+
+  get id() {
+    return `package-${this.name}`;
+  }
 
   get runtimeName() {
     return (this.packageJson && this.packageJson.name) || this.name;
@@ -149,6 +158,10 @@ interface ServiceCreateOptions extends ProjectOptions {
 
 export class Service extends Project {
   readonly entry: string;
+
+  get id() {
+    return `service-${this.name}`;
+  }
 
   constructor({entry, ...rest}: ServiceCreateOptions) {
     super(rest);

@@ -1,10 +1,6 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {Package, Workspace} from '../../workspace';
-import {BabelConfig} from '../../types';
-
-interface TransformOptions {
-  babelTransform: string;
-}
+import {Step} from '../../runner';
+import {Package, Workspace, WebApp} from '../../workspace';
 
 export interface TestTaskOptions {
   pre?: boolean;
@@ -17,57 +13,75 @@ export interface TestTaskOptions {
   updateSnapshot?: boolean;
 }
 
-interface JestFlags {
-  config?: string;
-  watch?: boolean;
-  watchAll?: boolean;
-  testNamePattern?: string;
-  testPathPattern?: string;
-  runInBand?: boolean;
-  forceExit?: boolean;
-  maxWorkers?: number;
-  onlyChanged?: boolean;
-  coverage?: boolean;
-  updateSnapshot?: boolean;
+export interface ProjectConfigurationCustomHooks {}
+
+interface ProjectConfigurationCoreHooks {}
+
+export interface ProjectConfigurationHooks
+  extends ProjectConfigurationCoreHooks,
+    Partial<ProjectConfigurationCustomHooks> {}
+
+// WEB APP
+
+export interface WebAppTestConfigurationCustomHooks {}
+
+interface WebAppTestConfigurationCoreHooks {}
+
+export interface WebAppTestConfigurationHooks
+  extends ProjectConfigurationHooks,
+    WebAppTestConfigurationCoreHooks,
+    Partial<WebAppTestConfigurationCoreHooks> {}
+
+interface WebAppTestHooks {
+  steps: AsyncSeriesWaterfallHook<Step[]>;
+  configure: AsyncSeriesHook<WebAppTestConfigurationHooks>;
 }
 
-export interface ProjectConfigurationHooks {
-  readonly babel: AsyncSeriesWaterfallHook<BabelConfig>;
-  readonly extensions: AsyncSeriesWaterfallHook<string[]>;
-  readonly environment: AsyncSeriesWaterfallHook<string>;
-  readonly moduleMapper: AsyncSeriesWaterfallHook<{[key: string]: string}>;
+// PACKAGE
 
-  readonly setupEnv: AsyncSeriesWaterfallHook<string[]>;
-  readonly setupTests: AsyncSeriesWaterfallHook<string[]>;
+export interface PackageTestConfigurationCustomHooks {}
 
-  readonly jestTransforms: AsyncSeriesWaterfallHook<
-    {[key: string]: string},
-    TransformOptions
-  >;
+interface PackageTestConfigurationCoreHooks {}
 
-  readonly jestConfig: AsyncSeriesWaterfallHook<jest.InitialOptions>;
+export interface PackageTestConfigurationHooks
+  extends ProjectConfigurationHooks,
+    PackageTestConfigurationCoreHooks,
+    Partial<PackageTestConfigurationCoreHooks> {}
+
+interface PackageTestHooks {
+  steps: AsyncSeriesWaterfallHook<Step[]>;
+  configure: AsyncSeriesHook<PackageTestConfigurationHooks>;
 }
 
-export interface RootConfigurationHooks {
-  readonly setupEnv: AsyncSeriesWaterfallHook<string[]>;
-  readonly setupTests: AsyncSeriesWaterfallHook<string[]>;
-  readonly watchIgnore: AsyncSeriesWaterfallHook<string[]>;
+// TASK
 
-  readonly jestConfig: AsyncSeriesWaterfallHook<jest.InitialOptions>;
-  readonly jestWatchPlugins: AsyncSeriesWaterfallHook<string[]>;
-  readonly jestFlags: AsyncSeriesWaterfallHook<JestFlags>;
-}
+export interface RootConfigurationCustomHooks {}
+
+interface RootConfigurationCoreHooks {}
+
+export interface RootConfigurationHooks
+  extends RootConfigurationCoreHooks,
+    Partial<RootConfigurationCustomHooks> {}
 
 export interface TestTaskHooks {
-  readonly configureRoot: AsyncSeriesHook<RootConfigurationHooks>;
-  readonly configureProject: AsyncSeriesHook<{
-    project: Package;
-    hooks: ProjectConfigurationHooks;
-  }>;
-  readonly configurePackage: AsyncSeriesHook<{
+  readonly project: AsyncSeriesHook<
+    | {
+        project: Package;
+        hooks: PackageTestHooks;
+      }
+    | {project: WebApp; hooks: WebAppTestHooks}
+  >;
+  readonly package: AsyncSeriesHook<{
     pkg: Package;
-    hooks: ProjectConfigurationHooks;
+    hooks: PackageTestHooks;
   }>;
+  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: WebAppTestHooks}>;
+
+  readonly preSteps: AsyncSeriesWaterfallHook<Step[]>;
+  readonly postSteps: AsyncSeriesWaterfallHook<Step[]>;
+
+  readonly configure: AsyncSeriesHook<RootConfigurationHooks>;
+  readonly steps: AsyncSeriesWaterfallHook<Step[]>;
 }
 
 export interface TestTask {

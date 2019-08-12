@@ -21,6 +21,14 @@ type HookAdder<T> = () => {
   [K in OptionalKeys<T>]?: T[K];
 };
 
+export function compose<T extends (...args: any[]) => void>(...funcs: T[]): T {
+  return ((...args: any[]) => {
+    for (const func of funcs) {
+      func(...args);
+    }
+  }) as any;
+}
+
 export function addHooks<T>(adder: HookAdder<T>): (hooks: T) => void {
   return (hooks) => {
     Object.assign(hooks, adder());

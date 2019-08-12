@@ -17,6 +17,12 @@ declare module '../../tasks/build/types' {
   }
 }
 
+declare module '../../tasks/testing/types' {
+  interface ProjectConfigurationCustomHooks {
+    readonly babelConfig: AsyncSeriesWaterfallHook<BabelConfig>;
+  }
+}
+
 const PLUGIN = 'SewingKit.babel';
 
 export default function babel(tasks: RunnerTasks) {
