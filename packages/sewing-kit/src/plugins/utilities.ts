@@ -1,5 +1,6 @@
 import {resolve, relative} from 'path';
 import {exec} from 'child_process';
+import {kebab} from 'change-case';
 
 import {PackageBuildConfigurationHooks} from '../tasks/build';
 import {createStep, MissingPluginError} from '../runner';
@@ -225,4 +226,28 @@ export function createCompileBabelStep(
 function normalizedRelative(from: string, to: string) {
   const rel = relative(from, to);
   return rel.startsWith('.') ? rel : `./${rel}`;
+}
+
+export function toArgs(flags: object, {dasherize = false} = {}) {
+  return Object.entries(flags).reduce<string[]>((all, [key, value]) => {
+    const newArgs: string[] = [];
+    const normalizedKey = dasherize ? kebab(key) : key;
+
+    if (typeof value === 'boolean') {
+      if (value) {
+        newArgs.push(`--${normalizedKey}`);
+      }
+    } else if (Array.isArray(value)) {
+      newArgs.push(
+        ...value.flatMap((subValue) => [
+          `--${normalizedKey}`,
+          String(subValue),
+        ]),
+      );
+    } else if (value != null) {
+      newArgs.push(`--${normalizedKey}`, String(value));
+    }
+
+    return [...all, ...newArgs];
+  }, []);
 }

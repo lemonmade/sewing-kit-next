@@ -22,8 +22,12 @@ export default function json(tasks: RunnerTasks) {
   });
 
   tasks.test.tap(PLUGIN, ({hooks}) => {
-    hooks.configureProject.tap(PLUGIN, ({hooks}) => {
-      hooks.extensions.tap(PLUGIN, addJsonExtension);
+    hooks.project.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (hooks) => {
+        if (hooks.jestExtensions) {
+          hooks.jestExtensions.tap(PLUGIN, addJsonExtension);
+        }
+      });
     });
   });
 }

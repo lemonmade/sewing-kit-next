@@ -17,8 +17,11 @@ export class Project {
   readonly name: string;
   readonly root: string;
   readonly fs: FileSystem;
-  readonly id = this.name;
   protected readonly packageJson?: PackageJson;
+
+  get id() {
+    return this.name;
+  }
 
   constructor({name, root}: ProjectOptions) {
     this.name = name;
@@ -70,6 +73,10 @@ export class Workspace extends Project {
 
   get private() {
     return this.webApps.length > 0 || this.services.length > 0;
+  }
+
+  get projects() {
+    return [...this.packages, ...this.webApps, ...this.services];
   }
 
   constructor({webApps, packages, services, ...rest}: WorkspaceCreateOptions) {

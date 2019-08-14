@@ -1,5 +1,3 @@
-export {default as base} from './base';
-
 export {default as babel} from './babel';
 export {default as jest} from './jest';
 export {default as webpack} from './webpack';

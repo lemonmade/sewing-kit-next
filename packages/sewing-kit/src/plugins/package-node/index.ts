@@ -22,8 +22,15 @@ declare module '../../tasks/build/types' {
 
 export default function packageNode(tasks: RunnerTasks) {
   tasks.test.tap(PLUGIN, ({hooks}) => {
-    hooks.configureProject.tap(PLUGIN, ({hooks}) => {
-      hooks.extensions.tap(PLUGIN, (extensions) => [EXTENSION, ...extensions]);
+    hooks.project.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (hooks) => {
+        if (hooks.jestExtensions) {
+          hooks.jestExtensions.tap(PLUGIN, (extensions) => [
+            EXTENSION,
+            ...extensions,
+          ]);
+        }
+      });
     });
   });
 

@@ -63,7 +63,7 @@ class StepRunner {
   }
 
   toString(tick: number): Loggable {
-    if (this.step.label == null) {
+    if (this.step.label == null || this.step.indefinite) {
       return '';
     }
 
@@ -121,7 +121,10 @@ class StepGroupRunner {
 
   toString(tick: number): Loggable {
     return (fmt) =>
-      this.stepRunners.map((step) => fmt`${step.toString(tick)}`).join('\n');
+      this.stepRunners
+        .map((step) => fmt`${step.toString(tick)}`)
+        .filter(Boolean)
+        .join('\n');
   }
 }
 
@@ -148,7 +151,10 @@ class RunnerUi {
       clearInterval(interval);
       clearImmediate(immediate);
       this.update();
-      this.ui.stdout.write('\n');
+
+      if (this.lastContentHeight > 0) {
+        this.ui.stdout.write('\n');
+      }
     }
   }
 
@@ -156,7 +162,8 @@ class RunnerUi {
     const content = this.ui.stdout.stringify((fmt) =>
       this.groupRunners
         .map((group) => fmt`${group.toString(this.tick)}`)
-        .join('\n'),
+        .filter(Boolean)
+        .join('\n\n'),
     );
 
     this.ui.stdout.moveCursor(0, -this.lastContentHeight);
@@ -187,9 +194,12 @@ export class Runner {
 
   constructor(private readonly ui: Ui) {}
 
-  async run(steps: Step[]) {
+  async run(
+    steps: Step[],
+    {pre = [], post = []}: {pre?: Step[]; post?: Step[]} = {},
+  ) {
     const {ui} = this;
-    const runnerUi = new RunnerUi([steps], ui);
+    const runnerUi = new RunnerUi([pre, steps, post], ui);
 
     try {
       await runnerUi.run();

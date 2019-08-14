@@ -9,24 +9,28 @@ const PLUGIN = 'SewingKit.packages';
 
 export default function packages(tasks: RunnerTasks) {
   tasks.test.tap(PLUGIN, ({hooks, workspace}) => {
-    hooks.configureRoot.tap(PLUGIN, (hooks) => {
-      hooks.watchIgnore.tap(
-        PLUGIN,
-        produce((watchIgnore: string[]) => {
-          watchIgnore.push(workspace.fs.resolvePath('packages/.*/build'));
-        }),
-      );
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.jestWatchIgnore) {
+        hooks.jestWatchIgnore.tap(PLUGIN, (watchIgnore) => [
+          ...watchIgnore,
+          workspace.fs.resolvePath('packages/.*/build'),
+        ]);
+      }
     });
 
-    hooks.configureProject.tap(PLUGIN, ({hooks}) => {
-      hooks.moduleMapper.tap(PLUGIN, (moduleMap) => {
-        return workspace.packages.reduce(
-          (all, pkg) => ({
-            ...all,
-            ...packageEntryMatcherMap(pkg),
-          }),
-          moduleMap,
-        );
+    hooks.project.tap(PLUGIN, ({hooks}) => {
+      hooks.configure.tap(PLUGIN, (hooks) => {
+        if (hooks.jestModuleMapper) {
+          hooks.jestModuleMapper.tap(PLUGIN, (moduleMap) => {
+            return workspace.packages.reduce(
+              (all, pkg) => ({
+                ...all,
+                ...packageEntryMatcherMap(pkg),
+              }),
+              moduleMap,
+            );
+          });
+        }
       });
     });
   });

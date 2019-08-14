@@ -32,8 +32,7 @@ export interface WebAppTestConfigurationHooks
     WebAppTestConfigurationCoreHooks,
     Partial<WebAppTestConfigurationCoreHooks> {}
 
-interface WebAppTestHooks {
-  steps: AsyncSeriesWaterfallHook<Step[]>;
+export interface WebAppTestHooks {
   configure: AsyncSeriesHook<WebAppTestConfigurationHooks>;
 }
 
@@ -48,8 +47,7 @@ export interface PackageTestConfigurationHooks
     PackageTestConfigurationCoreHooks,
     Partial<PackageTestConfigurationCoreHooks> {}
 
-interface PackageTestHooks {
-  steps: AsyncSeriesWaterfallHook<Step[]>;
+export interface PackageTestHooks {
   configure: AsyncSeriesHook<PackageTestConfigurationHooks>;
 }
 

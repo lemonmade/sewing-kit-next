@@ -1,15 +1,14 @@
-import jest from 'jest';
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
 import {Runner} from '../../runner';
-import {Workspace} from '../../workspace';
-import {toArgs} from '../utilities';
+import {Workspace, Package, WebApp} from '../../workspace';
 
 import {
   TestTaskHooks,
   TestTaskOptions,
   RootConfigurationHooks,
-  ProjectConfigurationHooks,
+  PackageTestHooks,
+  WebAppTestHooks,
 } from './types';
 
 export async function runTests(
@@ -21,143 +20,46 @@ export async function runTests(
   process.env.NODE_ENV = 'test';
 
   const hooks: TestTaskHooks = {
-    configureRoot: new AsyncSeriesHook(['rootConfigurationHooks']),
-    configureProject: new AsyncSeriesHook(['projectConfiguration']),
-    configurePackage: new AsyncSeriesHook(['packageConfiguration']),
+    configure: new AsyncSeriesHook(['configurationHooks']),
+    preSteps: new AsyncSeriesWaterfallHook(['steps']),
+    postSteps: new AsyncSeriesWaterfallHook(['steps']),
+    steps: new AsyncSeriesWaterfallHook(['steps']),
+    project: new AsyncSeriesHook(['projectWithHooks']),
+    package: new AsyncSeriesHook(['packageWithHooks']),
+    webApp: new AsyncSeriesHook(['webAppWithHooks']),
   };
 
   await runner.tasks.test.promise({hooks, workspace, options});
 
-  const rootConfigHooks: RootConfigurationHooks = {
-    setupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
-    setupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
-    watchIgnore: new AsyncSeriesWaterfallHook(['watchIgnore']),
-    jestWatchPlugins: new AsyncSeriesWaterfallHook(['jestWatchPlugins']),
-    jestConfig: new AsyncSeriesWaterfallHook(['jestConfig']),
-    jestFlags: new AsyncSeriesWaterfallHook(['jestFlags']),
-  };
+  const rootConfigHooks: RootConfigurationHooks = {};
 
-  await hooks.configureRoot.promise(rootConfigHooks);
+  await hooks.configure.promise(rootConfigHooks);
 
-  const [rootSetupEnvFiles, rootSetupTestsFiles] = await Promise.all([
-    rootConfigHooks.setupEnv.promise([]),
-    rootConfigHooks.setupTests.promise([]),
-  ]);
+  await Promise.all(
+    workspace.projects.map(async (project) => {
+      if (project instanceof Package) {
+        const packageHooks: PackageTestHooks = {
+          configure: new AsyncSeriesHook(['configHooks']),
+        };
 
-  const projects = await Promise.all(
-    workspace.packages.map(async (pkg) => {
-      const projectConfigHooks: ProjectConfigurationHooks = {
-        babel: new AsyncSeriesWaterfallHook(['babelConfig']),
-        extensions: new AsyncSeriesWaterfallHook(['extensions']),
-        environment: new AsyncSeriesWaterfallHook(['environment']),
-        moduleMapper: new AsyncSeriesWaterfallHook(['moduleMapper']),
+        await hooks.project.promise({project, hooks: packageHooks});
+        await hooks.package.promise({pkg: project, hooks: packageHooks});
+        await packageHooks.configure.promise({});
+      } else if (project instanceof WebApp) {
+        const webAppHooks: WebAppTestHooks = {
+          configure: new AsyncSeriesHook(['configHooks']),
+        };
 
-        setupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
-        setupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
-
-        jestTransforms: new AsyncSeriesWaterfallHook([
-          'transform',
-          'transformOptions',
-        ]),
-        jestConfig: new AsyncSeriesWaterfallHook(['jestConfig']),
-      };
-
-      await hooks.configureProject.promise({
-        project: pkg,
-        hooks: projectConfigHooks,
-      });
-
-      await hooks.configurePackage.promise({
-        pkg,
-        hooks: projectConfigHooks,
-      });
-
-      const babelTransform = workspace.internal.configPath(
-        'jest/packages',
-        pkg.name,
-        'babel-transformer.js',
-      );
-
-      const babelConfig = await projectConfigHooks.babel.promise({});
-      const transform = await projectConfigHooks.jestTransforms.promise(
-        {},
-        {babelTransform},
-      );
-      const environment = await projectConfigHooks.environment.promise('node');
-      const extensions = (await projectConfigHooks.extensions.promise([])).map(
-        (extension) => extension.replace('.', ''),
-      );
-      const moduleMapper = await projectConfigHooks.moduleMapper.promise({});
-      const setupEnvFiles = await projectConfigHooks.setupEnv.promise(
-        rootSetupEnvFiles,
-      );
-      const setupTestsFiles = await projectConfigHooks.setupTests.promise(
-        rootSetupTestsFiles,
-      );
-
-      await workspace.internal.write(
-        babelTransform,
-        `const {createTransformer} = require('babel-jest'); module.exports = createTransformer(${JSON.stringify(
-          babelConfig,
-        )})`,
-      );
-
-      const config = await projectConfigHooks.jestConfig.promise({
-        displayName: pkg.name,
-        rootDir: pkg.root,
-        testRegex: `.*\\.test\\.(${extensions.join('|')})$`,
-        moduleFileExtensions: extensions,
-        testEnvironment: environment,
-        moduleNameMapper: moduleMapper,
-        setupFiles: setupEnvFiles,
-        setupFilesAfterEnv: setupTestsFiles,
-        transform,
-      });
-
-      return config;
+        await hooks.project.promise({project, hooks: webAppHooks});
+        await hooks.webApp.promise({webApp: project, hooks: webAppHooks});
+        await webAppHooks.configure.promise({});
+      }
     }),
   );
 
-  const watchPlugins = await rootConfigHooks.jestWatchPlugins.promise([]);
-  const watchIgnorePatterns = await rootConfigHooks.watchIgnore.promise([]);
+  const preSteps = await hooks.preSteps.promise([]);
+  const steps = await hooks.steps.promise([]);
+  const postSteps = await hooks.postSteps.promise([]);
 
-  const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
-
-  const rootConfig = await rootConfigHooks.jestConfig.promise({
-    rootDir: workspace.root,
-    projects,
-    watchPlugins,
-    watchPathIgnorePatterns: watchIgnorePatterns,
-  } as any);
-
-  await workspace.internal.write(
-    rootConfigPath,
-    `module.exports = ${JSON.stringify(rootConfig)};`,
-  );
-
-  const {
-    coverage = false,
-    debug = false,
-    watch = true,
-    testPattern,
-    testNamePattern,
-    maxWorkers,
-    updateSnapshot,
-  } = options;
-
-  const flags = await rootConfigHooks.jestFlags.promise({
-    config: rootConfigPath,
-    coverage,
-    watch: watch && testPattern == null,
-    watchAll: watch && testPattern != null,
-    onlyChanged: testPattern == null,
-    testNamePattern,
-    testPathPattern: testPattern,
-    maxWorkers,
-    updateSnapshot,
-    runInBand: debug,
-    forceExit: debug,
-  });
-
-  jest.run(toArgs(flags));
+  await runner.run(steps, {pre: preSteps, post: postSteps});
 }

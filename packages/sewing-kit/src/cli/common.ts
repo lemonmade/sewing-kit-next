@@ -1,7 +1,12 @@
+import {Readable, Writable} from 'stream';
 import arg, {Result} from 'arg';
 import * as plugins from '../plugins';
 
 const DEFAULT_PLUGINS = Object.values(plugins);
+
+interface InternalOptions {
+  __internal?: {stdin?: Readable; stdout?: Writable; stderr?: Writable};
+}
 
 export function createCommand<Flags extends {[key: string]: any}>(
   flagSpec: Flags,
@@ -11,10 +16,12 @@ export function createCommand<Flags extends {[key: string]: any}>(
     runner: import('../runner').Runner,
   ) => Promise<void>,
 ) {
-  return async (argv: string[]) => {
+  return async (
+    argv: string[],
+    {__internal: internalOptions = {}}: InternalOptions = {},
+  ) => {
     const {Runner, Ui, DiagnosticError} = await import('../runner');
-
-    const ui = new Ui();
+    const ui = new Ui(internalOptions as any);
     const runner = new Runner(ui);
 
     for (const plugin of DEFAULT_PLUGINS) {

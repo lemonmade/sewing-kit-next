@@ -2,6 +2,8 @@ import 'core-js/features/array/flat';
 import 'core-js/features/array/flat-map';
 
 import {resolve, dirname} from 'path';
+import {Readable, Writable} from 'stream';
+
 import {
   mkdirp,
   rmdir,
@@ -22,11 +24,24 @@ type CommandType<T extends keyof CommandMap> = ThenType<
   ReturnType<CommandMap[T]>
 >;
 
+class TestOutputStream extends Writable {
+  private buffer = '';
+
+  _write(buffer: Buffer) {
+    this.buffer += buffer;
+  }
+}
+
 export class Workspace {
   constructor(public readonly root: string) {}
 
   async run<K extends keyof CommandMap>(command: K, args: string[] = []) {
-    await (await commandMap[command]())([...args, '--root', this.root]);
+    const stdout = new TestOutputStream();
+    const stderr = new TestOutputStream();
+    const stdin = new Readable();
+    await (await commandMap[command]())([...args, '--root', this.root], {
+      __internal: {stdin, stdout, stderr},
+    });
   }
 
   async writeConfig(contents: string) {
