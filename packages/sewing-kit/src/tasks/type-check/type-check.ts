@@ -1,39 +1,32 @@
-import exec from 'execa';
+import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 
-import {Runner, createStep, DiagnosticError} from '../../runner';
+import {Runner} from '../../runner';
 import {Workspace} from '../../workspace';
-import {TypeCheckOptions} from './types';
+import {TypeCheckOptions, TypeCheckTaskHooks} from './types';
 
 export async function runTypeCheck(
   options: TypeCheckOptions,
   workspace: Workspace,
   runner: Runner,
 ) {
+  const hooks: TypeCheckTaskHooks = {
+    configure: new AsyncSeriesHook(['configurationHooks']),
+    pre: new AsyncSeriesWaterfallHook(['steps']),
+    steps: new AsyncSeriesWaterfallHook(['steps']),
+    post: new AsyncSeriesWaterfallHook(['steps']),
+  };
+
   await runner.tasks.typeCheck.promise({
-    hooks: {},
+    hooks,
     options,
     workspace,
   });
 
-  const {heap} = options;
-  const heapArguments = heap ? [`--max-old-space-size=${heap}`] : [];
+  await hooks.configure.promise({});
 
-  await runner.run([
-    createStep(async (ui) => {
-      try {
-        const result = await exec('node', [
-          ...heapArguments,
-          'node_modules/.bin/tsc',
-          '--build',
-          '--pretty',
-        ]);
+  const pre = await hooks.pre.promise([]);
+  const steps = await hooks.steps.promise([]);
+  const post = await hooks.post.promise([]);
 
-        ui.log(result.all.trim() || 'Type check completed successfully.');
-      } catch (error) {
-        throw new DiagnosticError({
-          message: error.all,
-        });
-      }
-    }),
-  ]);
+  await runner.run(steps, {title: 'type-check', pre, post});
 }

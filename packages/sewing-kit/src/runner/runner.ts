@@ -166,12 +166,12 @@ class RunnerUi {
         .join('\n\n'),
     );
 
-    this.ui.stdout.moveCursor(0, -this.lastContentHeight);
+    this.ui.stdout.moveCursor(0, -1 * Math.max(0, this.lastContentHeight - 1));
     this.ui.stdout.clearDown();
     this.ui.stdout.write(content);
 
     this.tick += 1;
-    this.lastContentHeight = content.split('\n').length - 1;
+    this.lastContentHeight = content.split('\n').length;
   };
 }
 
@@ -196,12 +196,20 @@ export class Runner {
 
   async run(
     steps: Step[],
-    {pre = [], post = []}: {pre?: Step[]; post?: Step[]} = {},
+    {
+      pre = [],
+      post = [],
+      title,
+    }: {pre?: Step[]; post?: Step[]; title?: string} = {},
   ) {
     const {ui} = this;
     const runnerUi = new RunnerUi([pre, steps, post], ui);
 
     try {
+      if (title) {
+        ui.log((fmt) => fmt`🧵 {emphasis ${title}}\n`);
+      }
+
       await runnerUi.run();
     } catch (error) {
       if (error instanceof DiagnosticError) {

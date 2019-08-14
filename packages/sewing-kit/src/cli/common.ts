@@ -4,10 +4,6 @@ import * as plugins from '../plugins';
 
 const DEFAULT_PLUGINS = Object.values(plugins);
 
-interface InternalOptions {
-  __internal?: {stdin?: Readable; stdout?: Writable; stderr?: Writable};
-}
-
 export function createCommand<Flags extends {[key: string]: any}>(
   flagSpec: Flags,
   run: (
@@ -18,7 +14,11 @@ export function createCommand<Flags extends {[key: string]: any}>(
 ) {
   return async (
     argv: string[],
-    {__internal: internalOptions = {}}: InternalOptions = {},
+    {
+      __internal: internalOptions = {},
+    }: {
+      __internal?: {stdin?: Readable; stdout?: Writable; stderr?: Writable};
+    } = {},
   ) => {
     const {Runner, Ui, DiagnosticError} = await import('../runner');
     const ui = new Ui(internalOptions as any);
