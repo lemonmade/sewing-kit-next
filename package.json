@@ -7,7 +7,8 @@
     "build": "yarn sk build",
     "test": "yarn sk test",
     "lint": "yarn sk lint",
-    "type-check": "yarn sk type-check"
+    "type-check": "yarn sk type-check",
+    "release": "lerna publish && git push --tags"
   },
   "workspaces": [
     "packages/*"
@@ -15,10 +16,10 @@
   "devDependencies": {
     "@types/fs-extra": "^8.0.0",
     "fs-extra": "^8.1.0",
+    "lerna": "^3.16.4",
     "tree-node-cli": "^1.2.5",
     "ts-node": "^8.3.0"
   },
-  "dependencies": {},
   "resolutions": {
     "typescript-eslint-parser": "npm:@typescript-eslint/parser@1.13.0"
   }
