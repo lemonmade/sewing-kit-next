@@ -5,9 +5,5 @@
   "publishConfig": {
     "access": "public",
     "@sewing-kit:registry": "https://registry.npmjs.org"
-  },
-  "dependencies": {
-    "@types/webpack": "^4.32.1",
-    "webpack": "^4.39.2"
   }
 }
