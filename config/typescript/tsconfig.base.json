@@ -16,7 +16,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "sourceMap": false,
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "lib": [
       "dom",
       "dom.iterable",

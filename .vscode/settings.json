@@ -4,6 +4,7 @@
     "esmodules",
     "execa",
     "immer",
+    "loggable",
     "tapable"
   ],
   "eslint.validate": [
