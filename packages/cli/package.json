@@ -1,6 +1,6 @@
 {
   "name": "@sewing-kit/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "bin": {
     "sewing-kit": "./bin/sewing-kit",
     "sk": "./bin/sk"

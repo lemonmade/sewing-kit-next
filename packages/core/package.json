@@ -1,6 +1,6 @@
 {
   "name": "@sewing-kit/core",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "dependencies": {
     "fs-extra": "^8.1.0",
     "glob": "^7.1.4"
