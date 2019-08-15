@@ -4,13 +4,19 @@
   "references": [
     {"path": "./packages/cli"},
     {"path": "./packages/core"},
-    {"path": "./packages/plugin-utilities"},
+    {"path": "./packages/config"},
     {"path": "./packages/ui"},
+
+    {"path": "./packages/plugin-utilities"},
 
     {"path": "./packages/plugin-babel"},
     {"path": "./packages/plugin-eslint"},
     {"path": "./packages/plugin-jest"},
     {"path": "./packages/plugin-webpack"},
+
+    {"path": "./packages/plugin-json"},
+    {"path": "./packages/plugin-javascript"},
+    {"path": "./packages/plugin-typescript"},
 
     {"path": "./packages/sewing-kit"}
   ]

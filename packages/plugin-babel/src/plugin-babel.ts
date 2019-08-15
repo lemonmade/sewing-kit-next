@@ -1,10 +1,6 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {addHooks, createRootPlugin} from '@sewing-kit/plugin-utilities';
-
-export interface BabelConfig {
-  presets?: (string | [string, object?])[];
-  plugins?: string[];
-}
+import {BabelConfig} from './types';
 
 interface BabelHooks {
   readonly babelConfig: AsyncSeriesWaterfallHook<BabelConfig>;
