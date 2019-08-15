@@ -53,7 +53,7 @@ export async function runBuild(
       const variants = await hooks.variants.promise([]);
 
       return variants.map((variant) => {
-        return createStep({label: `Building variant`}, async (_, runner) => {
+        return createStep({label: `Building variant`}, async (step) => {
           const configurationHooks: BuildBrowserConfigurationHooks = {
             entries: new AsyncSeriesWaterfallHook(['entries']),
             extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
@@ -70,7 +70,7 @@ export async function runBuild(
             serviceWorkerConfig: configurationHooks,
           });
 
-          await runner.run(steps);
+          await step.run(steps);
         });
       });
     }),
@@ -93,14 +93,14 @@ export async function runBuild(
 
           return createStep(
             {label: (fmt) => fmt`Build package {emphasis ${pkg.name}}`},
-            async (_ui, runner) => {
+            async (step) => {
               const steps = variants.map((variant) =>
                 createStep(
                   {
                     label: (fmt) =>
                       fmt`Build {code ${Object.keys(variant)[0]}} variant`,
                   },
-                  async (_, runner) => {
+                  async (step) => {
                     const configurationHooks: BuildPackageConfigurationHooks = {
                       output: new AsyncSeriesWaterfallHook(['output']),
                       extensions: new AsyncSeriesWaterfallHook(['extensions']),
@@ -113,12 +113,12 @@ export async function runBuild(
                       config: configurationHooks,
                     });
 
-                    await runner.run(steps);
+                    await step.run(steps);
                   },
                 ),
               );
 
-              await runner.run(steps);
+              await step.run(steps);
             },
           );
         }),

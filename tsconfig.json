@@ -7,6 +7,11 @@
     {"path": "./packages/plugin-utilities"},
     {"path": "./packages/ui"},
 
+    {"path": "./packages/plugin-babel"},
+    {"path": "./packages/plugin-eslint"},
+    {"path": "./packages/plugin-jest"},
+    {"path": "./packages/plugin-webpack"},
+
     {"path": "./packages/sewing-kit"}
   ]
 }

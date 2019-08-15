@@ -1,8 +1,12 @@
+import exec from 'execa';
+
 import {Ui, Loggable} from './ui';
 import {Step} from './steps';
 import {DiagnosticError} from './errors';
 
 export interface NestedStepRunner {
+  ui: Ui;
+  exec: typeof exec;
   run(steps: Step[]): Promise<void>;
 }
 
@@ -28,6 +32,8 @@ class StepRunner {
 
     try {
       const runner = {
+        ui,
+        exec,
         run: async (steps: Step[]) => {
           for (const step of steps) {
             const stepRunner = new StepRunner(step, this.update);
@@ -40,7 +46,7 @@ class StepRunner {
         },
       };
 
-      await this.step.run(ui, runner);
+      await this.step.run(runner);
       this.setState(StepState.Success);
     } catch (error) {
       this.setState(StepState.Failure);

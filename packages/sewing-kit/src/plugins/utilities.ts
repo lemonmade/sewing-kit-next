@@ -2,7 +2,7 @@ import {resolve, relative} from 'path';
 import {exec} from 'child_process';
 import {kebab} from 'change-case';
 
-import {PackageBuildConfigurationHooks} from '../tasks/build';
+import {BuildPackageConfigurationHooks} from '../tasks/build';
 import {createStep, MissingPluginError} from '../runner';
 import {Workspace, Package, PackageEntry, Project} from '../workspace';
 
@@ -180,7 +180,7 @@ interface CompileBabelOptions {
 export function createCompileBabelStep(
   pkg: Package,
   workspace: Workspace,
-  config: PackageBuildConfigurationHooks,
+  config: BuildPackageConfigurationHooks,
   options: CompileBabelOptions,
 ) {
   return createStep(async () => {
