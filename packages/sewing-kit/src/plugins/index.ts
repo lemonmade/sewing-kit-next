@@ -1,6 +1,7 @@
 export {default as babel} from './babel';
 export {default as jest} from './jest';
 export {default as webpack} from './webpack';
+export {default as eslint} from './eslint';
 
 export {default as json} from './json';
 export {default as javascript} from './javascript';

@@ -1,57 +1,32 @@
-import exec from 'execa';
+import {AsyncSeriesHook, AsyncSeriesWaterfallHook} from 'tapable';
+
 import {Workspace} from '../../workspace';
-import {Runner, createStep, DiagnosticError} from '../../runner';
-import {toArgs} from '../utilities';
-
-export interface LintTaskOptions {
-  fix?: boolean;
-}
-
-export interface LintTaskHooks {}
-
-export interface LintTask {
-  readonly hooks: LintTaskHooks;
-  readonly options: LintTaskOptions;
-  readonly workspace: Workspace;
-}
+import {Runner} from '../../runner';
+import {LintTaskOptions, LintTaskHooks} from './types';
 
 export async function runLint(
   options: LintTaskOptions,
   workspace: Workspace,
   runner: Runner,
 ) {
-  const {fix = false} = options;
+  const hooks: LintTaskHooks = {
+    configure: new AsyncSeriesHook(['configurationHooks']),
+    pre: new AsyncSeriesWaterfallHook(['steps']),
+    steps: new AsyncSeriesWaterfallHook(['steps']),
+    post: new AsyncSeriesWaterfallHook(['steps']),
+  };
 
-  await runner.tasks.lint.promise({hooks: {}, options, workspace});
+  await runner.tasks.lint.promise({
+    hooks,
+    options,
+    workspace,
+  });
 
-  const extensions = ['.js', '.mjs', '.ts', '.tsx'];
-  const args = toArgs(
-    {
-      fix,
-      maxWarnings: 0,
-      format: 'codeframe',
-      cache: true,
-      cacheLocation: workspace.internal.cachePath('eslint/'),
-      ext: extensions,
-    },
-    {dasherize: true},
-  );
+  await hooks.configure.promise({});
 
-  const steps = [
-    createStep(async (ui) => {
-      try {
-        const result = await exec('node_modules/.bin/eslint', ['.', ...args], {
-          env: {FORCE_COLOR: '1'},
-        });
+  const pre = await hooks.pre.promise([]);
+  const steps = await hooks.steps.promise([]);
+  const post = await hooks.post.promise([]);
 
-        ui.log(result.all.trim() || 'Lint successfully completed.');
-      } catch (error) {
-        throw new DiagnosticError({
-          message: error.all,
-        });
-      }
-    }),
-  ];
-
-  await runner.run(steps);
+  await runner.run(steps, {title: 'lint', pre, post});
 }
