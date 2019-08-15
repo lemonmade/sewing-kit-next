@@ -1,6 +1,11 @@
 {
   "name": "@sewing-kit/cli",
   "version": "0.0.1",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "@sewing-kit:registry": "https://registry.npmjs.org"
+  },
   "bin": {
     "sewing-kit": "./bin/sewing-kit",
     "sk": "./bin/sk"

@@ -1,4 +1,9 @@
 {
   "name": "@sewing-kit/plugin-utilities",
-  "version": "0.0.1"
+  "version": "0.0.1",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "@sewing-kit:registry": "https://registry.npmjs.org"
+  }
 }
