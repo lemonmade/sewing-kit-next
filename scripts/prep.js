@@ -18,3 +18,5 @@ writeFileSync(
   'packages/sewing-kit/index.js',
   'module.exports = require("./src")',
 );
+
+writeFileSync('packages/config/index.js', 'module.exports = require("./src")');
