@@ -1,14 +1,13 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import exec from 'execa';
 
-import {LintRootConfigurationHooks} from '../../tasks/lint/types';
 import {RunnerTasks, createStep, DiagnosticError} from '../../runner';
-import {addHooks, compose, toArgs} from '../utilities';
+import {addHooks, toArgs} from '../utilities';
 
 interface EslintFlags {
   fix?: boolean;
   maxWarnings?: number;
-  format?: 'codeframe';
+  format?: string;
   cache?: boolean;
   cacheLocation?: string;
   ext?: string[];
@@ -16,8 +15,8 @@ interface EslintFlags {
 
 declare module '../../tasks/lint/types' {
   interface LintRootConfigurationCustomHooks {
-    eslintExtensions: AsyncSeriesWaterfallHook<string[]>;
-    eslintFlags: AsyncSeriesWaterfallHook<EslintFlags>;
+    readonly eslintExtensions: AsyncSeriesWaterfallHook<string[]>;
+    readonly eslintFlags: AsyncSeriesWaterfallHook<EslintFlags>;
   }
 }
 
@@ -31,28 +30,16 @@ const addRootConfigurationHooks = addHooks<
 }));
 
 export default function eslint(tasks: RunnerTasks) {
-  let rootConfigurationHooks!: LintRootConfigurationHooks;
-
   tasks.lint.tap(PLUGIN, ({workspace, options, hooks}) => {
-    hooks.configure.tap(
-      PLUGIN,
-      compose(
-        addRootConfigurationHooks,
-        (hooks) => {
-          rootConfigurationHooks = hooks;
-        },
-      ),
-    );
+    hooks.configure.tap(PLUGIN, addRootConfigurationHooks);
 
-    hooks.steps.tap(PLUGIN, (steps) => [
+    hooks.steps.tap(PLUGIN, (steps, {configuration}) => [
       ...steps,
       createStep({label: 'Linting scripts with ESLint'}, async () => {
         const {fix = false} = options;
-        const extensions = await rootConfigurationHooks.eslintExtensions!.promise(
-          [],
-        );
+        const extensions = await configuration.eslintExtensions!.promise([]);
         const args = toArgs(
-          await rootConfigurationHooks.eslintFlags!.promise({
+          await configuration.eslintFlags!.promise({
             fix,
             maxWarnings: 0,
             format: 'codeframe',

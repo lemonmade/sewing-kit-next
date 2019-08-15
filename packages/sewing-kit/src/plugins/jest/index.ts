@@ -6,7 +6,7 @@ import {addHooks, compose, toArgs} from '../utilities';
 const PLUGIN = 'SewingKit.jest';
 
 declare module '../../tasks/testing/types' {
-  interface ProjectConfigurationCustomHooks {
+  interface TestProjectConfigurationCustomHooks {
     readonly jestExtensions: AsyncSeriesWaterfallHook<string[]>;
     readonly jestEnvironment: AsyncSeriesWaterfallHook<string>;
     readonly jestModuleMapper: AsyncSeriesWaterfallHook<{
@@ -21,7 +21,7 @@ declare module '../../tasks/testing/types' {
     readonly jestConfig: AsyncSeriesWaterfallHook<jest.InitialOptions>;
   }
 
-  interface RootConfigurationCustomHooks {
+  interface TestRootConfigurationCustomHooks {
     readonly jestSetupEnv: AsyncSeriesWaterfallHook<string[]>;
     readonly jestSetupTests: AsyncSeriesWaterfallHook<string[]>;
     readonly jestWatchIgnore: AsyncSeriesWaterfallHook<string[]>;
@@ -32,7 +32,7 @@ declare module '../../tasks/testing/types' {
 }
 
 const addProjectConfigurationHooks = addHooks<
-  import('../../tasks/testing/types').ProjectConfigurationHooks
+  import('../../tasks/testing/types').TestProjectConfigurationHooks
 >(() => ({
   jestExtensions: new AsyncSeriesWaterfallHook(['extensions']),
   jestEnvironment: new AsyncSeriesWaterfallHook(['environment']),
@@ -47,7 +47,7 @@ const addProjectConfigurationHooks = addHooks<
 }));
 
 const addRootConfigurationHooks = addHooks<
-  import('../../tasks/testing/types').RootConfigurationHooks
+  import('../../tasks/testing/types').TestRootConfigurationHooks
 >(() => ({
   jestSetupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
   jestSetupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
@@ -73,11 +73,9 @@ interface JestFlags {
 
 export default function jest(tasks: RunnerTasks) {
   tasks.test.tap(PLUGIN, ({workspace, hooks, options}) => {
-    let rootConfigurationHooks!: import('../../tasks/testing/types').RootConfigurationHooks;
-
     const projectConfigurations: {
       project: Project;
-      hooks: import('../../tasks/testing/types').ProjectConfigurationHooks;
+      hooks: import('../../tasks/testing/types').TestProjectConfigurationHooks;
     }[] = [];
 
     const rootConfigPath = workspace.internal.configPath('jest/root.config.js');
@@ -87,8 +85,6 @@ export default function jest(tasks: RunnerTasks) {
       compose(
         addRootConfigurationHooks,
         (hooks) => {
-          rootConfigurationHooks = hooks;
-
           hooks.jestWatchIgnore!.tap(PLUGIN, (watchIgnore) => [
             ...watchIgnore,
             '/tmp/',
@@ -164,12 +160,12 @@ export default function jest(tasks: RunnerTasks) {
       );
     });
 
-    hooks.preSteps.tap(PLUGIN, (steps) => [
+    hooks.pre.tap(PLUGIN, (steps, {configuration}) => [
       ...steps,
       createStep(async () => {
         const [rootSetupEnvFiles, rootSetupTestsFiles] = await Promise.all([
-          rootConfigurationHooks.jestSetupEnv!.promise([]),
-          rootConfigurationHooks.jestSetupTests!.promise([]),
+          configuration.jestSetupEnv!.promise([]),
+          configuration.jestSetupTests!.promise([]),
         ]);
 
         const projects = await Promise.all(
@@ -224,14 +220,12 @@ export default function jest(tasks: RunnerTasks) {
           }),
         );
 
-        const watchPlugins = await rootConfigurationHooks.jestWatchPlugins!.promise(
-          [],
-        );
-        const watchIgnorePatterns = await rootConfigurationHooks.jestWatchIgnore!.promise(
+        const watchPlugins = await configuration.jestWatchPlugins!.promise([]);
+        const watchIgnorePatterns = await configuration.jestWatchIgnore!.promise(
           [],
         );
 
-        const rootConfig = await rootConfigurationHooks.jestConfig!.promise({
+        const rootConfig = await configuration.jestConfig!.promise({
           rootDir: workspace.root,
           projects: projects as any,
           watchPlugins,
@@ -245,7 +239,7 @@ export default function jest(tasks: RunnerTasks) {
       }),
     ]);
 
-    hooks.steps.tap(PLUGIN, (steps) => [
+    hooks.steps.tap(PLUGIN, (steps, {configuration}) => [
       ...steps,
       createStep({label: 'Running Jest', indefinite: true}, async () => {
         process.env.BABEL_ENV = 'test';
@@ -261,7 +255,7 @@ export default function jest(tasks: RunnerTasks) {
           updateSnapshot,
         } = options;
 
-        const flags = await rootConfigurationHooks.jestFlags!.promise({
+        const flags = await configuration.jestFlags!.promise({
           config: rootConfigPath,
           coverage,
           watch: watch && testPattern == null,

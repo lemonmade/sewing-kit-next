@@ -6,9 +6,8 @@ import {Workspace, Package, WebApp} from '../../workspace';
 import {
   TestTaskHooks,
   TestTaskOptions,
-  RootConfigurationHooks,
-  PackageTestHooks,
-  WebAppTestHooks,
+  TestPackageHooks,
+  TestWebAppHooks,
 } from './types';
 
 export async function runTests(
@@ -21,9 +20,9 @@ export async function runTests(
 
   const hooks: TestTaskHooks = {
     configure: new AsyncSeriesHook(['configurationHooks']),
-    preSteps: new AsyncSeriesWaterfallHook(['steps']),
-    postSteps: new AsyncSeriesWaterfallHook(['steps']),
-    steps: new AsyncSeriesWaterfallHook(['steps']),
+    pre: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
+    post: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
+    steps: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
     project: new AsyncSeriesHook(['projectWithHooks']),
     package: new AsyncSeriesHook(['packageWithHooks']),
     webApp: new AsyncSeriesHook(['webAppWithHooks']),
@@ -31,14 +30,13 @@ export async function runTests(
 
   await runner.tasks.test.promise({hooks, workspace, options});
 
-  const rootConfigHooks: RootConfigurationHooks = {};
-
+  const rootConfigHooks = {};
   await hooks.configure.promise(rootConfigHooks);
 
   await Promise.all(
     workspace.projects.map(async (project) => {
       if (project instanceof Package) {
-        const packageHooks: PackageTestHooks = {
+        const packageHooks: TestPackageHooks = {
           configure: new AsyncSeriesHook(['configHooks']),
         };
 
@@ -46,7 +44,7 @@ export async function runTests(
         await hooks.package.promise({pkg: project, hooks: packageHooks});
         await packageHooks.configure.promise({});
       } else if (project instanceof WebApp) {
-        const webAppHooks: WebAppTestHooks = {
+        const webAppHooks: TestWebAppHooks = {
           configure: new AsyncSeriesHook(['configHooks']),
         };
 
@@ -57,9 +55,10 @@ export async function runTests(
     }),
   );
 
-  const preSteps = await hooks.preSteps.promise([]);
-  const steps = await hooks.steps.promise([]);
-  const postSteps = await hooks.postSteps.promise([]);
+  const stepDetails = {configuration: rootConfigHooks};
+  const pre = await hooks.pre.promise([], stepDetails);
+  const steps = await hooks.steps.promise([], stepDetails);
+  const post = await hooks.post.promise([], stepDetails);
 
-  await runner.run(steps, {pre: preSteps, post: postSteps});
+  await runner.run(steps, {pre, post});
 }

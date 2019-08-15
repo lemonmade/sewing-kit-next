@@ -4,7 +4,7 @@ import {RunnerTasks} from '../../runner';
 import {addHooks} from '../utilities';
 
 declare module '../../tasks/build/types' {
-  interface BrowserBuildConfigurationCustomHooks {
+  interface BuildBrowserConfigurationCustomHooks {
     readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
     readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
   }

@@ -14,7 +14,7 @@ const VARIANT = 'esnext';
 const EXTENSION = '.esnext';
 
 declare module '../tasks/build/types' {
-  interface PackageBuildOptions {
+  interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
 }

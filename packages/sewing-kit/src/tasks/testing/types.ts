@@ -13,73 +13,77 @@ export interface TestTaskOptions {
   updateSnapshot?: boolean;
 }
 
-export interface ProjectConfigurationCustomHooks {}
+export interface TestProjectConfigurationCustomHooks {}
 
-interface ProjectConfigurationCoreHooks {}
+interface TestProjectConfigurationCoreHooks {}
 
-export interface ProjectConfigurationHooks
-  extends ProjectConfigurationCoreHooks,
-    Partial<ProjectConfigurationCustomHooks> {}
+export interface TestProjectConfigurationHooks
+  extends TestProjectConfigurationCoreHooks,
+    Partial<TestProjectConfigurationCustomHooks> {}
 
 // WEB APP
 
-export interface WebAppTestConfigurationCustomHooks {}
+export interface TestWebAppConfigurationCustomHooks {}
 
-interface WebAppTestConfigurationCoreHooks {}
+interface TestWebAppConfigurationCoreHooks {}
 
-export interface WebAppTestConfigurationHooks
-  extends ProjectConfigurationHooks,
-    WebAppTestConfigurationCoreHooks,
-    Partial<WebAppTestConfigurationCoreHooks> {}
+export interface TestWebAppConfigurationHooks
+  extends TestProjectConfigurationHooks,
+    TestWebAppConfigurationCoreHooks,
+    Partial<TestWebAppConfigurationCoreHooks> {}
 
-export interface WebAppTestHooks {
-  configure: AsyncSeriesHook<WebAppTestConfigurationHooks>;
+export interface TestWebAppHooks {
+  configure: AsyncSeriesHook<TestWebAppConfigurationHooks>;
 }
 
 // PACKAGE
 
-export interface PackageTestConfigurationCustomHooks {}
+export interface TestPackageConfigurationCustomHooks {}
 
-interface PackageTestConfigurationCoreHooks {}
+interface TestPackageConfigurationCoreHooks {}
 
-export interface PackageTestConfigurationHooks
-  extends ProjectConfigurationHooks,
-    PackageTestConfigurationCoreHooks,
-    Partial<PackageTestConfigurationCoreHooks> {}
+export interface TestPackageConfigurationHooks
+  extends TestProjectConfigurationHooks,
+    TestPackageConfigurationCoreHooks,
+    Partial<TestPackageConfigurationCoreHooks> {}
 
-export interface PackageTestHooks {
-  configure: AsyncSeriesHook<PackageTestConfigurationHooks>;
+export interface TestPackageHooks {
+  configure: AsyncSeriesHook<TestPackageConfigurationHooks>;
 }
 
 // TASK
 
-export interface RootConfigurationCustomHooks {}
+export interface TestRootConfigurationCustomHooks {}
 
-interface RootConfigurationCoreHooks {}
+interface TestRootConfigurationCoreHooks {}
 
-export interface RootConfigurationHooks
-  extends RootConfigurationCoreHooks,
-    Partial<RootConfigurationCustomHooks> {}
+export interface TestRootConfigurationHooks
+  extends TestRootConfigurationCoreHooks,
+    Partial<TestRootConfigurationCustomHooks> {}
+
+interface TestStepDetails {
+  configuration: TestRootConfigurationHooks;
+}
 
 export interface TestTaskHooks {
   readonly project: AsyncSeriesHook<
     | {
         project: Package;
-        hooks: PackageTestHooks;
+        hooks: TestPackageHooks;
       }
-    | {project: WebApp; hooks: WebAppTestHooks}
+    | {project: WebApp; hooks: TestWebAppHooks}
   >;
   readonly package: AsyncSeriesHook<{
     pkg: Package;
-    hooks: PackageTestHooks;
+    hooks: TestPackageHooks;
   }>;
-  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: WebAppTestHooks}>;
+  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: TestWebAppHooks}>;
 
-  readonly preSteps: AsyncSeriesWaterfallHook<Step[]>;
-  readonly postSteps: AsyncSeriesWaterfallHook<Step[]>;
+  readonly configure: AsyncSeriesHook<TestRootConfigurationHooks>;
 
-  readonly configure: AsyncSeriesHook<RootConfigurationHooks>;
-  readonly steps: AsyncSeriesWaterfallHook<Step[]>;
+  readonly pre: AsyncSeriesWaterfallHook<Step[], TestStepDetails>;
+  readonly post: AsyncSeriesWaterfallHook<Step[], TestStepDetails>;
+  readonly steps: AsyncSeriesWaterfallHook<Step[], TestStepDetails>;
 }
 
 export interface TestTask {

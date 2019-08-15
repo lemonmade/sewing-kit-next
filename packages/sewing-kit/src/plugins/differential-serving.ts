@@ -2,12 +2,12 @@ import {dirname, basename, join} from 'path';
 import {produce} from 'immer';
 
 import {RunnerTasks} from '../runner';
-import {WebAppBuildOptions} from '../tasks/build';
+import {BuildWebAppOptions} from '../tasks/build';
 
 import {updateBabelPreset} from './utilities';
 
 declare module '../tasks/build/types' {
-  interface WebAppBuildOptions {
+  interface BuildWebAppOptions {
     browserTarget: 'baseline' | 'latest';
   }
 }
@@ -15,7 +15,7 @@ declare module '../tasks/build/types' {
 const PLUGIN = 'SewingKit.differentialServing';
 
 const BROWSER_TARGETS: {
-  [K in WebAppBuildOptions['browserTarget']]: string[];
+  [K in BuildWebAppOptions['browserTarget']]: string[];
 } = {
   baseline: [],
   latest: [],
@@ -28,7 +28,7 @@ export default function differentialServing(tasks: RunnerTasks) {
         Object.keys(BROWSER_TARGETS).flatMap((browserTarget) =>
           variants.map((build) => ({
             ...build,
-            browserTarget: browserTarget as WebAppBuildOptions['browserTarget'],
+            browserTarget: browserTarget as BuildWebAppOptions['browserTarget'],
           })),
         ),
       );

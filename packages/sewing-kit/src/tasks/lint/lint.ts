@@ -11,9 +11,9 @@ export async function runLint(
 ) {
   const hooks: LintTaskHooks = {
     configure: new AsyncSeriesHook(['configurationHooks']),
-    pre: new AsyncSeriesWaterfallHook(['steps']),
-    steps: new AsyncSeriesWaterfallHook(['steps']),
-    post: new AsyncSeriesWaterfallHook(['steps']),
+    pre: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
+    steps: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
+    post: new AsyncSeriesWaterfallHook(['steps', 'stepDetails']),
   };
 
   await runner.tasks.lint.promise({
@@ -22,11 +22,16 @@ export async function runLint(
     workspace,
   });
 
-  await hooks.configure.promise({});
+  const configurationHooks = {};
+  await hooks.configure.promise(configurationHooks);
 
-  const pre = await hooks.pre.promise([]);
-  const steps = await hooks.steps.promise([]);
-  const post = await hooks.post.promise([]);
+  const pre = await hooks.pre.promise([], {configuration: configurationHooks});
+  const steps = await hooks.steps.promise([], {
+    configuration: configurationHooks,
+  });
+  const post = await hooks.post.promise([], {
+    configuration: configurationHooks,
+  });
 
   await runner.run(steps, {title: 'lint', pre, post});
 }

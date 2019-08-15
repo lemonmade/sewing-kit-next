@@ -6,84 +6,84 @@ import {Env} from '../../types';
 
 // PACKAGE
 
-export interface PackageBuildOptions {}
+export interface BuildPackageOptions {}
 
-export interface PackageBuildConfigurationCustomHooks {}
+export interface BuildPackageConfigurationCustomHooks {}
 
-export interface PackageBuildConfigurationCoreHooks {
+export interface BuildPackageConfigurationCoreHooks {
   readonly extensions: AsyncSeriesWaterfallHook<string[]>;
   readonly output: AsyncSeriesWaterfallHook<string>;
 }
 
-export interface PackageBuildConfigurationHooks
-  extends PackageBuildConfigurationCoreHooks,
-    Partial<PackageBuildConfigurationCustomHooks> {}
+export interface BuildPackageConfigurationHooks
+  extends BuildPackageConfigurationCoreHooks,
+    Partial<BuildPackageConfigurationCustomHooks> {}
 
-export interface PackageBuildHooks {
-  readonly variants: AsyncSeriesWaterfallHook<Partial<PackageBuildOptions>[]>;
+export interface BuildPackageHooks {
+  readonly variants: AsyncSeriesWaterfallHook<Partial<BuildPackageOptions>[]>;
 
   readonly configure: AsyncSeriesHook<
-    PackageBuildConfigurationHooks,
-    Partial<PackageBuildOptions>
+    BuildPackageConfigurationHooks,
+    Partial<BuildPackageOptions>
   >;
 
   readonly steps: AsyncSeriesWaterfallHook<
     Step[],
     {
-      variant: Partial<PackageBuildOptions>;
-      config: PackageBuildConfigurationHooks;
+      variant: Partial<BuildPackageOptions>;
+      config: BuildPackageConfigurationHooks;
     }
   >;
 }
 
 // WEB APP
 
-export interface WebAppBuildOptions {}
+export interface BuildWebAppOptions {}
 
-export interface BrowserBuildConfigurationCoreHooks {
+export interface BuildBrowserConfigurationCoreHooks {
   readonly output: AsyncSeriesWaterfallHook<string>;
   readonly entries: AsyncSeriesWaterfallHook<string[]>;
   readonly extensions: AsyncSeriesWaterfallHook<string[]>;
   readonly filename: AsyncSeriesWaterfallHook<string>;
 }
 
-export interface BrowserBuildConfigurationCustomHooks {}
+export interface BuildBrowserConfigurationCustomHooks {}
 
-export interface BrowserBuildConfigurationHooks
-  extends BrowserBuildConfigurationCoreHooks,
-    Partial<BrowserBuildConfigurationCustomHooks> {}
+export interface BuildBrowserConfigurationHooks
+  extends BuildBrowserConfigurationCoreHooks,
+    Partial<BuildBrowserConfigurationCustomHooks> {}
 
 export interface ServiceWorkerBuildConfigurationCoreHooks
-  extends BrowserBuildConfigurationCoreHooks {}
+  extends BuildBrowserConfigurationCoreHooks {}
 
 export interface ServiceWorkerBuildConfigurationCustomHooks
-  extends BrowserBuildConfigurationCustomHooks {}
+  extends BuildBrowserConfigurationCustomHooks {}
 
 export interface ServiceWorkerBuildConfigurationHooks
   extends ServiceWorkerBuildConfigurationCoreHooks,
     Partial<ServiceWorkerBuildConfigurationCustomHooks> {}
 
-export interface WebAppBuildHooks {
-  readonly variants: AsyncSeriesWaterfallHook<Partial<WebAppBuildOptions>[]>;
+export interface BuildWebAppHooks {
+  readonly variants: AsyncSeriesWaterfallHook<Partial<BuildWebAppOptions>[]>;
 
   readonly configure: AsyncSeriesHook<
-    BrowserBuildConfigurationHooks | ServiceWorkerBuildConfigurationHooks,
-    Partial<WebAppBuildOptions>
+    BuildBrowserConfigurationHooks | ServiceWorkerBuildConfigurationHooks,
+    Partial<BuildWebAppOptions>
   >;
   readonly configureBrowser: AsyncSeriesHook<
-    BrowserBuildConfigurationHooks,
-    Partial<WebAppBuildOptions>
+    BuildBrowserConfigurationHooks,
+    Partial<BuildWebAppOptions>
   >;
   readonly configureServiceWorker: AsyncSeriesHook<
-    BrowserBuildConfigurationHooks,
-    Partial<WebAppBuildOptions>
+    BuildBrowserConfigurationHooks,
+    Partial<BuildWebAppOptions>
   >;
 
   readonly steps: AsyncSeriesWaterfallHook<
     Step[],
     {
-      variant: Partial<WebAppBuildOptions>;
-      browserConfig: BrowserBuildConfigurationHooks;
+      variant: Partial<BuildWebAppOptions>;
+      browserConfig: BuildBrowserConfigurationHooks;
       serviceWorkerConfig: ServiceWorkerBuildConfigurationHooks;
     }
   >;
@@ -100,12 +100,12 @@ export interface BuildTaskHooks {
   readonly project: AsyncSeriesHook<
     | {
         project: WebApp;
-        hooks: WebAppBuildHooks;
+        hooks: BuildWebAppHooks;
       }
-    | {project: Package; hooks: PackageBuildHooks}
+    | {project: Package; hooks: BuildPackageHooks}
   >;
-  readonly package: AsyncSeriesHook<{pkg: Package; hooks: PackageBuildHooks}>;
-  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: WebAppBuildHooks}>;
+  readonly package: AsyncSeriesHook<{pkg: Package; hooks: BuildPackageHooks}>;
+  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: BuildWebAppHooks}>;
 
   readonly pre: AsyncSeriesWaterfallHook<Step[]>;
   readonly post: AsyncSeriesWaterfallHook<Step[]>;

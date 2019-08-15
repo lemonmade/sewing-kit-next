@@ -15,7 +15,7 @@ const VARIANT = 'node';
 const EXTENSION = '.node';
 
 declare module '../../tasks/build/types' {
-  interface PackageBuildOptions {
+  interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
 }

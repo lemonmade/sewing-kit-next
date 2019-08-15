@@ -12,13 +12,13 @@ interface BabelHooks {
 }
 
 declare module '../../tasks/build/types' {
-  interface PackageBuildConfigurationCustomHooks extends BabelHooks {}
+  interface BuildPackageConfigurationCustomHooks extends BabelHooks {}
 
-  interface BrowserBuildConfigurationCustomHooks extends BabelHooks {}
+  interface BuildBrowserConfigurationCustomHooks extends BabelHooks {}
 }
 
 declare module '../../tasks/testing/types' {
-  interface ProjectConfigurationCustomHooks extends BabelHooks {}
+  interface TestProjectConfigurationCustomHooks extends BabelHooks {}
 }
 
 const PLUGIN = 'SewingKit.babel';

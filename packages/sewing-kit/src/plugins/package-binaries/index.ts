@@ -2,7 +2,7 @@ import {relative, dirname} from 'path';
 import exec from 'execa';
 
 import {Runtime} from '../../types';
-import {RunnerTasks} from '../../runner';
+import {RunnerTasks, createStep} from '../../runner';
 import {Package} from '../../workspace';
 
 const PLUGIN = 'SewingKit.package-binaries';
@@ -10,23 +10,31 @@ const PLUGIN = 'SewingKit.package-binaries';
 export default function packageBinaries(tasks: RunnerTasks) {
   tasks.build.tap(PLUGIN, ({hooks}) => {
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
-      hooks.steps.tap(PLUGIN, (steps) => [
-        ...steps,
-        createWriteBinariesStep(pkg),
-      ]);
+      hooks.steps.tap(PLUGIN, (steps) =>
+        pkg.binaries.length > 0
+          ? [...steps, createWriteBinariesStep(pkg)]
+          : steps,
+      );
     });
   });
 }
 
 function createWriteBinariesStep(pkg: Package) {
+  const binaryCount = pkg.binaries.length;
+
   const allNodeEntries = pkg.entries.every(
     ({runtime}) => runtime === Runtime.Node,
   );
 
   const sourceRoot = pkg.fs.resolvePath('src');
 
-  return {
-    async run() {
+  return createStep(
+    {
+      label: `Writing ${binaryCount} ${
+        binaryCount > 1 ? 'binaries' : 'binary'
+      }`,
+    },
+    async () => {
       await Promise.all(
         pkg.binaries.map(async ({name, root, aliases = []}) => {
           const relativeFromSourceRoot = relative(
@@ -58,7 +66,7 @@ function createWriteBinariesStep(pkg: Package) {
         }),
       );
     },
-  };
+  );
 }
 
 function normalizedRelative(from: string, to: string) {

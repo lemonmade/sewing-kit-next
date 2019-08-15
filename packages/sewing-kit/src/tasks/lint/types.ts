@@ -3,7 +3,7 @@ import {Workspace} from '../../workspace';
 import {Step} from '../../runner';
 
 export interface LintTaskOptions {
-  fix?: boolean;
+  readonly fix?: boolean;
 }
 
 export interface LintRootConfigurationCustomHooks {}
@@ -13,11 +13,15 @@ export interface LintRootConfigurationHooks
   extends LintRootConfigurationCoreHooks,
     Partial<LintRootConfigurationCustomHooks> {}
 
+interface LintStepDetails {
+  readonly configuration: LintRootConfigurationHooks;
+}
+
 export interface LintTaskHooks {
-  configure: AsyncSeriesHook<LintRootConfigurationHooks>;
-  pre: AsyncSeriesWaterfallHook<Step[]>;
-  steps: AsyncSeriesWaterfallHook<Step[]>;
-  post: AsyncSeriesWaterfallHook<Step[]>;
+  readonly configure: AsyncSeriesHook<LintRootConfigurationHooks>;
+  readonly pre: AsyncSeriesWaterfallHook<Step[], LintStepDetails>;
+  readonly steps: AsyncSeriesWaterfallHook<Step[], LintStepDetails>;
+  readonly post: AsyncSeriesWaterfallHook<Step[], LintStepDetails>;
 }
 
 export interface LintTask {

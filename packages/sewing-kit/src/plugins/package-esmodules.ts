@@ -8,7 +8,7 @@ const PLUGIN = 'SewingKit.package-esmodules';
 const VARIANT = 'esmodules';
 
 declare module '../tasks/build/types' {
-  interface PackageBuildOptions {
+  interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
 }

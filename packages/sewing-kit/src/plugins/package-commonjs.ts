@@ -14,7 +14,7 @@ const PLUGIN = 'SewingKit.package-commonjs';
 const VARIANT = 'commonjs';
 
 declare module '../tasks/build/types' {
-  interface PackageBuildOptions {
+  interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
 }

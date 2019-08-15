@@ -14,15 +14,19 @@ export interface TypeCheckRootConfigurationHooks
   extends TypeCheckRootConfigurationCoreHooks,
     Partial<TypeCheckRootConfigurationCustomHooks> {}
 
+interface TypeCheckStepDetails {
+  readonly configuration: TypeCheckRootConfigurationHooks;
+}
+
 export interface TypeCheckTaskHooks {
-  configure: AsyncSeriesHook<TypeCheckRootConfigurationHooks>;
-  pre: AsyncSeriesWaterfallHook<Step[]>;
-  steps: AsyncSeriesWaterfallHook<Step[]>;
-  post: AsyncSeriesWaterfallHook<Step[]>;
+  readonly configure: AsyncSeriesHook<TypeCheckRootConfigurationHooks>;
+  readonly pre: AsyncSeriesWaterfallHook<Step[], TypeCheckStepDetails>;
+  readonly steps: AsyncSeriesWaterfallHook<Step[], TypeCheckStepDetails>;
+  readonly post: AsyncSeriesWaterfallHook<Step[], TypeCheckStepDetails>;
 }
 
 export interface TypeCheckTask {
-  hooks: TypeCheckTaskHooks;
-  options: TypeCheckOptions;
-  workspace: Workspace;
+  readonly hooks: TypeCheckTaskHooks;
+  readonly options: TypeCheckOptions;
+  readonly workspace: Workspace;
 }

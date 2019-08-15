@@ -6,10 +6,10 @@ import {Runner, Step, createStep} from '../../runner';
 import {
   BuildTaskOptions,
   BuildTaskHooks,
-  PackageBuildHooks,
-  PackageBuildConfigurationHooks,
-  WebAppBuildHooks,
-  BrowserBuildConfigurationHooks,
+  BuildPackageHooks,
+  BuildPackageConfigurationHooks,
+  BuildWebAppHooks,
+  BuildBrowserConfigurationHooks,
 } from './types';
 
 export async function runBuild(
@@ -35,7 +35,7 @@ export async function runBuild(
 
   const webAppSteps: Step[] = (await Promise.all(
     workspace.webApps.map(async (webApp) => {
-      const hooks: WebAppBuildHooks = {
+      const hooks: BuildWebAppHooks = {
         variants: new AsyncSeriesWaterfallHook(['variants']),
         steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
         configure: new AsyncSeriesHook(['configuration', 'variant']),
@@ -53,7 +53,7 @@ export async function runBuild(
 
       return variants.map((variant) => {
         return createStep({label: `Building variant`}, async (_, runner) => {
-          const configurationHooks: BrowserBuildConfigurationHooks = {
+          const configurationHooks: BuildBrowserConfigurationHooks = {
             entries: new AsyncSeriesWaterfallHook(['entries']),
             extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
             filename: new AsyncSeriesWaterfallHook(['filename']),
@@ -79,7 +79,7 @@ export async function runBuild(
     ? []
     : await Promise.all(
         workspace.packages.map(async (pkg) => {
-          const hooks: PackageBuildHooks = {
+          const hooks: BuildPackageHooks = {
             variants: new AsyncSeriesWaterfallHook(['variants']),
             steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
             configure: new AsyncSeriesHook(['buildTarget', 'options']),
@@ -100,7 +100,7 @@ export async function runBuild(
                       fmt`Build {code ${Object.keys(variant)[0]}} variant`,
                   },
                   async (_, runner) => {
-                    const configurationHooks: PackageBuildConfigurationHooks = {
+                    const configurationHooks: BuildPackageConfigurationHooks = {
                       output: new AsyncSeriesWaterfallHook(['output']),
                       extensions: new AsyncSeriesWaterfallHook(['extensions']),
                     };
