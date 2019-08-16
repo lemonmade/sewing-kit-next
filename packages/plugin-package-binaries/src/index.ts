@@ -1,1 +1,1 @@
-export * from './plugin-package-binaries';
+export {default} from './plugin-package-binaries';

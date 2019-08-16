@@ -19,13 +19,14 @@ export async function runBuild(
   runner: Runner,
 ) {
   const buildTaskHooks: BuildTaskHooks = {
-    pre: new AsyncSeriesWaterfallHook(['steps']),
+    configure: new AsyncSeriesHook(['hooks']),
+    pre: new AsyncSeriesWaterfallHook(['steps', 'details']),
 
     project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
     package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
     webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
 
-    post: new AsyncSeriesWaterfallHook(['steps']),
+    post: new AsyncSeriesWaterfallHook(['steps', 'details']),
   };
 
   await runner.tasks.build.promise({
@@ -98,11 +99,10 @@ export async function runBuild(
                 createStep(
                   {
                     label: (fmt) =>
-                      fmt`Build {code ${Object.keys(variant)[0]}} variant`,
+                      fmt`Build {emphasis ${Object.keys(variant)[0]}} variant`,
                   },
                   async (step) => {
                     const configurationHooks: BuildPackageConfigurationHooks = {
-                      output: new AsyncSeriesWaterfallHook(['output']),
                       extensions: new AsyncSeriesWaterfallHook(['extensions']),
                     };
 
@@ -124,5 +124,13 @@ export async function runBuild(
         }),
       );
 
-  await run([...webAppSteps, ...packageSteps], {ui: runner.ui});
+  const configurationHooks = {};
+  await buildTaskHooks.configure.promise(configurationHooks);
+
+  const [pre, post] = await Promise.all([
+    buildTaskHooks.pre.promise([], {configuration: configurationHooks}),
+    buildTaskHooks.post.promise([], {configuration: configurationHooks}),
+  ]);
+
+  await run([...webAppSteps, ...packageSteps], {ui: runner.ui, pre, post});
 }

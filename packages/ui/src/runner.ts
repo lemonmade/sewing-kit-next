@@ -78,6 +78,11 @@ class StepRunner {
       }
 
       const ownLine = fmt`${prefix} ${fmt`${this.step.label || ''}`}`;
+
+      if (this.state !== StepState.InProgress) {
+        return ownLine;
+      }
+
       const childLines = this.stepRunners
         .map((step) => fmt`${step.toString(tick)}`)
         .filter(Boolean);
@@ -132,8 +137,13 @@ class RunnerUi {
       this.groupRunners.push(new StepGroupRunner(group, this.update));
     }
 
-    const interval: any = setInterval(this.update, 60);
-    const immediate = setImmediate(this.update);
+    const frame = () => {
+      this.update();
+      this.tick += 1;
+    };
+
+    const interval: any = setInterval(frame, 60);
+    const immediate = setImmediate(frame);
 
     try {
       for (const groupRunner of this.groupRunners) {
@@ -162,7 +172,6 @@ class RunnerUi {
     this.ui.stdout.clearDown();
     this.ui.stdout.write(content);
 
-    this.tick += 1;
     this.lastContentHeight = content.split('\n').length;
   };
 }
@@ -194,9 +203,7 @@ export async function run(
     } else {
       ui.error(
         (fmt) =>
-          fmt`🧵 The following unexpected error occurred. We want to provide more useful suggestions when errors occur, so please open an issue on {link the sewing-kit repo https://github.com/Shopify/sewing-kit} so that we can improve this message. Command: {code ${process.argv.join(
-            ' ',
-          )}}.\n`,
+          fmt`🧵 The following unexpected error occurred. We want to provide more useful suggestions when errors occur, so please open an issue on {link the sewing-kit repo https://github.com/Shopify/sewing-kit} so that we can improve this message.`,
       );
       // ui.log(error.message);
 
@@ -204,6 +211,7 @@ export async function run(
         ui.error(error.stack);
       } else {
         ui.error(error.all);
+        ui.error(error.stack);
       }
     }
 

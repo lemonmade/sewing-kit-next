@@ -2,7 +2,9 @@
   "name": "sewing-kit-next",
   "private": true,
   "scripts": {
-    "sk": "node scripts/prep && babel-node --extensions .js,.ts,.tsx,.mjs ./packages/sewing-kit/src/cli",
+    "postinstall": "yarn bootstrap",
+    "bootstrap": "lerna bootstrap && node ./scripts/bootstrap && tsc --build",
+    "sk": "node ./scripts/bootstrap && babel-node --extensions .ts,.tsx,.mjs,.js ./packages/cli/src/index",
     "sewing-kit": "yarn sk",
     "build": "yarn sk build",
     "test": "yarn sk test",
@@ -14,9 +16,15 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/node": "^7.5.5",
     "@types/fs-extra": "^8.0.0",
+    "babel-preset-shopify": "^20.0.0",
+    "eslint-plugin-shopify": "^30.0.1",
     "fs-extra": "^8.1.0",
+    "glob": "^7.1.4",
     "lerna": "^3.16.4",
+    "prettier": "^1.18.2",
     "tree-node-cli": "^1.2.5",
     "ts-node": "^8.3.0"
   },

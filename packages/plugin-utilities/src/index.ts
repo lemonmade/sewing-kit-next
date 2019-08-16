@@ -2,7 +2,7 @@ import {RunnerTasks} from '@sewing-kit/core';
 import {kebab} from 'change-case';
 
 type OptionalKeys<T> = {
-  [K in keyof T]-?: undefined extends T[K] ? K : never
+  [K in keyof T]-?: undefined extends T[K] ? K : never;
 }[keyof T];
 
 type HookAdder<T> = () => {[K in OptionalKeys<T>]?: T[K]};

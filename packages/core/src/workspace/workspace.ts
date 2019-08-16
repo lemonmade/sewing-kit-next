@@ -120,11 +120,13 @@ export class WebApp extends Project {
 export interface WebAppOptions {}
 
 export interface PackageCreateOptions extends ProjectOptions {
+  runtime?: Runtime;
   entries: PackageEntry[];
   binaries: PackageBinary[];
 }
 
 export class Package extends Project {
+  readonly runtime: Runtime | undefined;
   readonly entries: PackageEntry[];
   readonly binaries: PackageBinary[];
 
@@ -136,9 +138,10 @@ export class Package extends Project {
     return (this.packageJson && this.packageJson.name) || this.name;
   }
 
-  constructor({entries, binaries, ...rest}: PackageCreateOptions) {
+  constructor({entries, binaries, runtime, ...rest}: PackageCreateOptions) {
     super(rest);
 
+    this.runtime = runtime;
     this.entries = entries;
     this.binaries = binaries;
   }

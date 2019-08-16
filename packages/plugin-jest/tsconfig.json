@@ -8,7 +8,8 @@
       "./config/typescript/typings",
       "./node_modules/@types",
       "../../node_modules/@types"
-    ]
+    ],
+    "types": ["jest"]
   },
   "include": ["src/**/*.ts"],
   "references": [

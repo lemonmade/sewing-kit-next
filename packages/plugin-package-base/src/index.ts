@@ -1,1 +1,2 @@
-export * from './plugin-package-base';
+export * from './types';
+export {default} from './plugin-package-base';

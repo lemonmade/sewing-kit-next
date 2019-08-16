@@ -1,1 +1,1 @@
-export * from './plugin-jest';
+export {default} from './plugin-jest';

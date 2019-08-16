@@ -28,8 +28,6 @@
     {"path": "./packages/plugin-package-typescript"},
 
     {"path": "./packages/plugin-web-app-base"},
-    {"path": "./packages/plugin-differential-serving"},
-
-    {"path": "./packages/sewing-kit"}
+    {"path": "./packages/plugin-differential-serving"}
   ]
 }

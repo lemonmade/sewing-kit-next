@@ -1,1 +1,1 @@
-export * from './plugin-differential-serving';
+export {default} from './plugin-differential-serving';

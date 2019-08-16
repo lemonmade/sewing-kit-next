@@ -12,7 +12,6 @@ export interface BuildPackageConfigurationCustomHooks {}
 
 export interface BuildPackageConfigurationCoreHooks {
   readonly extensions: AsyncSeriesWaterfallHook<string[]>;
-  readonly output: AsyncSeriesWaterfallHook<string>;
 }
 
 export interface BuildPackageConfigurationHooks
@@ -89,6 +88,16 @@ export interface BuildWebAppHooks {
   >;
 }
 
+// ROOT
+
+export interface BuildRootConfigurationCustomHooks {}
+
+export interface BuildRootConfigurationCoreHooks {}
+
+export interface BuildRootConfigurationHooks
+  extends BuildRootConfigurationCoreHooks,
+    Partial<BuildRootConfigurationCustomHooks> {}
+
 // TASK
 
 export interface BuildTaskOptions {
@@ -96,7 +105,13 @@ export interface BuildTaskOptions {
   readonly simulateEnv: Env;
 }
 
+interface BuildStepDetails {
+  readonly configuration: BuildRootConfigurationHooks;
+}
+
 export interface BuildTaskHooks {
+  readonly configure: AsyncSeriesHook<BuildRootConfigurationHooks>;
+
   readonly project: AsyncSeriesHook<
     | {
         project: WebApp;
@@ -107,8 +122,8 @@ export interface BuildTaskHooks {
   readonly package: AsyncSeriesHook<{pkg: Package; hooks: BuildPackageHooks}>;
   readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: BuildWebAppHooks}>;
 
-  readonly pre: AsyncSeriesWaterfallHook<Step[]>;
-  readonly post: AsyncSeriesWaterfallHook<Step[]>;
+  readonly pre: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;
+  readonly post: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;
 }
 
 export interface BuildTask {

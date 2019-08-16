@@ -1,1 +1,1 @@
-export * from './plugin-package-node';
+export {default} from './plugin-package-node';

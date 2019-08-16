@@ -5,5 +5,10 @@
   "publishConfig": {
     "access": "public",
     "@sewing-kit:registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "@types/jest": "^24.0.17",
+    "jest": "^24.9.0",
+    "jest-watch-typeahead": "^0.3.1"
   }
 }

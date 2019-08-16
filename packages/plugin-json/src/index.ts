@@ -1,1 +1,1 @@
-export * from './plugin-json';
+export {default} from './plugin-json';

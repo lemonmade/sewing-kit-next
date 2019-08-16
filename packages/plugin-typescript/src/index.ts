@@ -1,1 +1,1 @@
-export * from './plugin-typescript';
+export {default} from './plugin-typescript';

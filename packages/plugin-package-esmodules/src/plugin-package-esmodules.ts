@@ -1,4 +1,3 @@
-import {join} from 'path';
 import {produce} from 'immer';
 
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
@@ -7,6 +6,7 @@ import {
   updateBabelPreset,
   createCompileBabelStep,
 } from '@sewing-kit/plugin-babel';
+import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-esmodules';
 const VARIANT = 'esmodules';
@@ -19,6 +19,18 @@ declare module '@sewing-kit/core/build/ts/tasks/build/types' {
 
 export default createRootPlugin(PLUGIN, (tasks) => {
   tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.packageBuildArtifacts) {
+        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+          ...artifacts,
+          ...workspace.packages.map((pkg) => pkg.fs.buildPath('esm')),
+          ...(await Promise.all(
+            workspace.packages.map((pkg) => pkg.fs.glob('./*.mjs')),
+          )).flat(),
+        ]);
+      }
+    });
+
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
@@ -45,35 +57,32 @@ export default createRootPlugin(PLUGIN, (tasks) => {
             );
           });
         }
-
-        configurationHooks.output.tap(PLUGIN, (output) => join(output, 'esm'));
       });
 
-      hooks.steps.tapPromise(
-        PLUGIN,
-        async (steps, {config, variant: {esmodules}}) => {
-          if (!esmodules) {
-            return steps;
-          }
+      hooks.steps.tap(PLUGIN, (steps, {config, variant: {esmodules}}) => {
+        if (!esmodules) {
+          return steps;
+        }
 
-          const outputPath = await config.output.promise(pkg.fs.buildPath());
+        const outputPath = pkg.fs.buildPath('esm');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.esm.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: '.mjs',
-                contents: (relative) =>
-                  `export * from ${JSON.stringify(relative)};`,
-              }),
-            );
-          });
-        },
-      );
+        return produce(steps, (steps) => {
+          steps.push(
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.esm.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: '.mjs',
+              contents: (relative) =>
+                `export * from ${JSON.stringify(
+                  relative,
+                )};\nexport {default} from ${JSON.stringify(relative)};`,
+            }),
+          );
+        });
+      });
     });
   });
 });

@@ -1,22 +1,35 @@
-import {
-  Runtime,
-  PackageCreateOptions,
-  PackageEntry,
-  PackageBinary,
-} from '@sewing-kit/core';
+export enum Runtime {
+  Node = 'node',
+  Browser = 'browser',
+  ServiceWorker = 'service-worker',
+  WebWorker = 'web-worker',
+}
+
+export interface PackageBinary {
+  readonly name: string;
+  readonly root: string;
+  readonly aliases?: string[];
+}
+
+export interface PackageEntryOptions {}
+
+export interface PackageEntry {
+  readonly root: string;
+  readonly name?: string;
+  readonly options?: Partial<PackageEntryOptions>;
+  readonly runtime?: Runtime;
+}
 
 class PackageCreator {
-  private defaultRuntime?: Runtime;
-
-  constructor(private readonly options: Partial<PackageCreateOptions>) {}
+  constructor(private readonly options: any) {}
 
   runtime(defaultRuntime: Runtime) {
-    this.defaultRuntime = defaultRuntime;
+    this.options.runtime = defaultRuntime;
   }
 
   entry(entry: PackageEntry) {
     this.options.entries = this.options.entries || [];
-    this.options.entries.push({runtime: this.defaultRuntime, ...entry});
+    this.options.entries.push({runtime: this.options.runtime, ...entry});
   }
 
   binary(binary: PackageBinary) {
@@ -29,7 +42,7 @@ export function createPackage(
   create: (pkg: PackageCreator) => void | Promise<void>,
 ) {
   return async () => {
-    const options = {};
+    const options: any = {};
     const creator = new PackageCreator(options);
     await create(creator);
     return options;

@@ -1,1 +1,1 @@
-export * from './plugin-webpack';
+export {default} from './plugin-webpack';

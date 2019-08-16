@@ -14,6 +14,7 @@
   "references": [
     {"path": "../ui"},
     {"path": "../core"},
-    {"path": "../plugin-utilities"}
+    {"path": "../plugin-utilities"},
+    {"path": "../plugin-package-base"}
   ]
 }

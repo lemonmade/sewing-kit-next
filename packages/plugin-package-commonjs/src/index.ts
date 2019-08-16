@@ -1,1 +1,1 @@
-export * from './plugin-package-commonjs';
+export {default} from './plugin-package-commonjs';

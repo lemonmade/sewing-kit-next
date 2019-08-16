@@ -1,1 +1,1 @@
-export * from './plugin-web-app-base';
+export {default} from './plugin-web-app-base';

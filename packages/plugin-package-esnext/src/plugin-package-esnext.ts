@@ -1,4 +1,3 @@
-import {join} from 'path';
 import {produce} from 'immer';
 
 import {Runtime} from '@sewing-kit/core';
@@ -8,6 +7,7 @@ import {
   updateBabelPreset,
   createCompileBabelStep,
 } from '@sewing-kit/plugin-babel';
+import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-esnext';
 const VARIANT = 'esnext';
@@ -21,6 +21,18 @@ declare module '@sewing-kit/core/build/ts/tasks/build/types' {
 
 export default createRootPlugin(PLUGIN, (tasks) => {
   tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.packageBuildArtifacts) {
+        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+          ...artifacts,
+          ...workspace.packages.map((pkg) => pkg.fs.buildPath('esnext')),
+          ...(await Promise.all(
+            workspace.packages.map((pkg) => pkg.fs.glob(`./*${EXTENSION}`)),
+          )).flat(),
+        ]);
+      }
+    });
+
     hooks.webApp.tap(PLUGIN, ({hooks}) => {
       hooks.configure.tap(PLUGIN, (configurationHooks) => {
         configurationHooks.extensions.tap(PLUGIN, (extensions) => [
@@ -65,38 +77,33 @@ export default createRootPlugin(PLUGIN, (tasks) => {
             );
           });
         }
-
-        configurationHooks.output.tap(PLUGIN, (output) =>
-          join(output, 'esnext'),
-        );
       });
 
-      hooks.steps.tapPromise(
-        PLUGIN,
-        async (steps, {config, variant: {esnext}}) => {
-          if (!esnext) {
-            return steps;
-          }
+      hooks.steps.tap(PLUGIN, (steps, {config, variant: {esnext}}) => {
+        if (!esnext) {
+          return steps;
+        }
 
-          const outputPath = await config.output.promise(pkg.fs.buildPath());
+        const outputPath = pkg.fs.buildPath('esnext');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.esnext.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: EXTENSION,
-                exclude: (entry) => entry.runtime === Runtime.Node,
-                contents: (relative) =>
-                  `export * from ${JSON.stringify(relative)};`,
-              }),
-            );
-          });
-        },
-      );
+        return produce(steps, (steps) => {
+          steps.push(
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.esnext.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: EXTENSION,
+              exclude: (entry) => entry.runtime === Runtime.Node,
+              contents: (relative) =>
+                `export * from ${JSON.stringify(
+                  relative,
+                )};\nexport {default} from ${JSON.stringify(relative)};`,
+            }),
+          );
+        });
+      });
     });
   });
 });

@@ -1,1 +1,1 @@
-export * from './plugin-javascript';
+export {default} from './plugin-javascript';

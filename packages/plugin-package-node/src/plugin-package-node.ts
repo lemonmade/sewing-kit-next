@@ -1,4 +1,3 @@
-import {join} from 'path';
 import {produce} from 'immer';
 
 import {Runtime} from '@sewing-kit/core';
@@ -10,6 +9,7 @@ import {
   createCompileBabelStep,
 } from '@sewing-kit/plugin-babel';
 import {} from '@sewing-kit/plugin-jest';
+import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-node';
 const VARIANT = 'node';
@@ -36,6 +36,18 @@ export default createRootPlugin(PLUGIN, (tasks) => {
   });
 
   tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.packageBuildArtifacts) {
+        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+          ...artifacts,
+          ...workspace.packages.map((pkg) => pkg.fs.buildPath('node')),
+          ...(await Promise.all(
+            workspace.packages.map((pkg) => pkg.fs.glob(`./*${EXTENSION}`)),
+          )).flat(),
+        ]);
+      }
+    });
+
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => {
         // If all the entries already target node, there is no need to do a
@@ -66,36 +78,31 @@ export default createRootPlugin(PLUGIN, (tasks) => {
             });
           });
         }
-
-        configurationHooks.output.tap(PLUGIN, (output) => join(output, 'node'));
       });
 
-      hooks.steps.tapPromise(
-        PLUGIN,
-        async (steps, {config, variant: {node}}) => {
-          if (!node) {
-            return steps;
-          }
+      hooks.steps.tap(PLUGIN, (steps, {config, variant: {node}}) => {
+        if (!node) {
+          return steps;
+        }
 
-          const outputPath = await config.output.promise(pkg.fs.buildPath());
+        const outputPath = pkg.fs.buildPath('node');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.node.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: EXTENSION,
-                exclude: (entry) => entry.runtime === Runtime.Node,
-                contents: (relative) =>
-                  `module.exports = require(${JSON.stringify(relative)});`,
-              }),
-            );
-          });
-        },
-      );
+        return produce(steps, (steps) => {
+          steps.push(
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.node.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: EXTENSION,
+              exclude: (entry) => entry.runtime === Runtime.Node,
+              contents: (relative) =>
+                `module.exports = require(${JSON.stringify(relative)});`,
+            }),
+          );
+        });
+      });
     });
   });
 });

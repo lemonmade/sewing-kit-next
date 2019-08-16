@@ -2,11 +2,27 @@ import {relative, dirname} from 'path';
 import {Package, Runtime} from '@sewing-kit/core';
 import {createStep} from '@sewing-kit/ui';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
+import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-binaries';
 
 export default createRootPlugin(PLUGIN, (tasks) => {
-  tasks.build.tap(PLUGIN, ({hooks}) => {
+  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.packageBuildArtifacts) {
+        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+          ...artifacts,
+          ...((await Promise.all(
+            workspace.packages.map((pkg) =>
+              pkg.fs.hasDirectory('bin')
+                ? pkg.fs.resolvePath('bin')
+                : undefined,
+            ),
+          )).filter(Boolean) as string[]),
+        ]);
+      }
+    });
+
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.steps.tap(PLUGIN, (steps) =>
         pkg.binaries.length > 0

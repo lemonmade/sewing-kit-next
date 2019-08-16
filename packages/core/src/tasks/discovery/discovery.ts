@@ -1,5 +1,7 @@
 import {basename} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
+import {loadConfig} from '@sewing-kit/config/load';
+
 import {WebApp, Service, Package, Workspace, FileSystem} from '../../workspace';
 import {Runner} from '../../runner';
 
@@ -34,6 +36,12 @@ export async function runDiscovery(
   const {root = process.cwd()} = options;
   const name = basename(root);
   const fs = new FileSystem(root);
+
+  const {plugins = []} = await loadConfig(root);
+
+  for (const plugin of plugins) {
+    plugin(runner.tasks);
+  }
 
   await runner.tasks.discovery.promise({
     fs,

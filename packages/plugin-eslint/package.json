@@ -5,5 +5,8 @@
   "publishConfig": {
     "access": "public",
     "@sewing-kit:registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "eslint": "^6.1.0"
   }
 }

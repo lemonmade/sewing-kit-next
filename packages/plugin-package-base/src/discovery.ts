@@ -11,14 +11,16 @@ export default function discoverPackages({
 }: DiscoveryTask) {
   hooks.packages.tapPromise(PLUGIN, async (packages) => {
     if (await fs.hasFile('src/index.*')) {
+      const customConfig = await loadConfig(root);
+
       return [
         ...packages,
         new Package({
           root,
           name,
           binaries: [],
-          entries: [{root: 'src'}],
-          ...(await loadConfig(root)),
+          entries: [{root: 'src', runtime: customConfig.runtime}],
+          ...customConfig,
         }),
       ];
     }
@@ -26,12 +28,14 @@ export default function discoverPackages({
     const packageMatches = await fs.glob('packages/*/');
     const newPackages = await Promise.all(
       packageMatches.map(async (root) => {
+        const customConfig = await loadConfig(root);
+
         return new Package({
           root,
           name: basename(root),
           binaries: [],
-          entries: [{root: 'src'}],
-          ...(await loadConfig(root)),
+          entries: [{root: 'src', runtime: customConfig.runtime}],
+          ...customConfig,
         });
       }),
     );

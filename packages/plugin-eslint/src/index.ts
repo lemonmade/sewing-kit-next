@@ -1,1 +1,1 @@
-export * from './plugin-eslint';
+export {default} from './plugin-eslint';

@@ -11,7 +11,7 @@ declare module '@sewing-kit/core/build/ts/tasks/build/types' {
 }
 
 const BROWSER_TARGETS: {
-  [K in BuildWebAppOptions['browserTarget']]: string[]
+  [K in BuildWebAppOptions['browserTarget']]: string[];
 } = {
   baseline: [],
   latest: [],

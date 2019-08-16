@@ -1,4 +1,3 @@
-import {join} from 'path';
 import {produce} from 'immer';
 
 import {Runtime} from '@sewing-kit/core';
@@ -9,6 +8,7 @@ import {
   updateBabelPreset,
   createCompileBabelStep,
 } from '@sewing-kit/plugin-babel';
+import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-commonjs';
 const VARIANT = 'commonjs';
@@ -35,6 +35,22 @@ const setNodePreset = changeBabelPreset(
 
 export default createRootPlugin(PLUGIN, (tasks) => {
   tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+    hooks.configure.tap(PLUGIN, (hooks) => {
+      if (hooks.packageBuildArtifacts) {
+        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+          ...artifacts,
+          ...workspace.packages.map((pkg) => pkg.fs.buildPath('cjs')),
+          ...(await Promise.all(
+            workspace.packages.map(async (pkg) =>
+              pkg.fs.glob('./*.js', {
+                ignore: await pkg.fs.glob('sewing-kit.config.*'),
+              }),
+            ),
+          )).flat(),
+        ]);
+      }
+    });
+
     hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
       hooks.variants.tap(PLUGIN, (variants) => [
         ...variants,
@@ -61,35 +77,30 @@ export default createRootPlugin(PLUGIN, (tasks) => {
             });
           });
         }
-
-        configurationHooks.output.tap(PLUGIN, (output) => join(output, 'cjs'));
       });
 
-      hooks.steps.tapPromise(
-        PLUGIN,
-        async (steps, {config, variant: {commonjs}}) => {
-          if (!commonjs) {
-            return steps;
-          }
+      hooks.steps.tap(PLUGIN, (steps, {config, variant: {commonjs}}) => {
+        if (!commonjs) {
+          return steps;
+        }
 
-          const outputPath = await config.output.promise(pkg.fs.buildPath());
+        const outputPath = pkg.fs.buildPath('cjs');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.cjs.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: '.js',
-                contents: (relative) =>
-                  `module.exports = require(${JSON.stringify(relative)});`,
-              }),
-            );
-          });
-        },
-      );
+        return produce(steps, (steps) => {
+          steps.push(
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.cjs.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: '.js',
+              contents: (relative) =>
+                `module.exports = require(${JSON.stringify(relative)});`,
+            }),
+          );
+        });
+      });
     });
   });
 });

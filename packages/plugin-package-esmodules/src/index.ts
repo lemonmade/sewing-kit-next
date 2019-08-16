@@ -1,1 +1,1 @@
-export * from './plugin-package-esmodules';
+export {default} from './plugin-package-esmodules';
