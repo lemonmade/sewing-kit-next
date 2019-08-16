@@ -1,0 +1,9 @@
+{
+  "name": "@sewing-kit/plugin-package-commonjs",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "@sewing-kit:registry": "https://registry.npmjs.org"
+  }
+}

@@ -7,4 +7,7 @@ tmp
 ~
 yarn-error.log
 .sewing-kit
-packages/*/index.*
+packages/*/*.js
+packages/*/*.esnext
+packages/*/*.node
+packages/*/*.d.ts

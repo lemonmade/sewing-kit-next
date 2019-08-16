@@ -8,6 +8,7 @@
     {"path": "./packages/ui"},
 
     {"path": "./packages/plugin-utilities"},
+    {"path": "./packages/plugin-package-utilities"},
 
     {"path": "./packages/plugin-babel"},
     {"path": "./packages/plugin-eslint"},
@@ -17,6 +18,17 @@
     {"path": "./packages/plugin-json"},
     {"path": "./packages/plugin-javascript"},
     {"path": "./packages/plugin-typescript"},
+
+    {"path": "./packages/plugin-package-base"},
+    {"path": "./packages/plugin-package-binaries"},
+    {"path": "./packages/plugin-package-commonjs"},
+    {"path": "./packages/plugin-package-esmodules"},
+    {"path": "./packages/plugin-package-esnext"},
+    {"path": "./packages/plugin-package-node"},
+    {"path": "./packages/plugin-package-typescript"},
+
+    {"path": "./packages/plugin-web-app-base"},
+    {"path": "./packages/plugin-differential-serving"},
 
     {"path": "./packages/sewing-kit"}
   ]

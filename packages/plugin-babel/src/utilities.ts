@@ -1,3 +1,13 @@
+import {resolve} from 'path';
+
+import {createStep, MissingPluginError} from '@sewing-kit/ui';
+import {
+  Workspace,
+  Package,
+  BuildPackageConfigurationHooks,
+} from '@sewing-kit/core';
+import {toArgs} from '@sewing-kit/plugin-utilities';
+
 import {BabelConfig} from './types';
 
 const PRESET_MATCHER = /(babel-preset-shopify(?:\/[^.]*)?)/;
@@ -46,4 +56,52 @@ export function updateBabelPreset(match: string | string[], options: object) {
       }
     }
   };
+}
+
+interface CompileBabelOptions {
+  configFile: string;
+  outputPath: string;
+}
+
+export function createCompileBabelStep(
+  pkg: Package,
+  workspace: Workspace,
+  config: BuildPackageConfigurationHooks,
+  options: CompileBabelOptions,
+) {
+  return createStep(async (step) => {
+    const {configFile = 'babel.js', outputPath} = options;
+
+    const babelConfigPath = workspace.internal.configPath(
+      `build/packages/${pkg.name}/${configFile}`,
+    );
+
+    if (config.babelConfig == null) {
+      throw new MissingPluginError('@sewing-kit/plugin-babel');
+    }
+
+    await workspace.internal.write(
+      babelConfigPath,
+      `module.exports=${JSON.stringify(
+        await config.babelConfig.promise({presets: []}),
+      )};`,
+    );
+
+    const extensions = await config.extensions.promise([]);
+    const sourceRoot = resolve(pkg.root, 'src');
+
+    await step.exec('node_modules/.bin/babel', [
+      sourceRoot,
+      ...toArgs(
+        {
+          outDir: outputPath,
+          configFile: babelConfigPath,
+          verbose: true,
+          noBabelrc: true,
+          extensions: extensions.join(','),
+        },
+        {dasherize: true},
+      ),
+    ]);
+  });
 }
