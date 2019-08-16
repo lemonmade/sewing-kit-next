@@ -1,5 +1,5 @@
 {
-  "name": "@sewing-kit/plugin-package-esnext",
+  "name": "@sewing-kit/plugin-package-typescript",
   "version": "0.0.0",
   "sideEffects": false,
   "publishConfig": {
