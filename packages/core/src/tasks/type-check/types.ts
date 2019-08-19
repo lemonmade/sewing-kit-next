@@ -1,18 +1,11 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {Step} from '@sewing-kit/ui';
+import {Step, TypeCheckRootConfigurationHooks} from '@sewing-kit/types';
 import {Workspace} from '../../workspace';
 
 export interface TypeCheckOptions {
   heap?: number;
   watch?: boolean;
 }
-
-export interface TypeCheckRootConfigurationCustomHooks {}
-export interface TypeCheckRootConfigurationCoreHooks {}
-
-export interface TypeCheckRootConfigurationHooks
-  extends TypeCheckRootConfigurationCoreHooks,
-    Partial<TypeCheckRootConfigurationCustomHooks> {}
 
 interface TypeCheckStepDetails {
   readonly configuration: TypeCheckRootConfigurationHooks;

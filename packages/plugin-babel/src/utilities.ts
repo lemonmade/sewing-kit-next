@@ -1,12 +1,9 @@
 import {resolve} from 'path';
 
-import {createStep, MissingPluginError} from '@sewing-kit/ui';
-import {
-  Workspace,
-  Package,
-  BuildPackageConfigurationHooks,
-} from '@sewing-kit/core';
-import {toArgs} from '@sewing-kit/plugin-utilities';
+import {createStep} from '@sewing-kit/ui';
+import {BuildPackageConfigurationHooks} from '@sewing-kit/types';
+import {Workspace, Package} from '@sewing-kit/core';
+import {toArgs, MissingPluginError} from '@sewing-kit/plugin-utilities';
 
 import {BabelConfig} from './types';
 

@@ -1,10 +1,4 @@
-import {FirstArgument} from '@shopify/useful-types';
-
-export interface Step {
-  label?: FirstArgument<import('./ui').Ui['log']>;
-  indefinite?: boolean;
-  run(runner: import('./runner').NestedStepRunner): void | Promise<void>;
-}
+import {Step} from '@sewing-kit/types';
 
 export function createStep(run: Step['run']): Step;
 export function createStep(options: Omit<Step, 'run'>, run: Step['run']): Step;

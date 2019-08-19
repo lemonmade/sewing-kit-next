@@ -1,5 +1,6 @@
 import {relative, dirname} from 'path';
-import {Package, Runtime} from '@sewing-kit/core';
+import {Runtime} from '@sewing-kit/types';
+import {Package} from '@sewing-kit/core';
 import {createStep} from '@sewing-kit/ui';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
 import {} from '@sewing-kit/plugin-package-base';

@@ -1,8 +1,9 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {Project} from '@sewing-kit/core';
-import {MissingPluginError, createStep} from '@sewing-kit/ui';
+import {createStep} from '@sewing-kit/ui';
 import {
   createRootPlugin,
+  MissingPluginError,
   addHooks,
   compose,
   toArgs,
@@ -13,7 +14,7 @@ import {} from '@sewing-kit/plugin-babel';
 
 const PLUGIN = 'SewingKit.jest';
 
-declare module '@sewing-kit/core/build/ts/tasks/testing/types' {
+declare module '@sewing-kit/types' {
   interface TestProjectConfigurationCustomHooks {
     readonly jestExtensions: AsyncSeriesWaterfallHook<string[]>;
     readonly jestEnvironment: AsyncSeriesWaterfallHook<string>;
@@ -40,7 +41,7 @@ declare module '@sewing-kit/core/build/ts/tasks/testing/types' {
 }
 
 const addProjectConfigurationHooks = addHooks<
-  import('@sewing-kit/core').TestProjectConfigurationHooks
+  import('@sewing-kit/types').TestProjectConfigurationHooks
 >(() => ({
   jestExtensions: new AsyncSeriesWaterfallHook(['extensions']),
   jestEnvironment: new AsyncSeriesWaterfallHook(['environment']),
@@ -55,7 +56,7 @@ const addProjectConfigurationHooks = addHooks<
 }));
 
 const addRootConfigurationHooks = addHooks<
-  import('@sewing-kit/core').TestRootConfigurationHooks
+  import('@sewing-kit/types').TestRootConfigurationHooks
 >(() => ({
   jestSetupEnv: new AsyncSeriesWaterfallHook(['setupEnvFiles']),
   jestSetupTests: new AsyncSeriesWaterfallHook(['setupTestFiles']),
@@ -83,7 +84,7 @@ export default createRootPlugin(PLUGIN, (tasks) => {
   tasks.test.tap(PLUGIN, ({workspace, hooks, options}) => {
     const projectConfigurations: {
       project: Project;
-      hooks: import('@sewing-kit/core').TestProjectConfigurationHooks;
+      hooks: import('@sewing-kit/types').TestProjectConfigurationHooks;
     }[] = [];
 
     const rootConfigPath = workspace.internal.configPath('jest/root.config.js');

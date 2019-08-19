@@ -3,7 +3,7 @@ import {createStep, DiagnosticError} from '@sewing-kit/ui';
 import {addHooks, compose} from '@sewing-kit/plugin-utilities';
 import {PLUGIN} from './common';
 
-declare module '@sewing-kit/core/build/ts/tasks/type-check/types' {
+declare module '@sewing-kit/types' {
   interface TypeCheckRootConfigurationCustomHooks {
     typescriptHeap: AsyncSeriesWaterfallHook<number>;
   }

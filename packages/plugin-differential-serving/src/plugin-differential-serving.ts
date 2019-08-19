@@ -1,10 +1,10 @@
 import {join, dirname, basename} from 'path';
 import {produce} from 'immer';
-import {BuildWebAppOptions} from '@sewing-kit/core';
+import {BuildWebAppOptions} from '@sewing-kit/types';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
 import {updateBabelPreset} from '@sewing-kit/plugin-babel';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildWebAppOptions {
     browserTarget: 'baseline' | 'latest';
   }

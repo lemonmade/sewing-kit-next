@@ -1,17 +1,10 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {Step} from '@sewing-kit/ui';
+import {Step, LintRootConfigurationHooks} from '@sewing-kit/types';
 import {Workspace} from '../../workspace';
 
 export interface LintTaskOptions {
   readonly fix?: boolean;
 }
-
-export interface LintRootConfigurationCustomHooks {}
-export interface LintRootConfigurationCoreHooks {}
-
-export interface LintRootConfigurationHooks
-  extends LintRootConfigurationCoreHooks,
-    Partial<LintRootConfigurationCustomHooks> {}
 
 interface LintStepDetails {
   readonly configuration: LintRootConfigurationHooks;

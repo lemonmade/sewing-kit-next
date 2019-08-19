@@ -37,7 +37,7 @@ export async function runDiscovery(
   const name = basename(root);
   const fs = new FileSystem(root);
 
-  const {plugins = []} = await loadConfig(root);
+  const {plugins = []} = await loadConfig<{plugins?: Function[]}>(root);
 
   for (const plugin of plugins) {
     plugin(runner.tasks);

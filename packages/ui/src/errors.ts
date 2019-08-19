@@ -14,13 +14,3 @@ export class DiagnosticError extends Error {
     this.suggestion = suggestion;
   }
 }
-
-export class MissingPluginError extends DiagnosticError {
-  constructor(plugin: string) {
-    super({
-      message: `Missing hooks provided by ${plugin}`,
-      suggestion: (fmt) =>
-        fmt`Run {command yarn add ${plugin}}, import it into your sewing-kit config file, and include it using the {code plugins} option.`,
-    });
-  }
-}

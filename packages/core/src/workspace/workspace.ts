@@ -1,4 +1,13 @@
-import {Runtime} from '../types';
+import {
+  Runtime,
+  ProjectCreateOptions,
+  PackageEntryCreateOptions,
+  PackageBinaryCreateOptions,
+  PackageCreateOptions,
+  WebAppOptions,
+  WebAppCreateOptions,
+  ServiceCreateOptions,
+} from '@sewing-kit/types';
 import {FileSystem, SewingKitFileSystem} from './fs';
 import {PackageJson} from './dependencies';
 
@@ -6,11 +15,6 @@ interface DependencyOptions {
   all?: boolean;
   dev?: boolean;
   prod?: boolean;
-}
-
-interface ProjectOptions {
-  name: string;
-  root: string;
 }
 
 export class Project {
@@ -23,7 +27,7 @@ export class Project {
     return this.name;
   }
 
-  constructor({name, root}: ProjectOptions) {
+  constructor({name, root}: ProjectCreateOptions) {
     this.name = name;
     this.root = root;
     this.fs = new FileSystem(root);
@@ -59,7 +63,7 @@ export class Project {
   }
 }
 
-interface WorkspaceCreateOptions extends ProjectOptions {
+interface WorkspaceCreateOptions extends ProjectCreateOptions {
   webApps: WebApp[];
   packages: Package[];
   services: Service[];
@@ -88,12 +92,6 @@ export class Workspace extends Project {
   }
 }
 
-interface WebAppCreateOptions extends ProjectOptions {
-  entry: string;
-  options?: Partial<WebAppOptions>;
-  serviceWorker?: string;
-}
-
 export class WebApp extends Project {
   readonly entry: string;
   readonly options: Partial<WebAppOptions>;
@@ -117,13 +115,8 @@ export class WebApp extends Project {
   }
 }
 
-export interface WebAppOptions {}
-
-export interface PackageCreateOptions extends ProjectOptions {
-  runtime?: Runtime;
-  entries: PackageEntry[];
-  binaries: PackageBinary[];
-}
+export interface PackageEntry extends PackageEntryCreateOptions {}
+export interface PackageBinary extends PackageBinaryCreateOptions {}
 
 export class Package extends Project {
   readonly runtime: Runtime | undefined;
@@ -145,25 +138,6 @@ export class Package extends Project {
     this.entries = entries;
     this.binaries = binaries;
   }
-}
-
-export interface PackageBinary {
-  readonly name: string;
-  readonly root: string;
-  readonly aliases?: string[];
-}
-
-export interface PackageEntryOptions {}
-
-export interface PackageEntry {
-  readonly root: string;
-  readonly name?: string;
-  readonly options?: Partial<PackageEntryOptions>;
-  readonly runtime?: Runtime;
-}
-
-interface ServiceCreateOptions extends ProjectOptions {
-  entry: string;
 }
 
 export class Service extends Project {

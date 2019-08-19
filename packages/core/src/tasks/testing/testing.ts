@@ -1,15 +1,11 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
+import {TestPackageHooks, TestWebAppHooks} from '@sewing-kit/types';
 import {run} from '@sewing-kit/ui';
 
 import {Runner} from '../../runner';
 import {Workspace, Package, WebApp} from '../../workspace';
 
-import {
-  TestTaskHooks,
-  TestTaskOptions,
-  TestPackageHooks,
-  TestWebAppHooks,
-} from './types';
+import {TestTaskHooks, TestTaskOptions} from './types';
 
 export async function runTests(
   options: TestTaskOptions,

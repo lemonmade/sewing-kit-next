@@ -6,12 +6,13 @@ import {
   updateBabelPreset,
   createCompileBabelStep,
 } from '@sewing-kit/plugin-babel';
+import {} from '@sewing-kit/types';
 import {} from '@sewing-kit/plugin-package-base';
 
 const PLUGIN = 'SewingKit.package-esmodules';
 const VARIANT = 'esmodules';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildPackageOptions {
     [VARIANT]: boolean;
   }

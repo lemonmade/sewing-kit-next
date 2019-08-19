@@ -1,4 +1,5 @@
 import {resolve, relative} from 'path';
+import {copy} from 'fs-extra';
 import {Package} from '@sewing-kit/core';
 import {createStep, DiagnosticError} from '@sewing-kit/ui';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
@@ -7,7 +8,7 @@ import {} from '@sewing-kit/plugin-package-base';
 const PLUGIN = 'SewingKit.package-esnext';
 const VARIANT = 'esnext';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
@@ -31,6 +32,25 @@ export default createRootPlugin(PLUGIN, (tasks) => {
     if (workspace.private) {
       return;
     }
+
+    hooks.package.tapPromise(PLUGIN, async ({pkg, hooks}) => {
+      const allTsFiles = await pkg.fs.glob('src/**/*.ts');
+      const definitionFiles = allTsFiles.filter((file) =>
+        file.endsWith('.d.ts'),
+      );
+
+      if (
+        allTsFiles.length === 0 ||
+        definitionFiles.length !== allTsFiles.length
+      ) {
+        hooks.steps.tap(PLUGIN, (steps) => [
+          ...steps,
+          createStep({label: 'Copying type definitions to root'}, async () => {
+            await copy(pkg.fs.resolvePath('src'), pkg.fs.root);
+          }),
+        ]);
+      }
+    });
 
     hooks.pre.tap(PLUGIN, (steps) => [
       ...steps,

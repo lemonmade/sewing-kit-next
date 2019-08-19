@@ -1,6 +1,6 @@
 import {produce} from 'immer';
 
-import {Runtime} from '@sewing-kit/core';
+import {Runtime} from '@sewing-kit/types';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
 import {createWriteEntriesStep} from '@sewing-kit/plugin-package-utilities';
 import {
@@ -13,7 +13,7 @@ import {} from '@sewing-kit/plugin-package-base';
 const PLUGIN = 'SewingKit.package-commonjs';
 const VARIANT = 'commonjs';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildPackageOptions {
     [VARIANT]: boolean;
   }

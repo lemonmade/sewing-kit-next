@@ -1,17 +1,17 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {run, Step, createStep} from '@sewing-kit/ui';
+import {
+  Step,
+  BuildWebAppHooks,
+  BuildBrowserConfigurationHooks,
+  BuildPackageHooks,
+  BuildPackageConfigurationHooks,
+} from '@sewing-kit/types';
+import {run, createStep} from '@sewing-kit/ui';
 
 import {Workspace} from '../../workspace';
 import {Runner} from '../../runner';
 
-import {
-  BuildTaskOptions,
-  BuildTaskHooks,
-  BuildPackageHooks,
-  BuildPackageConfigurationHooks,
-  BuildWebAppHooks,
-  BuildBrowserConfigurationHooks,
-} from './types';
+import {BuildTaskOptions, BuildTaskHooks} from './types';
 
 export async function runBuild(
   options: BuildTaskOptions,

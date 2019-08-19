@@ -2,7 +2,7 @@ import {AsyncSeriesWaterfallHook} from 'tapable';
 import {Configuration as WebpackConfiguration} from 'webpack';
 import {addHooks, createRootPlugin} from '@sewing-kit/plugin-utilities';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildBrowserConfigurationCustomHooks {
     readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
     readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;

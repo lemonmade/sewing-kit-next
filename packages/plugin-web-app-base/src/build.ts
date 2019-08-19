@@ -1,9 +1,11 @@
 import {join} from 'path';
 import {produce} from 'immer';
 
-import {createStep, MissingPluginError} from '@sewing-kit/ui';
-import {BuildTask, Env} from '@sewing-kit/core';
+import {Env} from '@sewing-kit/types';
+import {createStep} from '@sewing-kit/ui';
+import {BuildTask} from '@sewing-kit/core';
 import {changeBabelPreset, updateBabelPreset} from '@sewing-kit/plugin-babel';
+import {MissingPluginError} from '@sewing-kit/plugin-utilities';
 import {} from '@sewing-kit/plugin-webpack';
 
 import {PLUGIN} from './common';

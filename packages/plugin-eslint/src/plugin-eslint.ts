@@ -1,5 +1,6 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {createStep, DiagnosticError} from '@sewing-kit/ui';
+import {} from '@sewing-kit/types';
 import {createRootPlugin, addHooks, toArgs} from '@sewing-kit/plugin-utilities';
 
 interface EslintFlags {
@@ -11,7 +12,7 @@ interface EslintFlags {
   ext?: string[];
 }
 
-declare module '@sewing-kit/core/build/ts/tasks/lint/types' {
+declare module '@sewing-kit/types' {
   interface LintRootConfigurationCustomHooks {
     readonly eslintExtensions: AsyncSeriesWaterfallHook<string[]>;
     readonly eslintFlags: AsyncSeriesWaterfallHook<EslintFlags>;
@@ -21,7 +22,7 @@ declare module '@sewing-kit/core/build/ts/tasks/lint/types' {
 const PLUGIN = 'SewingKit.eslint';
 
 const addRootConfigurationHooks = addHooks<
-  import('@sewing-kit/core').LintRootConfigurationHooks
+  import('@sewing-kit/types').LintRootConfigurationHooks
 >(() => ({
   eslintExtensions: new AsyncSeriesWaterfallHook(['extensions']),
   eslintFlags: new AsyncSeriesWaterfallHook(['flags']),

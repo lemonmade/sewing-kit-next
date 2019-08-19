@@ -6,6 +6,7 @@
     {"path": "./packages/core"},
     {"path": "./packages/config"},
     {"path": "./packages/ui"},
+    {"path": "./packages/types"},
 
     {"path": "./packages/plugin-utilities"},
     {"path": "./packages/plugin-package-utilities"},

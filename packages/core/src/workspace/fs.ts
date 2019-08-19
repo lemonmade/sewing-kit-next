@@ -3,7 +3,7 @@ import {writeFile, readFile, mkdirp} from 'fs-extra';
 import glob, {IOptions as GlobOptions} from 'glob';
 
 export class FileSystem {
-  constructor(protected readonly root: string) {}
+  constructor(public readonly root: string) {}
 
   read(file: string) {
     return readFile(this.resolvePath(file), 'utf8');

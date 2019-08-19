@@ -1,6 +1,6 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
+declare module '@sewing-kit/types' {
   interface BuildRootConfigurationCustomHooks {
     readonly packageBuildArtifacts: AsyncSeriesWaterfallHook<string[]>;
   }

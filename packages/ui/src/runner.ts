@@ -1,14 +1,8 @@
 import exec from 'execa';
 
+import {Step, StepRunner as NestedStepRunner} from '@sewing-kit/types';
 import {Ui, Loggable} from './ui';
-import {Step} from './steps';
 import {DiagnosticError} from './errors';
-
-export interface NestedStepRunner {
-  ui: Ui;
-  exec: typeof exec;
-  run(steps: Step[]): Promise<void>;
-}
 
 enum StepState {
   InProgress,
@@ -31,10 +25,12 @@ class StepRunner {
     this.setState(StepState.InProgress);
 
     try {
-      const runner = {
-        ui,
+      const runner: NestedStepRunner = {
         exec,
-        run: async (steps: Step[]) => {
+        log(loggable, _logLevel) {
+          ui.log(loggable);
+        },
+        run: async (steps) => {
           for (const step of steps) {
             const stepRunner = new StepRunner(step, this.update);
             this.stepRunners.push(stepRunner);

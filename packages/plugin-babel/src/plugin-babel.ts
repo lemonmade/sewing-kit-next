@@ -1,16 +1,15 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {addHooks, createRootPlugin} from '@sewing-kit/plugin-utilities';
+import {} from '@sewing-kit/types';
 import {BabelConfig} from './types';
 
 interface BabelHooks {
   readonly babelConfig: AsyncSeriesWaterfallHook<BabelConfig>;
 }
 
-declare module '@sewing-kit/core/build/ts/tasks/testing/types' {
+declare module '@sewing-kit/types' {
   interface TestProjectConfigurationCustomHooks extends BabelHooks {}
-}
 
-declare module '@sewing-kit/core/build/ts/tasks/build/types' {
   interface BuildPackageConfigurationCustomHooks extends BabelHooks {}
   interface BuildBrowserConfigurationCustomHooks extends BabelHooks {}
 }

@@ -1,4 +1,5 @@
 import {basename} from 'path';
+import {PackageCreateOptions} from '@sewing-kit/types';
 import {DiscoveryTask, Package} from '@sewing-kit/core';
 import {loadConfig} from '@sewing-kit/config/load';
 import {PLUGIN} from './common';
@@ -11,7 +12,7 @@ export default function discoverPackages({
 }: DiscoveryTask) {
   hooks.packages.tapPromise(PLUGIN, async (packages) => {
     if (await fs.hasFile('src/index.*')) {
-      const customConfig = await loadConfig(root);
+      const customConfig = await loadConfig<PackageCreateOptions>(root);
 
       return [
         ...packages,
@@ -28,7 +29,7 @@ export default function discoverPackages({
     const packageMatches = await fs.glob('packages/*/');
     const newPackages = await Promise.all(
       packageMatches.map(async (root) => {
-        const customConfig = await loadConfig(root);
+        const customConfig = await loadConfig<PackageCreateOptions>(root);
 
         return new Package({
           root,

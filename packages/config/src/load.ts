@@ -1,7 +1,7 @@
 import {join} from 'path';
 import {pathExists} from 'fs-extra';
 
-export async function loadConfig(root: string) {
+export async function loadConfig<T = any>(root: string): Promise<T> {
   if (await pathExists(join(root, 'sewing-kit.config.js'))) {
     return defaultOrCommonJsExport(
       require(join(root, 'sewing-kit.config.js')),
@@ -19,7 +19,7 @@ export async function loadConfig(root: string) {
     )();
   }
 
-  return {};
+  return {} as any;
 }
 
 function defaultOrCommonJsExport(module: any) {
