@@ -7,16 +7,22 @@
 //
 // To address this case, we write a tiny index file at the root of each package
 // that points to the source, rather than the compiled output. Since we run with
-// babel-node, this entry will be enough to make everything resolve properly.
+// babel-node, this entry will be enough to make everything resolve properly. This
+// is basically the same way we build type definitions for packages in `sewing-kit build`,
+// but outside of sewing-kit.
 
-const {join, basename} = require('path');
-const {writeFileSync, unlinkSync} = require('fs');
+const {resolve, basename} = require('path');
+const {writeFileSync, removeSync, symlinkSync} = require('fs-extra');
 const {sync: glob} = require('glob');
 
 for (const file of glob('packages/*/*.{js,mjs,node,esnext,ts}', {
   ignore: '**/sewing-kit.config.*',
 })) {
-  unlinkSync(file);
+  removeSync(file);
+}
+
+for (const buildDir of glob('packages/*/build/')) {
+  removeSync(buildDir);
 }
 
 const CUSTOM_ENTRIES = new Map([['config', ['index', 'load']]]);
@@ -24,12 +30,9 @@ const CUSTOM_ENTRIES = new Map([['config', ['index', 'load']]]);
 const jsExport = (name = 'index') =>
   `module.exports = require("./src/${name}");`;
 
-const tsExport = (name = 'index') =>
-  `export * from "./build/ts/${name}";\nexport {default} from "./build/ts/${name}";`;
-
 for (const pkgRoot of glob('packages/*/')) {
   for (const entry of CUSTOM_ENTRIES.get(basename(pkgRoot)) || ['index']) {
-    writeFileSync(join(pkgRoot, `${entry}.js`), jsExport(entry));
-    writeFileSync(join(pkgRoot, `${entry}.d.ts`), tsExport(entry));
+    writeFileSync(resolve(pkgRoot, `${entry}.js`), jsExport(entry));
+    symlinkSync(`./build/ts/${entry}.d.ts`, resolve(pkgRoot, `${entry}.d.ts`));
   }
 }

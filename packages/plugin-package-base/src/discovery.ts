@@ -20,7 +20,7 @@ export default function discoverPackages({
           root,
           name,
           binaries: [],
-          entries: [{root: 'src', runtime: customConfig.runtime}],
+          entries: [{root: 'src', runtime: customConfig.runtime, options: {}}],
           ...customConfig,
         }),
       ];
@@ -35,7 +35,7 @@ export default function discoverPackages({
           root,
           name: basename(root),
           binaries: [],
-          entries: [{root: 'src', runtime: customConfig.runtime}],
+          entries: [{root: 'src', runtime: customConfig.runtime, options: {}}],
           ...customConfig,
         });
       }),

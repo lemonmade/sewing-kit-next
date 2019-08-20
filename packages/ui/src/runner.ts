@@ -191,10 +191,26 @@ export async function run(
     await runnerUi.run();
   } catch (error) {
     if (error instanceof DiagnosticError) {
-      ui.error(error.message);
+      ui.error('\n');
+      ui.error(
+        (fmt) =>
+          fmt`{error Error} ${error.title || 'An unexpected error occurred'}`,
+      );
+
+      if (error.content) {
+        ui.error('\n');
+        ui.error(error.content);
+      }
 
       if (error.suggestion) {
+        ui.error('\n');
+        ui.error((fmt) => fmt`{emphasis What do I do next?}`);
         ui.error(error.suggestion);
+      }
+
+      if (error.stack) {
+        ui.error('\n');
+        ui.error((fmt) => fmt`{subdued ${error.stack}}`);
       }
     } else {
       ui.error(

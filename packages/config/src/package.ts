@@ -6,20 +6,23 @@ import {
 } from '@sewing-kit/types';
 
 class PackageCreator {
-  constructor(private readonly options: Partial<PackageCreateOptions>) {}
+  constructor(private readonly builder: Partial<PackageCreateOptions>) {}
 
   runtime(defaultRuntime: Runtime) {
-    this.options.runtime = defaultRuntime;
+    this.builder.runtime = defaultRuntime;
   }
 
   entry(entry: PackageEntryCreateOptions) {
-    this.options.entries = this.options.entries || [];
-    this.options.entries.push({runtime: this.options.runtime, ...entry});
+    this.builder.entries = this.builder.entries || [];
+    this.builder.entries.push({
+      runtime: this.builder.runtime,
+      ...entry,
+    });
   }
 
   binary(binary: PackageBinaryCreateOptions) {
-    this.options.binaries = this.options.binaries || [];
-    this.options.binaries.push(binary);
+    this.builder.binaries = this.builder.binaries || [];
+    this.builder.binaries.push(binary);
   }
 }
 

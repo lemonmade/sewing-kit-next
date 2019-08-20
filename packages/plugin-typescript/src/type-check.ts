@@ -28,15 +28,15 @@ export default function typeCheckTypeScript({
       const heapArguments = heap ? [`--max-old-space-size=${heap}`] : [];
 
       try {
-        await step.exec('node', [
-          ...heapArguments,
-          'node_modules/.bin/tsc',
-          '--build',
-          '--pretty',
-        ]);
+        await step.exec(
+          'node',
+          [...heapArguments, 'node_modules/.bin/tsc', '--build', '--pretty'],
+          {env: {FORCE_COLOR: '1'}},
+        );
       } catch (error) {
         throw new DiagnosticError({
-          message: error.all,
+          title: 'TypeScript found type errors',
+          content: error.all,
         });
       }
     }),

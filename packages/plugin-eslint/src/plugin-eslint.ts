@@ -55,7 +55,8 @@ export default createRootPlugin(PLUGIN, (tasks) => {
           });
         } catch (error) {
           throw new DiagnosticError({
-            message: error.all,
+            title: 'ESLint found lint errors.',
+            content: error.all,
           });
         }
       }),

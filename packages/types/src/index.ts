@@ -73,13 +73,15 @@ export interface PackageBinaryCreateOptions {
 
 export interface PackageEntryCustomOptions {}
 export interface PackageEntryCoreOptions {}
+export interface PackageEntryOptions
+  extends PackageEntryCoreOptions,
+    Partial<PackageEntryCustomOptions> {}
 
 export interface PackageEntryCreateOptions {
   readonly root: string;
   readonly name?: string;
   readonly runtime?: Runtime;
-  readonly options?: PackageEntryCoreOptions &
-    Partial<PackageEntryCustomOptions>;
+  readonly options?: PackageEntryOptions;
 }
 
 export interface PackageCreateOptions extends ProjectCreateOptions {

@@ -1,5 +1,5 @@
 import {resolve, relative} from 'path';
-import {copy} from 'fs-extra';
+import {copy, symlink, remove} from 'fs-extra';
 import {Package} from '@sewing-kit/core';
 import {createStep, DiagnosticError} from '@sewing-kit/ui';
 import {createRootPlugin} from '@sewing-kit/plugin-utilities';
@@ -12,6 +12,15 @@ declare module '@sewing-kit/types' {
   interface BuildPackageOptions {
     [VARIANT]: boolean;
   }
+
+  interface PackageEntryCustomOptions {
+    readonly typesAtRoot: boolean;
+  }
+}
+
+enum EntryStrategy {
+  Symlink,
+  ReExport,
 }
 
 export default createRootPlugin(PLUGIN, (tasks) => {
@@ -33,58 +42,94 @@ export default createRootPlugin(PLUGIN, (tasks) => {
       return;
     }
 
-    hooks.package.tapPromise(PLUGIN, async ({pkg, hooks}) => {
-      const allTsFiles = await pkg.fs.glob('src/**/*.ts');
-      const definitionFiles = allTsFiles.filter((file) =>
-        file.endsWith('.d.ts'),
-      );
+    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+      hooks.steps.tap(PLUGIN, (steps) => [
+        ...steps,
+        createStep({label: 'Writing type definitions'}, async () => {
+          await Promise.all(
+            pkg.entries.map((entry) =>
+              remove(pkg.fs.resolvePath(`${entry.name || 'index'}.d.ts`)),
+            ),
+          );
 
-      if (
-        allTsFiles.length === 0 ||
-        definitionFiles.length !== allTsFiles.length
-      ) {
-        hooks.steps.tap(PLUGIN, (steps) => [
-          ...steps,
-          createStep({label: 'Copying type definitions to root'}, async () => {
-            await copy(pkg.fs.resolvePath('src'), pkg.fs.root);
-          }),
-        ]);
-      }
+          if (
+            pkg.entries.some(
+              (entry) => entry.options && entry.options.typesAtRoot,
+            )
+          ) {
+            const outputPath = await getOutputPath(pkg);
+            const files = await pkg.fs.glob(
+              pkg.fs.resolvePath(outputPath, '**/*.d.ts'),
+            );
+
+            await Promise.all(
+              files.map((file) =>
+                copy(file, pkg.fs.resolvePath(relative(outputPath, file))),
+              ),
+            );
+          } else {
+            writeTypeScriptEntries(pkg, {strategy: EntryStrategy.ReExport});
+          }
+        }),
+      ]);
     });
 
     hooks.pre.tap(PLUGIN, (steps) => [
       ...steps,
       createStep({label: 'Compiling TypeScript definitions'}, async (step) => {
         try {
-          await Promise.all(workspace.packages.map(writeTypeScriptEntries));
-          await step.exec('node_modules/.bin/tsc', ['--build']);
+          await Promise.all(
+            workspace.packages.map((pkg) =>
+              writeTypeScriptEntries(pkg, {strategy: EntryStrategy.Symlink}),
+            ),
+          );
+          await step.exec('node_modules/.bin/tsc', ['--build', '--pretty'], {
+            env: {FORCE_COLOR: '1'},
+          });
         } catch (error) {
-          throw new DiagnosticError({message: error.all});
+          throw new DiagnosticError({
+            title: 'TypeScript found type errors',
+            content: error.all.trim(),
+          });
         }
       }),
     ]);
   });
 });
 
-async function writeTypeScriptEntries(pkg: Package) {
+async function writeTypeScriptEntries(
+  pkg: Package,
+  {strategy}: {strategy: EntryStrategy},
+) {
   const outputPath = await getOutputPath(pkg);
 
   const sourceRoot = pkg.fs.resolvePath('src');
 
   for (const entry of pkg.entries) {
-    const relativeFromSourceRoot = relative(
-      sourceRoot,
-      pkg.fs.resolvePath(entry.root),
-    );
+    const relativeFromSourceRoot = (await pkg.fs.hasDirectory(entry.root))
+      ? relative(sourceRoot, pkg.fs.resolvePath(entry.root, 'index'))
+      : relative(sourceRoot, pkg.fs.resolvePath(entry.root));
     const destinationInOutput = resolve(outputPath, relativeFromSourceRoot);
     const relativeFromRoot = normalizedRelative(pkg.root, destinationInOutput);
 
-    await pkg.fs.write(
-      `${entry.name || 'index'}.d.ts`,
-      `export * from ${JSON.stringify(
-        relativeFromRoot,
-      )};\nexport {default} from ${JSON.stringify(relativeFromRoot)};`,
-    );
+    if (strategy === EntryStrategy.ReExport) {
+      await pkg.fs.write(
+        `${entry.name || 'index'}.d.ts`,
+        `export * from ${JSON.stringify(
+          relativeFromRoot,
+        )};\nexport {default} from ${JSON.stringify(relativeFromRoot)};`,
+      );
+    } else {
+      const symlinkFile = `${relativeFromRoot}.d.ts`;
+      if (!(await pkg.fs.hasFile(symlinkFile))) {
+        await pkg.fs.write(symlinkFile, '');
+      }
+
+      await symlink(
+        symlinkFile,
+        pkg.fs.resolvePath(`${entry.name || 'index'}.d.ts`),
+      );
+    }
   }
 }
 
