@@ -1,6 +1,9 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
-import {addHooks, createRootPlugin} from '@sewing-kit/plugin-utilities';
-import {} from '@sewing-kit/types';
+import {
+  addHooks,
+  createPlugin,
+  PluginTarget,
+} from '@sewing-kit/plugin-utilities';
 import {BabelConfig} from './types';
 
 interface BabelHooks {
@@ -20,20 +23,23 @@ const addBabelHooks = addHooks(() => ({
   babelConfig: new AsyncSeriesWaterfallHook<BabelConfig>(['babelConfig']),
 }));
 
-export default createRootPlugin(PLUGIN, (tasks) => {
-  tasks.build.tap(PLUGIN, ({hooks}) => {
-    hooks.package.tap(PLUGIN, ({hooks}) => {
-      hooks.configure.tap(PLUGIN, addBabelHooks);
+export default createPlugin(
+  {id: PLUGIN, target: PluginTarget.Root},
+  (tasks) => {
+    tasks.build.tap(PLUGIN, ({hooks}) => {
+      hooks.package.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, addBabelHooks);
+      });
+
+      hooks.webApp.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, addBabelHooks);
+      });
     });
 
-    hooks.webApp.tap(PLUGIN, ({hooks}) => {
-      hooks.configure.tap(PLUGIN, addBabelHooks);
+    tasks.test.tap(PLUGIN, ({hooks}) => {
+      hooks.project.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, addBabelHooks);
+      });
     });
-  });
-
-  tasks.test.tap(PLUGIN, ({hooks}) => {
-    hooks.project.tap(PLUGIN, ({hooks}) => {
-      hooks.configure.tap(PLUGIN, addBabelHooks);
-    });
-  });
-});
+  },
+);

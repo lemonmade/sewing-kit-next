@@ -22,14 +22,15 @@ interface TestStepDetails {
   configuration: TestRootConfigurationHooks;
 }
 
+export type TestProjectDetails =
+  | {
+      project: Package;
+      hooks: TestPackageHooks;
+    }
+  | {project: WebApp; hooks: TestWebAppHooks};
+
 export interface TestTaskHooks {
-  readonly project: AsyncSeriesHook<
-    | {
-        project: Package;
-        hooks: TestPackageHooks;
-      }
-    | {project: WebApp; hooks: TestWebAppHooks}
-  >;
+  readonly project: AsyncSeriesHook<TestProjectDetails>;
   readonly package: AsyncSeriesHook<{
     pkg: Package;
     hooks: TestPackageHooks;

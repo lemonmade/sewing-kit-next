@@ -16,7 +16,7 @@ export default function discoverWebApps({
             name,
             root,
             entry: fs.resolvePath('client'),
-            ...loadConfig(root),
+            ...(await loadConfig(root, {allowRootPlugins: true})),
           }),
         ]
       : webApps;

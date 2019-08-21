@@ -1,6 +1,11 @@
-import {RunnerTasks} from '@sewing-kit/core';
+import {PluginTargetMap} from '@sewing-kit/core';
 import {DiagnosticError} from '@sewing-kit/ui';
+import {PluginTarget, PLUGIN} from '@sewing-kit/types';
 import {kebab} from 'change-case';
+
+export {PluginTarget};
+
+type Arguments<T> = T extends (...args: infer U) => any ? U : never;
 
 export class MissingPluginError extends DiagnosticError {
   constructor(plugin: string) {
@@ -32,11 +37,24 @@ export function compose<T extends (...args: any[]) => void>(...funcs: T[]): T {
   }) as any;
 }
 
-export function createRootPlugin(
-  _name: string,
-  run: (tasks: RunnerTasks) => void,
-) {
-  return run;
+interface CreatePluginOptions<T extends PluginTarget> {
+  id: string;
+  target: T;
+}
+
+export function createPlugin<T extends PluginTarget>(
+  {id, target}: CreatePluginOptions<T>,
+  run: (
+    ...args: Arguments<PluginTargetMap[T]>
+  ) => ReturnType<PluginTargetMap[T]>,
+): PluginTargetMap[T] {
+  Object.defineProperties(run, {
+    id: {value: id},
+    target: {value: target},
+    [PLUGIN]: {value: true},
+  });
+
+  return run as any;
 }
 
 export function toArgs(flags: object, {dasherize = false} = {}) {

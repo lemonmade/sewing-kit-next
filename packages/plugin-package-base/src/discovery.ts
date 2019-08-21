@@ -12,7 +12,9 @@ export default function discoverPackages({
 }: DiscoveryTask) {
   hooks.packages.tapPromise(PLUGIN, async (packages) => {
     if (await fs.hasFile('src/index.*')) {
-      const customConfig = await loadConfig<PackageCreateOptions>(root);
+      const customConfig = await loadConfig<PackageCreateOptions>(root, {
+        allowRootPlugins: true,
+      });
 
       return [
         ...packages,
@@ -29,7 +31,9 @@ export default function discoverPackages({
     const packageMatches = await fs.glob('packages/*/');
     const newPackages = await Promise.all(
       packageMatches.map(async (root) => {
-        const customConfig = await loadConfig<PackageCreateOptions>(root);
+        const customConfig = await loadConfig<PackageCreateOptions>(root, {
+          allowRootPlugins: false,
+        });
 
         return new Package({
           root,

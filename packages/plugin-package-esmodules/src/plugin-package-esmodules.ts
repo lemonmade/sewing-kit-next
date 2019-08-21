@@ -1,6 +1,6 @@
 import {produce} from 'immer';
 
-import {createRootPlugin} from '@sewing-kit/plugin-utilities';
+import {createPlugin, PluginTarget} from '@sewing-kit/plugin-utilities';
 import {createWriteEntriesStep} from '@sewing-kit/plugin-package-utilities';
 import {
   updateBabelPreset,
@@ -18,72 +18,75 @@ declare module '@sewing-kit/types' {
   }
 }
 
-export default createRootPlugin(PLUGIN, (tasks) => {
-  tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
-    hooks.configure.tap(PLUGIN, (hooks) => {
-      if (hooks.packageBuildArtifacts) {
-        hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
-          ...artifacts,
-          ...workspace.packages.map((pkg) => pkg.fs.buildPath('esm')),
-          ...(await Promise.all(
-            workspace.packages.map((pkg) => pkg.fs.glob('./*.mjs')),
-          )).flat(),
-        ]);
-      }
-    });
-
-    hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
-      hooks.variants.tap(PLUGIN, (variants) => [
-        ...variants,
-        {[VARIANT]: true},
-      ]);
-
-      hooks.configure.tap(PLUGIN, (configurationHooks, {esmodules}) => {
-        if (!esmodules) {
-          return;
-        }
-
-        if (configurationHooks.babelConfig) {
-          configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
-            return produce(
-              babelConfig,
-              updateBabelPreset(
-                [
-                  'babel-preset-shopify',
-                  'babel-preset-shopify/web',
-                  'babel-preset-shopify/node',
-                ],
-                {modules: false},
-              ),
-            );
-          });
+export default createPlugin(
+  {id: PLUGIN, target: PluginTarget.Root},
+  (tasks) => {
+    tasks.build.tap(PLUGIN, ({workspace, hooks}) => {
+      hooks.configure.tap(PLUGIN, (hooks) => {
+        if (hooks.packageBuildArtifacts) {
+          hooks.packageBuildArtifacts.tapPromise(PLUGIN, async (artifacts) => [
+            ...artifacts,
+            ...workspace.packages.map((pkg) => pkg.fs.buildPath('esm')),
+            ...(await Promise.all(
+              workspace.packages.map((pkg) => pkg.fs.glob('./*.mjs')),
+            )).flat(),
+          ]);
         }
       });
 
-      hooks.steps.tap(PLUGIN, (steps, {config, variant: {esmodules}}) => {
-        if (!esmodules) {
-          return steps;
-        }
+      hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
+        hooks.variants.tap(PLUGIN, (variants) => [
+          ...variants,
+          {[VARIANT]: true},
+        ]);
 
-        const outputPath = pkg.fs.buildPath('esm');
+        hooks.configure.tap(PLUGIN, (configurationHooks, {esmodules}) => {
+          if (!esmodules) {
+            return;
+          }
 
-        return produce(steps, (steps) => {
-          steps.push(
-            createCompileBabelStep(pkg, workspace, config, {
-              outputPath,
-              configFile: 'babel.esm.js',
-            }),
-            createWriteEntriesStep(pkg, {
-              outputPath,
-              extension: '.mjs',
-              contents: (relative) =>
-                `export * from ${JSON.stringify(
-                  relative,
-                )};\nexport {default} from ${JSON.stringify(relative)};`,
-            }),
-          );
+          if (configurationHooks.babelConfig) {
+            configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {
+              return produce(
+                babelConfig,
+                updateBabelPreset(
+                  [
+                    'babel-preset-shopify',
+                    'babel-preset-shopify/web',
+                    'babel-preset-shopify/node',
+                  ],
+                  {modules: false},
+                ),
+              );
+            });
+          }
+        });
+
+        hooks.steps.tap(PLUGIN, (steps, {config, variant: {esmodules}}) => {
+          if (!esmodules) {
+            return steps;
+          }
+
+          const outputPath = pkg.fs.buildPath('esm');
+
+          return produce(steps, (steps) => {
+            steps.push(
+              createCompileBabelStep(pkg, workspace, config, {
+                outputPath,
+                configFile: 'babel.esm.js',
+              }),
+              createWriteEntriesStep(pkg, {
+                outputPath,
+                extension: '.mjs',
+                contents: (relative) =>
+                  `export * from ${JSON.stringify(
+                    relative,
+                  )};\nexport {default} from ${JSON.stringify(relative)};`,
+              }),
+            );
+          });
         });
       });
     });
-  });
-});
+  },
+);

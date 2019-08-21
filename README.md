@@ -9,6 +9,7 @@ Just run `yarn` and you should be good to go. If you ever have issues with modul
 - [ ] Make `ui.log` work in the context of a step (should nest the logs under the step)
 - [ ] Let steps be aware of their current status (in progress/ pending/ error/ success)
 - [ ] Let you skip some pre steps (need an ID on steps and then something like `--skip-pre clean`)
+- [ ] Make sure type check works for tests
 
 ## Errors to handle
 

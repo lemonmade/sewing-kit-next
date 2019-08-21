@@ -1,6 +1,10 @@
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {Configuration as WebpackConfiguration} from 'webpack';
-import {addHooks, createRootPlugin} from '@sewing-kit/plugin-utilities';
+import {
+  addHooks,
+  createPlugin,
+  PluginTarget,
+} from '@sewing-kit/plugin-utilities';
 
 declare module '@sewing-kit/types' {
   interface BuildBrowserConfigurationCustomHooks {
@@ -11,16 +15,19 @@ declare module '@sewing-kit/types' {
 
 const PLUGIN = 'SewingKit.webpack';
 
-export default createRootPlugin(PLUGIN, (tasks) => {
-  tasks.build.tap(PLUGIN, ({hooks}) => {
-    hooks.webApp.tap(PLUGIN, ({hooks}) => {
-      hooks.configure.tap(
-        PLUGIN,
-        addHooks(() => ({
-          webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
-          webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
-        })),
-      );
+export default createPlugin(
+  {id: PLUGIN, target: PluginTarget.Root},
+  (tasks) => {
+    tasks.build.tap(PLUGIN, ({hooks}) => {
+      hooks.webApp.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(
+          PLUGIN,
+          addHooks(() => ({
+            webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
+            webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
+          })),
+        );
+      });
     });
-  });
-});
+  },
+);

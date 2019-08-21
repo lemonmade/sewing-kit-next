@@ -5,6 +5,7 @@ import {
   BuildBrowserConfigurationHooks,
   BuildPackageHooks,
   BuildPackageConfigurationHooks,
+  PluginTarget,
 } from '@sewing-kit/types';
 import {run, createStep} from '@sewing-kit/ui';
 
@@ -48,7 +49,13 @@ export async function runBuild(
         ]),
       };
 
-      await buildTaskHooks.project.promise({project: webApp, hooks});
+      const projectDetails = {project: webApp, hooks};
+
+      for (const plugin of webApp.pluginsForTarget(PluginTarget.BuildProject)) {
+        plugin(projectDetails);
+      }
+
+      await buildTaskHooks.project.promise(projectDetails);
       await buildTaskHooks.webApp.promise({webApp, hooks});
 
       const variants = await hooks.variants.promise([]);
@@ -87,7 +94,15 @@ export async function runBuild(
             configure: new AsyncSeriesHook(['buildTarget', 'options']),
           };
 
-          await buildTaskHooks.project.promise({project: pkg, hooks});
+          const projectDetails = {project: pkg, hooks};
+
+          for (const plugin of pkg.pluginsForTarget(
+            PluginTarget.BuildProject,
+          )) {
+            plugin(projectDetails);
+          }
+
+          await buildTaskHooks.project.promise(projectDetails);
           await buildTaskHooks.package.promise({pkg, hooks});
 
           const variants = await hooks.variants.promise([]);

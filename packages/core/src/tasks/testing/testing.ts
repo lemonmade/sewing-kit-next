@@ -1,5 +1,9 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
-import {TestPackageHooks, TestWebAppHooks} from '@sewing-kit/types';
+import {
+  TestPackageHooks,
+  TestWebAppHooks,
+  PluginTarget,
+} from '@sewing-kit/types';
 import {run} from '@sewing-kit/ui';
 
 import {Runner} from '../../runner';
@@ -34,7 +38,15 @@ export async function runTests(
           configure: new AsyncSeriesHook(['configHooks']),
         };
 
-        await hooks.project.promise({project, hooks: packageHooks});
+        const projectDetails = {project, hooks: packageHooks};
+
+        for (const plugin of project.pluginsForTarget(
+          PluginTarget.TestProject,
+        )) {
+          plugin(projectDetails);
+        }
+
+        await hooks.project.promise(projectDetails);
         await hooks.package.promise({pkg: project, hooks: packageHooks});
         await packageHooks.configure.promise({});
       } else if (project instanceof WebApp) {
@@ -42,7 +54,15 @@ export async function runTests(
           configure: new AsyncSeriesHook(['configHooks']),
         };
 
-        await hooks.project.promise({project, hooks: webAppHooks});
+        const projectDetails = {project, hooks: webAppHooks};
+
+        for (const plugin of project.pluginsForTarget(
+          PluginTarget.TestProject,
+        )) {
+          plugin(projectDetails);
+        }
+
+        await hooks.project.promise(projectDetails);
         await hooks.webApp.promise({webApp: project, hooks: webAppHooks});
         await webAppHooks.configure.promise({});
       }

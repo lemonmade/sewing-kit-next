@@ -1,4 +1,6 @@
 import {
+  Plugin,
+  PluginTarget,
   Runtime,
   ProjectCreateOptions,
   PackageEntryCreateOptions,
@@ -21,16 +23,18 @@ export class Project {
   readonly name: string;
   readonly root: string;
   readonly fs: FileSystem;
+  readonly plugins: readonly Plugin[];
   protected readonly packageJson?: PackageJson;
 
   get id() {
     return this.name;
   }
 
-  constructor({name, root}: ProjectCreateOptions) {
+  constructor({name, root, plugins = []}: ProjectCreateOptions) {
     this.name = name;
     this.root = root;
     this.fs = new FileSystem(root);
+    this.plugins = plugins;
     this.packageJson = PackageJson.load(this.root);
   }
 
@@ -61,9 +65,15 @@ export class Project {
 
     return packageJson != null && packageJson.dependency(name) != null;
   }
+
+  pluginsForTarget<T extends PluginTarget>(
+    target: T,
+  ): import('../plugins').PluginTargetMap[T][] {
+    return this.plugins.filter((plugin) => plugin.target === target) as any;
+  }
 }
 
-interface WorkspaceCreateOptions extends ProjectCreateOptions {
+export interface WorkspaceCreateOptions extends ProjectCreateOptions {
   webApps: WebApp[];
   packages: Package[];
   services: Service[];

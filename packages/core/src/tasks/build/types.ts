@@ -18,16 +18,17 @@ interface BuildStepDetails {
   readonly configuration: BuildRootConfigurationHooks;
 }
 
+export type BuildProjectDetails =
+  | {
+      project: WebApp;
+      hooks: BuildWebAppHooks;
+    }
+  | {project: Package; hooks: BuildPackageHooks};
+
 export interface BuildTaskHooks {
   readonly configure: AsyncSeriesHook<BuildRootConfigurationHooks>;
 
-  readonly project: AsyncSeriesHook<
-    | {
-        project: WebApp;
-        hooks: BuildWebAppHooks;
-      }
-    | {project: Package; hooks: BuildPackageHooks}
-  >;
+  readonly project: AsyncSeriesHook<BuildProjectDetails>;
   readonly package: AsyncSeriesHook<{pkg: Package; hooks: BuildPackageHooks}>;
   readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: BuildWebAppHooks}>;
 

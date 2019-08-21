@@ -41,6 +41,20 @@ export enum Env {
   Test = 'test',
 }
 
+export enum PluginTarget {
+  Root,
+  BuildProject,
+  TestProject,
+}
+
+export const PLUGIN = Symbol('SewingKitPlugin');
+
+export interface Plugin {
+  readonly id: string;
+  readonly target: PluginTarget;
+  readonly [PLUGIN]: true;
+}
+
 export enum Runtime {
   Node = 'node',
   Browser = 'browser',
@@ -51,6 +65,7 @@ export enum Runtime {
 export interface ProjectCreateOptions {
   name: string;
   root: string;
+  plugins?: readonly Plugin[];
 }
 
 export interface WebAppCoreOptions {}

@@ -1,5 +1,6 @@
 import {
   Runtime,
+  Plugin,
   PackageCreateOptions,
   PackageEntryCreateOptions,
   PackageBinaryCreateOptions,
@@ -23,6 +24,11 @@ class PackageCreator {
   binary(binary: PackageBinaryCreateOptions) {
     this.builder.binaries = this.builder.binaries || [];
     this.builder.binaries.push(binary);
+  }
+
+  plugin(...plugins: Plugin[]) {
+    this.builder.plugins = this.builder.plugins || [];
+    (this.builder.plugins as any).push(...plugins);
   }
 }
 

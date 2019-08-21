@@ -1,7 +1,9 @@
 import {basename} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
+import {ProjectCreateOptions, PluginTarget} from '@sewing-kit/types';
 import {loadConfig} from '@sewing-kit/config/load';
 
+import {RootPlugin} from '../../plugins';
 import {WebApp, Service, Package, Workspace, FileSystem} from '../../workspace';
 import {Runner} from '../../runner';
 
@@ -37,9 +39,13 @@ export async function runDiscovery(
   const name = basename(root);
   const fs = new FileSystem(root);
 
-  const {plugins = []} = await loadConfig<{plugins?: Function[]}>(root);
+  const {plugins = []} = await loadConfig<Partial<ProjectCreateOptions>>(root, {
+    allowRootPlugins: true,
+  });
 
-  for (const plugin of plugins) {
+  for (const plugin of plugins.filter(
+    (plugin) => plugin.target === PluginTarget.Root,
+  ) as RootPlugin[]) {
     plugin(runner.tasks);
   }
 
