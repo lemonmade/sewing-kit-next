@@ -27,3 +27,4 @@ The `@sewing-kit/plugin-utilities` library provides most of the helpers you’ll
 
 - Plugins provided by sewing-kit itself should have an `id` prefixed with `SewingKit.`.
 - Plugins that define meaningful behavior for more than one task should split the task handling into files, and use the `lazy` helper to asynchronously load code for each task (see `@sewing-kit/plugin-typescript` for an example).
+- Plugins are generally one of the following categories: tool (often adds hooks), language (often adds configuration for those custom hooks), discovery (finds projects and outlines the rough handling), and others. They should typically be composed in that order also, as it ensures that the necessary custom hooks are available at the right time.
