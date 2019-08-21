@@ -8,14 +8,14 @@ import {
 import {Package, Workspace, WebApp} from '../../workspace';
 
 export interface TestTaskOptions {
-  pre?: boolean;
-  watch?: boolean;
-  debug?: boolean;
-  coverage?: boolean;
-  testPattern?: string;
-  testNamePattern?: string;
-  maxWorkers?: number;
-  updateSnapshot?: boolean;
+  readonly pre?: boolean;
+  readonly watch?: boolean;
+  readonly debug?: boolean;
+  readonly coverage?: boolean;
+  readonly testPattern?: string;
+  readonly testNamePattern?: string;
+  readonly maxWorkers?: number;
+  readonly updateSnapshot?: boolean;
 }
 
 interface TestStepDetails {

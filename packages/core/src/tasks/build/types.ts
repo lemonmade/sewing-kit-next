@@ -12,6 +12,7 @@ import {Package, WebApp, Workspace} from '../../workspace';
 export interface BuildTaskOptions {
   readonly env: Env;
   readonly simulateEnv: Env;
+  readonly sourceMaps?: boolean;
 }
 
 interface BuildStepDetails {

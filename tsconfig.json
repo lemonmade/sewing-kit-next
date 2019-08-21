@@ -20,6 +20,7 @@
     {"path": "./packages/plugin-javascript"},
     {"path": "./packages/plugin-typescript"},
     {"path": "./packages/plugin-graphql"},
+    {"path": "./packages/plugin-sass"},
 
     {"path": "./packages/plugin-package-base"},
     {"path": "./packages/plugin-package-binaries"},

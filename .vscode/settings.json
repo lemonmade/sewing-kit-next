@@ -3,6 +3,7 @@
     "dasherize",
     "esmodules",
     "execa",
+    "happypack",
     "immer",
     "loggable",
     "tapable"
