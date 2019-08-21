@@ -53,6 +53,7 @@ export interface Plugin {
   readonly id: string;
   readonly target: PluginTarget;
   readonly [PLUGIN]: true;
+  readonly composes: readonly Plugin[];
 }
 
 export enum Runtime {

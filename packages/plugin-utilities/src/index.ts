@@ -1,6 +1,6 @@
 import {PluginTargetMap} from '@sewing-kit/core';
 import {DiagnosticError} from '@sewing-kit/ui';
-import {PluginTarget, PLUGIN} from '@sewing-kit/types';
+import {Plugin, PluginTarget, PLUGIN} from '@sewing-kit/types';
 import {kebab} from 'change-case';
 
 export {PluginTarget};
@@ -40,10 +40,11 @@ export function compose<T extends (...args: any[]) => void>(...funcs: T[]): T {
 interface CreatePluginOptions<T extends PluginTarget> {
   id: string;
   target: T;
+  composes?: Plugin[];
 }
 
 export function createPlugin<T extends PluginTarget>(
-  {id, target}: CreatePluginOptions<T>,
+  {id, target, composes = []}: CreatePluginOptions<T>,
   run: (
     ...args: Arguments<PluginTargetMap[T]>
   ) => ReturnType<PluginTargetMap[T]>,
@@ -52,9 +53,38 @@ export function createPlugin<T extends PluginTarget>(
     id: {value: id},
     target: {value: target},
     [PLUGIN]: {value: true},
+    composes: {value: composes},
   });
 
   return run as any;
+}
+
+export function composePlugins(id: string, plugins: Plugin[]): Plugin {
+  const targets = new Set<PluginTarget>();
+
+  for (const plugin of plugins) {
+    targets.add(plugin.target);
+  }
+
+  if (targets.size > 1) {
+    throw new DiagnosticError({
+      title: 'Invalid plugin composition',
+      content: `You are attempting to compose plugins of different types in composed plugin ${JSON.stringify(
+        id,
+      )}, which is not supported.`,
+    });
+  }
+
+  const run = (...args: any[]) => {
+    for (const plugin of plugins) {
+      (plugin as any)(...args);
+    }
+  };
+
+  return createPlugin(
+    {id, target: [...targets.values()][0], composes: plugins},
+    run,
+  );
 }
 
 export function toArgs(flags: object, {dasherize = false} = {}) {

@@ -1,6 +1,6 @@
 import {join} from 'path';
 import {pathExists} from 'fs-extra';
-import {Plugin, PluginTarget} from '@sewing-kit/types';
+import {Plugin, PluginTarget, PLUGIN} from '@sewing-kit/types';
 import {DiagnosticError} from '@sewing-kit/ui';
 
 export async function loadConfig<T = any>(
@@ -58,8 +58,17 @@ async function loadConfigFile(file: string, {allowRootPlugins = false}) {
     });
   }
 
+  const {plugins = []} = result as {plugins?: Plugin[]};
+
+  if (plugins.some((plugin) => !plugin[PLUGIN])) {
+    throw new DiagnosticError({
+      title: 'Invalid configuration file',
+      content: `The configuration file ${file} contains invalid plugins`,
+      suggestion: `Make sure that all plugins included in the configuration file were generated using createPlugin from @sewing-kit/plugin-utilities. If this is the case, you may have duplicate versions of some @sewing-kit dependencies. Resolve any duplicate versions and try your command again.`,
+    });
+  }
+
   if (!allowRootPlugins) {
-    const {plugins = []} = result as {plugins?: Plugin[]};
     if (plugins.some((plugin) => plugin.target === PluginTarget.Root)) {
       throw new DiagnosticError({
         title: 'Invalid configuration file',
