@@ -7,6 +7,10 @@
     "@sewing-kit:registry": "https://registry.npmjs.org"
   },
   "dependencies": {
-    "eslint": "^6.1.0"
+    "@sewing-kit/plugin-utilities": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1",
+    "@sewing-kit/ui": "^0.0.5",
+    "eslint": "^6.1.0",
+    "tapable": "^1.1.3"
   }
 }

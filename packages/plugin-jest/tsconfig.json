@@ -15,6 +15,7 @@
   "references": [
     {"path": "../ui"},
     {"path": "../core"},
+    {"path": "../types"},
     {"path": "../plugin-utilities"},
     {"path": "../plugin-babel"}
   ]

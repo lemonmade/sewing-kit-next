@@ -5,5 +5,12 @@
   "publishConfig": {
     "access": "public",
     "@sewing-kit:registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "@sewing-kit/config": "^0.0.3",
+    "@sewing-kit/core": "^0.0.5",
+    "@sewing-kit/plugin-jest": "^0.0.3",
+    "@sewing-kit/plugin-utilities": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1"
   }
 }

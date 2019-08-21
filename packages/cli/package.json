@@ -11,6 +11,9 @@
     "sk": "./bin/sk"
   },
   "dependencies": {
+    "@sewing-kit/core": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1",
+    "@sewing-kit/ui": "^0.0.5",
     "arg": "^4.1.1",
     "core-js": "^3.2.1",
     "tapable": "^1.1.3"

@@ -15,6 +15,7 @@
     {"path": "../core"},
     {"path": "../types"},
     {"path": "../config"},
-    {"path": "../plugin-jest"}
+    {"path": "../plugin-jest"},
+    {"path": "../plugin-utilities"}
   ]
 }

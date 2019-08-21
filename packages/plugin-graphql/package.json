@@ -7,6 +7,9 @@
     "@sewing-kit:registry": "https://registry.npmjs.org"
   },
   "dependencies": {
+    "@sewing-kit/plugin-jest": "^0.0.3",
+    "@sewing-kit/plugin-utilities": "^0.0.5",
+    "@sewing-kit/plugin-webpack": "^0.0.3",
     "graphql-mini-transforms": "^1.0.3"
   }
 }

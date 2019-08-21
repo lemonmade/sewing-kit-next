@@ -7,6 +7,9 @@
     "@sewing-kit:registry": "https://registry.npmjs.org"
   },
   "dependencies": {
+    "@sewing-kit/core": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1",
+    "@sewing-kit/ui": "^0.0.5",
     "change-case": "^3.1.0"
   }
 }

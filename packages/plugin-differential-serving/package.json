@@ -7,6 +7,9 @@
     "@sewing-kit:registry": "https://registry.npmjs.org"
   },
   "dependencies": {
+    "@sewing-kit/plugin-babel": "^0.0.3",
+    "@sewing-kit/plugin-utilities": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1",
     "immer": "^3.2.0"
   }
 }

@@ -7,6 +7,8 @@
     "@sewing-kit:registry": "https://registry.npmjs.org"
   },
   "dependencies": {
+    "@sewing-kit/plugin-utilities": "^0.0.5",
+    "@sewing-kit/types": "^0.0.1",
     "@types/webpack": "^4.32.1",
     "webpack": "^4.39.2"
   }
