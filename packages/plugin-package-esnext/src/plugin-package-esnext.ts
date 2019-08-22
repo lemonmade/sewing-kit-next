@@ -1,6 +1,5 @@
 import {produce} from 'immer';
 
-import {Runtime} from '@sewing-kit/types';
 import {createPlugin, PluginTarget} from '@sewing-kit/plugin-utilities';
 import {createWriteEntriesStep} from '@sewing-kit/plugin-package-utilities';
 import {
@@ -46,13 +45,6 @@ export default createPlugin(
 
       hooks.package.tap(PLUGIN, ({pkg, hooks}) => {
         hooks.variants.tap(PLUGIN, (variants) => {
-          // If all the entries are Node entries, there is no point in producing
-          // an un-compiled build, because the CommonJS build will already be tailored
-          // to the baseline version of Node.
-          if (pkg.entries.every(({runtime}) => runtime === Runtime.Node)) {
-            return variants;
-          }
-
           return [...variants, {[VARIANT]: true}];
         });
 
@@ -97,7 +89,6 @@ export default createPlugin(
               createWriteEntriesStep(pkg, {
                 outputPath,
                 extension: EXTENSION,
-                exclude: (entry) => entry.runtime === Runtime.Node,
                 contents: (relative) =>
                   `export * from ${JSON.stringify(
                     relative,

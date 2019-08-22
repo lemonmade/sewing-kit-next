@@ -9,6 +9,7 @@ import jest from '@sewing-kit/plugin-jest';
 import packageBase from '@sewing-kit/plugin-package-base';
 import packageBinaries from '@sewing-kit/plugin-package-binaries';
 import packageCommonJS from '@sewing-kit/plugin-package-commonjs';
+import packageEsnext from '@sewing-kit/plugin-package-esnext';
 import packageTypeScript from '@sewing-kit/plugin-package-typescript';
 
 const plugin = composePlugins('SewingKit.self', [
@@ -20,6 +21,7 @@ const plugin = composePlugins('SewingKit.self', [
   packageBase,
   packageBinaries,
   packageCommonJS,
+  packageEsnext,
   packageTypeScript,
 ]);
 

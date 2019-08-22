@@ -8,7 +8,7 @@ interface WorkspaceCreateOptions {
 class WorkspaceCreator {
   constructor(private readonly builder: Partial<WorkspaceCreateOptions>) {}
 
-  plugin(...plugins: (Plugin & {target: PluginTarget.Root})[]) {
+  plugin(...plugins: Plugin[]) {
     const nonRootPlugins = plugins.filter(
       (plugin) => plugin.target !== PluginTarget.Root,
     );
