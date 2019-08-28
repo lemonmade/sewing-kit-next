@@ -22,6 +22,8 @@
     {"path": "./packages/plugin-graphql"},
     {"path": "./packages/plugin-sass"},
 
+    {"path": "./packages/plugin-react"},
+
     {"path": "./packages/plugin-package-base"},
     {"path": "./packages/plugin-package-binaries"},
     {"path": "./packages/plugin-package-commonjs"},

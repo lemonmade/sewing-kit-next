@@ -1,4 +1,4 @@
-import {basename} from 'path';
+import {basename, resolve} from 'path';
 import {AsyncSeriesWaterfallHook} from 'tapable';
 import {ProjectCreateOptions, PluginTarget} from '@sewing-kit/types';
 import {loadConfig} from '@sewing-kit/config/load';
@@ -35,7 +35,8 @@ export async function runDiscovery(
     services: new AsyncSeriesWaterfallHook(['services']),
   };
 
-  const {root = process.cwd()} = options;
+  const {root: rootDir = process.cwd()} = options;
+  const root = resolve(rootDir);
   const name = basename(root);
   const fs = new FileSystem(root);
 

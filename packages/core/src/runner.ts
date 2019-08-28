@@ -6,6 +6,7 @@ export interface RunnerTasks {
     import('./tasks/discovery').DiscoveryTask
   >;
   readonly build: AsyncSeriesHook<import('./tasks/build').BuildTask>;
+  readonly dev: AsyncSeriesHook<import('./tasks/dev').DevTask>;
   readonly test: AsyncSeriesHook<import('./tasks/testing').TestTask>;
   readonly lint: AsyncSeriesHook<import('./tasks/lint').LintTask>;
   readonly typeCheck: AsyncSeriesHook<

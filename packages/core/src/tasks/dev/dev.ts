@@ -1,0 +1,197 @@
+import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
+import {
+  Env,
+  Step,
+  DevWebAppHooks,
+  DevWebAppConfigurationHooks,
+  BuildWebAppHooks,
+  BuildBrowserConfigurationHooks,
+  DevPackageHooks,
+  DevPackageConfigurationHooks,
+  BuildPackageHooks,
+  BuildPackageConfigurationHooks,
+  PluginTarget,
+} from '@sewing-kit/types';
+import {run, createStep} from '@sewing-kit/ui';
+
+import {Workspace} from '../../workspace';
+import {Runner} from '../../runner';
+
+import {BuildTaskHooks} from '../build';
+
+import {DevTaskHooks, DevTaskOptions} from './types';
+
+export async function runDev(
+  options: DevTaskOptions,
+  workspace: Workspace,
+  runner: Runner,
+) {
+  const devTaskHooks: DevTaskHooks = {
+    configure: new AsyncSeriesHook(['hooks']),
+    pre: new AsyncSeriesWaterfallHook(['steps', 'details']),
+
+    project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
+    package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
+    webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
+
+    post: new AsyncSeriesWaterfallHook(['steps', 'details']),
+  };
+
+  const buildTaskHooks: BuildTaskHooks = {
+    configure: new AsyncSeriesHook(['hooks']),
+    pre: new AsyncSeriesWaterfallHook(['steps', 'details']),
+
+    project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
+    package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
+    webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
+
+    post: new AsyncSeriesWaterfallHook(['steps', 'details']),
+  };
+
+  await runner.tasks.dev.promise({
+    hooks: devTaskHooks,
+    options,
+    workspace,
+  });
+
+  await runner.tasks.build.promise({
+    hooks: buildTaskHooks,
+    options: {...options, env: Env.Development, simulateEnv: Env.Development},
+    workspace,
+  });
+
+  const webAppSteps: Step[] = (await Promise.all(
+    workspace.webApps.map(async (webApp) => {
+      const hooks: DevWebAppHooks = {
+        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+        configure: new AsyncSeriesHook(['configuration', 'variant']),
+      };
+
+      const buildHooks: BuildWebAppHooks = {
+        variants: new AsyncSeriesWaterfallHook(['variants']),
+        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+        configure: new AsyncSeriesHook(['configuration', 'variant']),
+        configureBrowser: new AsyncSeriesHook(['configuration', 'variant']),
+        configureServiceWorker: new AsyncSeriesHook([
+          'configuration',
+          'variant',
+        ]),
+      };
+
+      for (const plugin of webApp.pluginsForTarget(PluginTarget.BuildProject)) {
+        plugin({project: webApp, hooks: buildHooks});
+      }
+
+      await devTaskHooks.project.promise({project: webApp, hooks});
+      await devTaskHooks.webApp.promise({webApp, hooks});
+
+      await buildTaskHooks.project.promise({
+        project: webApp,
+        hooks: buildHooks,
+      });
+      await buildTaskHooks.webApp.promise({webApp, hooks: buildHooks});
+
+      const configurationHooks: DevWebAppConfigurationHooks = {};
+      await hooks.configure.promise(configurationHooks);
+
+      const buildConfigurationHooks: BuildBrowserConfigurationHooks = {
+        entries: new AsyncSeriesWaterfallHook(['entries']),
+        extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
+        filename: new AsyncSeriesWaterfallHook(['filename']),
+        output: new AsyncSeriesWaterfallHook(['output']),
+      };
+
+      await buildHooks.configure.promise(buildConfigurationHooks, {});
+      await buildHooks.configureBrowser.promise(buildConfigurationHooks, {});
+
+      const steps = await hooks.steps.promise([], {
+        config: configurationHooks,
+        buildBrowserConfig: buildConfigurationHooks,
+        buildServiceWorkerConfig: buildConfigurationHooks,
+      });
+
+      return steps.length > 0
+        ? [
+            createStep(
+              {
+                label: (fmt) =>
+                  fmt`Starting development mode for web app {emphasis ${webApp.name}}`,
+              },
+              async (step) => {
+                await step.run(steps);
+              },
+            ),
+          ]
+        : [];
+    }),
+  )).flat();
+
+  const packageSteps: Step[] = workspace.private
+    ? []
+    : (await Promise.all(
+        workspace.packages.map(async (pkg) => {
+          const hooks: DevPackageHooks = {
+            steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+            configure: new AsyncSeriesHook(['buildTarget', 'options']),
+          };
+
+          const buildHooks: BuildPackageHooks = {
+            variants: new AsyncSeriesWaterfallHook(['variants']),
+            steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+            configure: new AsyncSeriesHook(['buildTarget', 'options']),
+          };
+
+          for (const plugin of pkg.pluginsForTarget(
+            PluginTarget.BuildProject,
+          )) {
+            plugin({project: pkg, hooks: buildHooks});
+          }
+
+          await devTaskHooks.project.promise({project: pkg, hooks});
+          await devTaskHooks.package.promise({pkg, hooks});
+
+          await buildTaskHooks.project.promise({
+            project: pkg,
+            hooks: buildHooks,
+          });
+          await buildTaskHooks.package.promise({pkg, hooks: buildHooks});
+
+          const configurationHooks: DevPackageConfigurationHooks = {};
+          await hooks.configure.promise(configurationHooks);
+
+          const buildConfigurationHooks: BuildPackageConfigurationHooks = {
+            extensions: new AsyncSeriesWaterfallHook(['extensions']),
+          };
+          await buildHooks.configure.promise(buildConfigurationHooks);
+
+          const steps = await hooks.steps.promise([], {
+            config: configurationHooks,
+            buildConfig: buildConfigurationHooks,
+          });
+
+          return steps.length > 0
+            ? [
+                createStep(
+                  {
+                    label: (fmt) =>
+                      fmt`Starting development mode for web app {emphasis ${pkg.name}}`,
+                  },
+                  async (step) => {
+                    await step.run(steps);
+                  },
+                ),
+              ]
+            : [];
+        }),
+      )).flat();
+
+  const configurationHooks = {};
+  await devTaskHooks.configure.promise(configurationHooks);
+
+  const [pre, post] = await Promise.all([
+    devTaskHooks.pre.promise([], {configuration: configurationHooks}),
+    devTaskHooks.post.promise([], {configuration: configurationHooks}),
+  ]);
+
+  await run([...webAppSteps, ...packageSteps], {ui: runner.ui, pre, post});
+}

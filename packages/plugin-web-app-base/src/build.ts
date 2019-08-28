@@ -5,10 +5,8 @@ import {Env} from '@sewing-kit/types';
 import {createStep} from '@sewing-kit/ui';
 import {BuildTask} from '@sewing-kit/core';
 import {changeBabelPreset, updateBabelPreset} from '@sewing-kit/plugin-babel';
-import {MissingPluginError} from '@sewing-kit/plugin-utilities';
-import {} from '@sewing-kit/plugin-webpack';
 
-import {PLUGIN} from './common';
+import {PLUGIN, createWebpackConfig} from './common';
 
 export default function buildWebApp({hooks, workspace, options}: BuildTask) {
   hooks.webApp.tap(PLUGIN, ({webApp, hooks}) => {
@@ -44,32 +42,11 @@ export default function buildWebApp({hooks, workspace, options}: BuildTask) {
 
     hooks.steps.tap(PLUGIN, (steps, {browserConfig}) => {
       const step = createStep({}, async () => {
-        if (
-          browserConfig.webpackRules == null ||
-          browserConfig.webpackConfig == null
-        ) {
-          throw new MissingPluginError('@sewing-kit/plugin-webpack');
-        }
-
-        const rules = await browserConfig.webpackRules.promise([]);
-        const extensions = await browserConfig.extensions.promise([]);
-        const outputPath = await browserConfig.output.promise(
-          workspace.fs.buildPath(),
+        await buildWebpack(
+          await createWebpackConfig(browserConfig, webApp, workspace, {
+            mode: toMode(options.simulateEnv),
+          }),
         );
-        const filename = await browserConfig.filename.promise('[name].js');
-
-        const webpackConfig = await browserConfig.webpackConfig.promise({
-          entry: await browserConfig.entries.promise([webApp.entry]),
-          mode: toMode(options.simulateEnv),
-          resolve: {extensions},
-          module: {rules},
-          output: {
-            path: outputPath,
-            filename,
-          },
-        });
-
-        await buildWebpack(webpackConfig);
       });
 
       return [...steps, step];

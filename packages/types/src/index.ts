@@ -106,8 +106,15 @@ export interface PackageCreateOptions extends ProjectCreateOptions {
   binaries: PackageBinaryCreateOptions[];
 }
 
+export interface ServiceCoreOptions {}
+export interface ServiceCustomOptions {}
+export interface ServiceOptions
+  extends ServiceCoreOptions,
+    Partial<ServiceCustomOptions> {}
+
 export interface ServiceCreateOptions extends ProjectCreateOptions {
   entry: string;
+  options?: ServiceOptions;
 }
 
 // ==================================================================
@@ -162,21 +169,21 @@ export interface BuildBrowserConfigurationHooks
   extends BuildBrowserConfigurationCoreHooks,
     Partial<BuildBrowserConfigurationCustomHooks> {}
 
-export interface ServiceWorkerBuildConfigurationCoreHooks
+export interface BuildServiceWorkerConfigurationCoreHooks
   extends BuildBrowserConfigurationCoreHooks {}
 
-export interface ServiceWorkerBuildConfigurationCustomHooks
+export interface BuildServiceWorkerConfigurationCustomHooks
   extends BuildBrowserConfigurationCustomHooks {}
 
-export interface ServiceWorkerBuildConfigurationHooks
-  extends ServiceWorkerBuildConfigurationCoreHooks,
-    Partial<ServiceWorkerBuildConfigurationCustomHooks> {}
+export interface BuildServiceWorkerConfigurationHooks
+  extends BuildServiceWorkerConfigurationCoreHooks,
+    Partial<BuildServiceWorkerConfigurationCustomHooks> {}
 
 export interface BuildWebAppHooks {
   readonly variants: AsyncSeriesWaterfallHook<Partial<BuildWebAppOptions>[]>;
 
   readonly configure: AsyncSeriesHook<
-    BuildBrowserConfigurationHooks | ServiceWorkerBuildConfigurationHooks,
+    BuildBrowserConfigurationHooks | BuildServiceWorkerConfigurationHooks,
     Partial<BuildWebAppOptions>
   >;
   readonly configureBrowser: AsyncSeriesHook<
@@ -193,7 +200,7 @@ export interface BuildWebAppHooks {
     {
       variant: Partial<BuildWebAppOptions>;
       browserConfig: BuildBrowserConfigurationHooks;
-      serviceWorkerConfig: ServiceWorkerBuildConfigurationHooks;
+      serviceWorkerConfig: BuildServiceWorkerConfigurationHooks;
     }
   >;
 }
@@ -207,6 +214,59 @@ export interface BuildRootConfigurationCoreHooks {}
 export interface BuildRootConfigurationHooks
   extends BuildRootConfigurationCoreHooks,
     Partial<BuildRootConfigurationCustomHooks> {}
+
+// ==================================================================
+// DEV
+// ==================================================================
+
+// PACKAGE
+
+export interface DevPackageConfigurationCustomHooks {}
+export interface DevPackageConfigurationCoreHooks {}
+export interface DevPackageConfigurationHooks
+  extends DevPackageConfigurationCoreHooks,
+    Partial<DevPackageConfigurationCustomHooks> {}
+
+export interface DevPackageHooks {
+  readonly configure: AsyncSeriesHook<DevPackageConfigurationHooks>;
+  readonly steps: AsyncSeriesWaterfallHook<
+    Step[],
+    {
+      config: DevPackageConfigurationHooks;
+      buildConfig: BuildPackageConfigurationHooks;
+    }
+  >;
+}
+
+// WEB APP
+
+export interface DevWebAppConfigurationCoreHooks {}
+export interface DevWebAppConfigurationCustomHooks {}
+export interface DevWebAppConfigurationHooks
+  extends DevWebAppConfigurationCoreHooks,
+    Partial<DevWebAppConfigurationCustomHooks> {}
+
+export interface DevWebAppHooks {
+  readonly configure: AsyncSeriesHook<DevWebAppConfigurationHooks>;
+  readonly steps: AsyncSeriesWaterfallHook<
+    Step[],
+    {
+      config: DevPackageConfigurationHooks;
+      buildBrowserConfig: BuildBrowserConfigurationHooks;
+      buildServiceWorkerConfig: BuildServiceWorkerConfigurationHooks;
+    }
+  >;
+}
+
+// ROOT
+
+export interface DevRootConfigurationCustomHooks {}
+
+export interface DevRootConfigurationCoreHooks {}
+
+export interface DevRootConfigurationHooks
+  extends DevRootConfigurationCoreHooks,
+    Partial<DevRootConfigurationCustomHooks> {}
 
 // ==================================================================
 // LINT

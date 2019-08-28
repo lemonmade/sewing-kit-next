@@ -2,6 +2,7 @@ import {cpus} from 'os';
 import {AsyncSeriesWaterfallHook} from 'tapable';
 
 import {
+  addHooks,
   createPlugin,
   PluginTarget,
   MissingPluginError,
@@ -19,6 +20,10 @@ declare module '@sewing-kit/types' {
 
 const PLUGIN = 'SewingKit.sass';
 const HAPPYPACK_ID = 'sass';
+
+const addSassHooks = addHooks(() => ({
+  sassIncludePaths: new AsyncSeriesWaterfallHook(['sassIncludePaths']),
+}));
 
 export function createSassIncludesBuildProjectPlugin(include: string[]) {
   const id = 'SewingKit.sassIncludes';
@@ -50,6 +55,8 @@ export default createPlugin(
     tasks.build.tap(PLUGIN, ({hooks, options: {sourceMaps = false}}) => {
       hooks.webApp.tap(PLUGIN, ({hooks}) => {
         hooks.configure.tap(PLUGIN, (configurationHooks) => {
+          addSassHooks(configurationHooks);
+
           if (configurationHooks.webpackRules) {
             configurationHooks.webpackRules.tap(PLUGIN, (rules) => [
               ...rules,

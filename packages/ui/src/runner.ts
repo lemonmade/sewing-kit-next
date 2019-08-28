@@ -181,6 +181,10 @@ export async function run(
     title,
   }: {ui: Ui; pre?: Step[]; post?: Step[]; title?: string},
 ) {
+  if (pre.length + steps.length + post.length === 0) {
+    return;
+  }
+
   const runnerUi = new RunnerUi([pre, steps, post], ui);
 
   try {

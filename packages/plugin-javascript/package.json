@@ -15,6 +15,7 @@
     "@sewing-kit/plugin-webpack": "^0.0.4",
     "@sewing-kit/types": "^0.0.1",
     "@sewing-kit/ui": "^0.0.5",
+    "babel-loader": "^8.0.6",
     "immer": "^3.2.0"
   }
 }

@@ -29,6 +29,7 @@ export default createPlugin(
           addHooks(() => ({
             webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
             webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
+            webpackPlugins: new AsyncSeriesWaterfallHook(['webpackPlugins']),
           })),
         );
       });

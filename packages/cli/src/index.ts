@@ -2,12 +2,14 @@ import 'core-js/features/array/flat';
 import 'core-js/features/array/flat-map';
 
 import {build} from './build';
+import {dev} from './dev';
 import {test} from './test';
 import {lint} from './lint';
 import {typeCheck} from './type-check';
 
 const commands = new Map([
   ['build', build],
+  ['dev', dev],
   ['test', test],
   ['lint', lint],
   ['type-check', typeCheck],

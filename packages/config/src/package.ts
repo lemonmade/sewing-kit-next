@@ -5,9 +5,10 @@ import {
   PackageEntryCreateOptions,
   PackageBinaryCreateOptions,
 } from '@sewing-kit/types';
+import {OptionBuilder} from './types';
 
 class PackageCreator {
-  constructor(private readonly builder: Partial<PackageCreateOptions>) {}
+  constructor(private readonly builder: OptionBuilder<PackageCreateOptions>) {}
 
   runtime(defaultRuntime: Runtime) {
     this.builder.runtime = defaultRuntime;
@@ -28,7 +29,7 @@ class PackageCreator {
 
   plugin(...plugins: Plugin[]) {
     this.builder.plugins = this.builder.plugins || [];
-    (this.builder.plugins as any).push(...plugins);
+    this.builder.plugins.push(...plugins);
   }
 }
 
@@ -36,7 +37,7 @@ export function createPackage(
   create: (pkg: PackageCreator) => void | Promise<void>,
 ) {
   return async () => {
-    const options: Partial<PackageCreateOptions> = {};
+    const options: OptionBuilder<PackageCreateOptions> = {};
     const creator = new PackageCreator(options);
     await create(creator);
     return options;

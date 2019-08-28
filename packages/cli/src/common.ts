@@ -30,6 +30,9 @@ export function createCommand<Flags extends {[key: string]: any}>(
         build: new AsyncSeriesHook<import('@sewing-kit/core').BuildTask>([
           'buildTask',
         ]),
+        dev: new AsyncSeriesHook<import('@sewing-kit/core').DevTask>([
+          'devTask',
+        ]),
         test: new AsyncSeriesHook<import('@sewing-kit/core').TestTask>([
           'testTask',
         ]),
