@@ -1,6 +1,8 @@
 import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 import {
   Step,
+  BuildServiceHooks,
+  BuildServiceConfigurationHooks,
   BuildWebAppHooks,
   BuildBrowserConfigurationHooks,
   BuildPackageHooks,
@@ -26,6 +28,7 @@ export async function runBuild(
     project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
     package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
     webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
+    service: new AsyncSeriesHook(['service', 'serviceBuildHooks']),
 
     post: new AsyncSeriesWaterfallHook(['steps', 'details']),
   };
@@ -60,29 +63,77 @@ export async function runBuild(
 
       const variants = await hooks.variants.promise([]);
 
-      return variants.map((variant) => {
-        return createStep({label: `Building variant`}, async (step) => {
-          const configurationHooks: BuildBrowserConfigurationHooks = {
+      return createStep(
+        {label: (fmt) => fmt`Building app {emphasis ${webApp.name}}`},
+        async (step) => {
+          const steps = variants.map((variant) => {
+            return createStep(async (step) => {
+              const configurationHooks: BuildBrowserConfigurationHooks = {
+                entries: new AsyncSeriesWaterfallHook(['entries']),
+                extensions: new AsyncSeriesWaterfallHook([
+                  'extensions',
+                  'options',
+                ]),
+                filename: new AsyncSeriesWaterfallHook(['filename']),
+                output: new AsyncSeriesWaterfallHook(['output']),
+              };
+
+              await hooks.configure.promise(configurationHooks, variant);
+              await hooks.configureBrowser.promise(configurationHooks, variant);
+
+              const steps = await hooks.steps.promise([], {
+                variant,
+                browserConfig: configurationHooks,
+                serviceWorkerConfig: configurationHooks,
+              });
+
+              await step.run(steps);
+            });
+          });
+
+          await step.run(steps);
+        },
+      );
+    }),
+  )).flat();
+
+  const serviceSteps: Step[] = await Promise.all(
+    workspace.services.map(async (service) => {
+      const hooks: BuildServiceHooks = {
+        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+        configure: new AsyncSeriesHook(['configuration']),
+      };
+
+      for (const plugin of service.pluginsForTarget(
+        PluginTarget.BuildProject,
+      )) {
+        plugin({project: service, hooks});
+      }
+
+      await buildTaskHooks.project.promise({project: service, hooks});
+      await buildTaskHooks.service.promise({service, hooks});
+
+      return createStep(
+        {label: (fmt) => fmt`Building service {emphasis ${service.name}}`},
+        async (step) => {
+          const configurationHooks: BuildServiceConfigurationHooks = {
             entries: new AsyncSeriesWaterfallHook(['entries']),
             extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
             filename: new AsyncSeriesWaterfallHook(['filename']),
             output: new AsyncSeriesWaterfallHook(['output']),
           };
 
-          await hooks.configure.promise(configurationHooks, variant);
-          await hooks.configureBrowser.promise(configurationHooks, variant);
+          await hooks.configure.promise(configurationHooks);
 
           const steps = await hooks.steps.promise([], {
-            variant,
-            browserConfig: configurationHooks,
-            serviceWorkerConfig: configurationHooks,
+            config: configurationHooks,
           });
 
           await step.run(steps);
-        });
-      });
+        },
+      );
     }),
-  )).flat();
+  );
 
   const packageSteps: Step[] = workspace.private
     ? []
@@ -147,5 +198,9 @@ export async function runBuild(
     buildTaskHooks.post.promise([], {configuration: configurationHooks}),
   ]);
 
-  await run([...webAppSteps, ...packageSteps], {ui: runner.ui, pre, post});
+  await run([...webAppSteps, ...serviceSteps, ...packageSteps], {
+    ui: runner.ui,
+    pre,
+    post,
+  });
 }

@@ -1,4 +1,5 @@
-import {render} from 'react-dom';
+import React from 'react';
+import {hydrate} from 'react-dom';
 import App from '..';
 
-render(<App />, document.querySelector('#app'));
+hydrate(<App />, document.querySelector('#app'));

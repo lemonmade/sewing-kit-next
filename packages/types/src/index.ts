@@ -152,6 +152,32 @@ export interface BuildPackageHooks {
   >;
 }
 
+// SERVICE
+
+export interface BuildServiceConfigurationCustomHooks {}
+
+export interface BuildServiceConfigurationCoreHooks {
+  readonly output: AsyncSeriesWaterfallHook<string>;
+  readonly entries: AsyncSeriesWaterfallHook<string[]>;
+  readonly extensions: AsyncSeriesWaterfallHook<string[]>;
+  readonly filename: AsyncSeriesWaterfallHook<string>;
+}
+
+export interface BuildServiceConfigurationHooks
+  extends BuildServiceConfigurationCoreHooks,
+    Partial<BuildServiceConfigurationCustomHooks> {}
+
+export interface BuildServiceHooks {
+  readonly configure: AsyncSeriesHook<BuildServiceConfigurationHooks>;
+
+  readonly steps: AsyncSeriesWaterfallHook<
+    Step[],
+    {
+      config: BuildServiceConfigurationHooks;
+    }
+  >;
+}
+
 // WEB APP
 
 export interface BuildWebAppOptions {}
@@ -234,6 +260,25 @@ export interface DevPackageHooks {
     {
       config: DevPackageConfigurationHooks;
       buildConfig: BuildPackageConfigurationHooks;
+    }
+  >;
+}
+
+// PACKAGE
+
+export interface DevServiceConfigurationCustomHooks {}
+export interface DevServiceConfigurationCoreHooks {}
+export interface DevServiceConfigurationHooks
+  extends DevServiceConfigurationCoreHooks,
+    Partial<DevServiceConfigurationCustomHooks> {}
+
+export interface DevServiceHooks {
+  readonly configure: AsyncSeriesHook<DevServiceConfigurationHooks>;
+  readonly steps: AsyncSeriesWaterfallHook<
+    Step[],
+    {
+      config: DevServiceConfigurationHooks;
+      buildConfig: BuildServiceConfigurationHooks;
     }
   >;
 }

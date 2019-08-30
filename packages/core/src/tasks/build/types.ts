@@ -5,9 +5,10 @@ import {
   BuildRootConfigurationHooks,
   BuildWebAppHooks,
   BuildPackageHooks,
+  BuildServiceHooks,
 } from '@sewing-kit/types';
 
-import {Package, WebApp, Workspace} from '../../workspace';
+import {Package, WebApp, Workspace, Service} from '../../workspace';
 
 export interface BuildTaskOptions {
   readonly env: Env;
@@ -24,7 +25,8 @@ export type BuildProjectDetails =
       project: WebApp;
       hooks: BuildWebAppHooks;
     }
-  | {project: Package; hooks: BuildPackageHooks};
+  | {project: Package; hooks: BuildPackageHooks}
+  | {project: Service; hooks: BuildServiceHooks};
 
 export interface BuildTaskHooks {
   readonly configure: AsyncSeriesHook<BuildRootConfigurationHooks>;
@@ -32,6 +34,10 @@ export interface BuildTaskHooks {
   readonly project: AsyncSeriesHook<BuildProjectDetails>;
   readonly package: AsyncSeriesHook<{pkg: Package; hooks: BuildPackageHooks}>;
   readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: BuildWebAppHooks}>;
+  readonly service: AsyncSeriesHook<{
+    service: Service;
+    hooks: BuildServiceHooks;
+  }>;
 
   readonly pre: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;
   readonly post: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;

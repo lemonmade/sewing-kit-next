@@ -15,6 +15,7 @@ declare module '@sewing-kit/types' {
 
   interface BuildPackageConfigurationCustomHooks extends BabelHooks {}
   interface BuildBrowserConfigurationCustomHooks extends BabelHooks {}
+  interface BuildServiceConfigurationCustomHooks extends BabelHooks {}
 }
 
 const PLUGIN = 'SewingKit.babel';
@@ -32,6 +33,10 @@ export default createPlugin(
       });
 
       hooks.webApp.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, addBabelHooks);
+      });
+
+      hooks.service.tap(PLUGIN, ({hooks}) => {
         hooks.configure.tap(PLUGIN, addBabelHooks);
       });
     });

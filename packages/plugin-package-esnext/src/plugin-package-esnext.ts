@@ -34,12 +34,19 @@ export default createPlugin(
         }
       });
 
+      function prefixExtension(extensions: string[]) {
+        return [EXTENSION, ...extensions];
+      }
+
       hooks.webApp.tap(PLUGIN, ({hooks}) => {
         hooks.configure.tap(PLUGIN, (configurationHooks) => {
-          configurationHooks.extensions.tap(PLUGIN, (extensions) => [
-            EXTENSION,
-            ...extensions,
-          ]);
+          configurationHooks.extensions.tap(PLUGIN, prefixExtension);
+        });
+      });
+
+      hooks.service.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, (configurationHooks) => {
+          configurationHooks.extensions.tap(PLUGIN, prefixExtension);
         });
       });
 

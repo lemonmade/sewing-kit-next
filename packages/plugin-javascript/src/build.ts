@@ -12,6 +12,13 @@ function addBaseBabelPreset(babelConfig: BabelConfig) {
   });
 }
 
+function addNodeBabelPreset(babelConfig: BabelConfig) {
+  return produce(babelConfig, (babelConfig) => {
+    babelConfig.presets = babelConfig.presets || [];
+    babelConfig.presets.push('babel-preset-shopify/node');
+  });
+}
+
 function addJsExtensions(extensions: string[]) {
   return ['.js', '.mjs', ...extensions];
 }
@@ -38,23 +45,47 @@ export default function buildJavaScript({
       }
 
       if (configurationHooks.webpackRules) {
-        configurationHooks.webpackRules.tapPromise(
-          PLUGIN,
-          async (rules, target) => {
-            const options =
-              configurationHooks.babelConfig &&
-              (await configurationHooks.babelConfig.promise({}, target));
+        configurationHooks.webpackRules.tapPromise(PLUGIN, async (rules) => {
+          const options =
+            configurationHooks.babelConfig &&
+            (await configurationHooks.babelConfig.promise({}));
 
-            return produce(rules, (rules) => {
-              rules.push({
-                test: /\.m?js/,
-                exclude: /node_modules/,
-                loader: 'babel-loader',
-                options,
-              });
+          return produce(rules, (rules) => {
+            rules.push({
+              test: /\.m?js/,
+              exclude: /node_modules/,
+              loader: 'babel-loader',
+              options,
             });
-          },
-        );
+          });
+        });
+      }
+    });
+  });
+
+  hooks.service.tap(PLUGIN, ({hooks}) => {
+    hooks.configure.tap(PLUGIN, (configurationHooks) => {
+      configurationHooks.extensions.tap(PLUGIN, addJsExtensions);
+
+      if (configurationHooks.babelConfig) {
+        configurationHooks.babelConfig.tap(PLUGIN, addNodeBabelPreset);
+      }
+
+      if (configurationHooks.webpackRules) {
+        configurationHooks.webpackRules.tapPromise(PLUGIN, async (rules) => {
+          const options =
+            configurationHooks.babelConfig &&
+            (await configurationHooks.babelConfig.promise({}));
+
+          return produce(rules, (rules) => {
+            rules.push({
+              test: /\.m?js/,
+              exclude: /node_modules/,
+              loader: 'babel-loader',
+              options,
+            });
+          });
+        });
       }
     });
   });

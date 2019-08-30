@@ -32,6 +32,8 @@
     {"path": "./packages/plugin-package-node"},
     {"path": "./packages/plugin-package-typescript"},
 
+    {"path": "./packages/plugin-service-base"},
+
     {"path": "./packages/plugin-web-app-base"},
     {"path": "./packages/plugin-differential-serving"}
   ]

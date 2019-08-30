@@ -81,6 +81,7 @@ export default createPlugin(
                   ...plugins,
                   new Happypack({
                     id: HAPPYPACK_ID,
+                    verbose: false,
                     threads: cpus().length - 1,
                     loaders: [
                       {path: 'style-loader'},
@@ -118,7 +119,7 @@ export default createPlugin(
                       },
                       // sassGlobalsLoader(workspace),
                     ],
-                  }),
+                  } as any),
                 ];
               },
             );

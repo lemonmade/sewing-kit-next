@@ -2,6 +2,7 @@ node_modules
 tsconfig.tsbuildinfo
 dist
 packages/*/build
+example/build
 bin
 tmp
 ~

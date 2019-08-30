@@ -2,6 +2,10 @@ import {AsyncSeriesWaterfallHook, AsyncSeriesHook} from 'tapable';
 import {
   Env,
   Step,
+  DevServiceHooks,
+  DevServiceConfigurationHooks,
+  BuildServiceHooks,
+  BuildServiceConfigurationHooks,
   DevWebAppHooks,
   DevWebAppConfigurationHooks,
   BuildWebAppHooks,
@@ -33,6 +37,7 @@ export async function runDev(
     project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
     package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
     webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
+    service: new AsyncSeriesHook(['service', 'serviceBuildHooks']),
 
     post: new AsyncSeriesWaterfallHook(['steps', 'details']),
   };
@@ -44,6 +49,7 @@ export async function runDev(
     project: new AsyncSeriesHook(['project', 'projectBuildHooks']),
     package: new AsyncSeriesHook(['pkg', 'packageBuildHooks']),
     webApp: new AsyncSeriesHook(['app', 'webAppBuildHooks']),
+    service: new AsyncSeriesHook(['service', 'serviceBuildHooks']),
 
     post: new AsyncSeriesWaterfallHook(['steps', 'details']),
   };
@@ -126,6 +132,66 @@ export async function runDev(
     }),
   )).flat();
 
+  const serviceSteps: Step[] = (await Promise.all(
+    workspace.services.map(async (service) => {
+      const hooks: DevServiceHooks = {
+        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+        configure: new AsyncSeriesHook(['configuration', 'variant']),
+      };
+
+      const buildHooks: BuildServiceHooks = {
+        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
+        configure: new AsyncSeriesHook(['configuration']),
+      };
+
+      for (const plugin of service.pluginsForTarget(
+        PluginTarget.BuildProject,
+      )) {
+        plugin({project: service, hooks: buildHooks});
+      }
+
+      await devTaskHooks.project.promise({project: service, hooks});
+      await devTaskHooks.service.promise({service, hooks});
+
+      await buildTaskHooks.project.promise({
+        project: service,
+        hooks: buildHooks,
+      });
+      await buildTaskHooks.service.promise({service, hooks: buildHooks});
+
+      const configurationHooks: DevServiceConfigurationHooks = {};
+      await hooks.configure.promise(configurationHooks);
+
+      const buildConfigurationHooks: BuildServiceConfigurationHooks = {
+        entries: new AsyncSeriesWaterfallHook(['entries']),
+        extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
+        filename: new AsyncSeriesWaterfallHook(['filename']),
+        output: new AsyncSeriesWaterfallHook(['output']),
+      };
+
+      await buildHooks.configure.promise(buildConfigurationHooks);
+
+      const steps = await hooks.steps.promise([], {
+        config: configurationHooks,
+        buildConfig: buildConfigurationHooks,
+      });
+
+      return steps.length > 0
+        ? [
+            createStep(
+              {
+                label: (fmt) =>
+                  fmt`Starting development mode for service {emphasis ${service.name}}`,
+              },
+              async (step) => {
+                await step.run(steps);
+              },
+            ),
+          ]
+        : [];
+    }),
+  )).flat();
+
   const packageSteps: Step[] = workspace.private
     ? []
     : (await Promise.all(
@@ -193,5 +259,9 @@ export async function runDev(
     devTaskHooks.post.promise([], {configuration: configurationHooks}),
   ]);
 
-  await run([...webAppSteps, ...packageSteps], {ui: runner.ui, pre, post});
+  await run([...webAppSteps, ...serviceSteps, ...packageSteps], {
+    ui: runner.ui,
+    pre,
+    post,
+  });
 }

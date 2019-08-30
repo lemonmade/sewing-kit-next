@@ -12,6 +12,7 @@ import graphql from '@sewing-kit/plugin-graphql';
 import sass from '@sewing-kit/plugin-sass';
 import react from '@sewing-kit/plugin-react';
 import webAppBase from '@sewing-kit/plugin-web-app-base';
+import serviceBase from '@sewing-kit/plugin-service-base';
 
 const plugin = composePlugins('SewingKitExample', [
   babel,
@@ -25,6 +26,7 @@ const plugin = composePlugins('SewingKitExample', [
   sass,
   react,
   webAppBase,
+  serviceBase,
 ]);
 
 export default createWorkspace((workspace) => {

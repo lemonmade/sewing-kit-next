@@ -23,12 +23,13 @@ export default function devWebApp({hooks, workspace}: DevTask) {
             },
           );
 
-          config.output.publicPath = '/webpack/assets';
+          (config as any).output.publicPath = '/webpack/assets';
 
           const compiler = webpack(config);
           const middleware = await koaWebpack({
             compiler,
             hotClient: false,
+            devMiddleware: {logLevel: 'silent'} as any,
           });
           const app = new Koa();
 

@@ -22,6 +22,12 @@ export default createPlugin(
           configurationHooks.extensions.tap(PLUGIN, addJsonExtension);
         });
       });
+
+      hooks.service.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, (configurationHooks) => {
+          configurationHooks.extensions.tap(PLUGIN, addJsonExtension);
+        });
+      });
     });
 
     tasks.test.tap(PLUGIN, ({hooks}) => {

@@ -9,7 +9,10 @@ Just run `yarn` and you should be good to go. If you ever have issues with modul
 - [ ] Make `ui.log` work in the context of a step (should nest the logs under the step)
 - [ ] Let steps be aware of their current status (in progress/ pending/ error/ success)
 - [ ] Let you skip some pre steps (need an ID on steps and then something like `--skip-pre clean`)
-- [ ] Make sure type check works for tests
+- [ ] Make sure type check works for tests (e.g., test files are type checked)
+- [ ] Split the discovery part of the `plugin-{web-app,service,package}-base` from the other details, because discovery is opinionated and the other parts aren't so much (or, they are distinct opinions). All of the discovery can probably go in a single package.
+- [ ] Make `loadConfig` accept an expected config type, fail if providing a service config when expecting a web app (for example)
+- [ ] Maybe allow passing project-level plugins at root, and then they are applied to each project? It is a bit weird right now that all plugins will probably need a "all projects" and a "single project" mode
 
 ## Errors to handle
 

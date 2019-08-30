@@ -4,9 +4,10 @@ import {
   DevRootConfigurationHooks,
   DevWebAppHooks,
   DevPackageHooks,
+  DevServiceHooks,
 } from '@sewing-kit/types';
 
-import {Package, WebApp, Workspace} from '../../workspace';
+import {Package, WebApp, Service, Workspace} from '../../workspace';
 
 export interface DevTaskOptions {
   readonly sourceMaps?: boolean;
@@ -21,6 +22,7 @@ export type DevProjectDetails =
       project: WebApp;
       hooks: DevWebAppHooks;
     }
+  | {project: Service; hooks: DevServiceHooks}
   | {project: Package; hooks: DevPackageHooks};
 
 export interface DevTaskHooks {
@@ -29,6 +31,7 @@ export interface DevTaskHooks {
   readonly project: AsyncSeriesHook<DevProjectDetails>;
   readonly package: AsyncSeriesHook<{pkg: Package; hooks: DevPackageHooks}>;
   readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: DevWebAppHooks}>;
+  readonly service: AsyncSeriesHook<{service: Service; hooks: DevServiceHooks}>;
 
   readonly pre: AsyncSeriesWaterfallHook<Step[], DevStepDetails>;
   readonly post: AsyncSeriesWaterfallHook<Step[], DevStepDetails>;

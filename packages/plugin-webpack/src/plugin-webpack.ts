@@ -9,29 +9,35 @@ import {
   PluginTarget,
 } from '@sewing-kit/plugin-utilities';
 
+interface WebpackHooks {
+  readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
+  readonly webpackPlugins: AsyncSeriesWaterfallHook<WebpackPlugin[]>;
+  readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
+}
+
 declare module '@sewing-kit/types' {
-  interface BuildBrowserConfigurationCustomHooks {
-    readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
-    readonly webpackPlugins: AsyncSeriesWaterfallHook<WebpackPlugin[]>;
-    readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
-  }
+  interface BuildBrowserConfigurationCustomHooks extends WebpackHooks {}
+  interface BuildServiceConfigurationCustomHooks extends WebpackHooks {}
 }
 
 const PLUGIN = 'SewingKit.webpack';
+
+const addWebpackHooks = addHooks<Partial<WebpackHooks>>(() => ({
+  webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
+  webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
+  webpackPlugins: new AsyncSeriesWaterfallHook(['webpackPlugins']),
+}));
 
 export default createPlugin(
   {id: PLUGIN, target: PluginTarget.Root},
   (tasks) => {
     tasks.build.tap(PLUGIN, ({hooks}) => {
       hooks.webApp.tap(PLUGIN, ({hooks}) => {
-        hooks.configure.tap(
-          PLUGIN,
-          addHooks(() => ({
-            webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
-            webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
-            webpackPlugins: new AsyncSeriesWaterfallHook(['webpackPlugins']),
-          })),
-        );
+        hooks.configure.tap(PLUGIN, addWebpackHooks);
+      });
+
+      hooks.service.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, addWebpackHooks);
       });
     });
   },

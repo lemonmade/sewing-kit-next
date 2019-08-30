@@ -34,6 +34,14 @@ export default createPlugin(
           }
         });
       });
+
+      hooks.service.tap(PLUGIN, ({hooks}) => {
+        hooks.configure.tap(PLUGIN, (configurationHooks) => {
+          if (configurationHooks.babelConfig) {
+            configurationHooks.babelConfig.tap(PLUGIN, addReactPreset);
+          }
+        });
+      });
     });
 
     tasks.test.tap(PLUGIN, ({hooks}) => {
