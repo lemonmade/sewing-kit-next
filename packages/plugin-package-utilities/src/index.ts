@@ -34,7 +34,11 @@ export function createWriteEntriesStep(
         sourceRoot,
         pkg.fs.resolvePath(entry.root),
       );
-      const destinationInOutput = resolve(outputPath, relativeFromSourceRoot);
+      const destinationInOutput = pkg.fs.resolvePath(
+        outputPath,
+        relativeFromSourceRoot,
+      );
+
       const relativeFromRoot = normalizedRelative(
         pkg.root,
         destinationInOutput,

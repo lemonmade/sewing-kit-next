@@ -19,6 +19,10 @@ class PackageCreator {
     this.builder.entries.push({
       runtime: this.builder.runtime,
       ...entry,
+      root:
+        typeof entry.root === 'string' && entry.root.startsWith('/')
+          ? entry.root.slice(1)
+          : entry.root,
     });
   }
 

@@ -95,6 +95,7 @@ export function createCompileBabelStep(
           configFile: babelConfigPath,
           verbose: true,
           noBabelrc: true,
+          babelConfig: false,
           extensions: extensions.join(','),
         },
         {dasherize: true},

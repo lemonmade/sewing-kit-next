@@ -13,6 +13,7 @@ Just run `yarn` and you should be good to go. If you ever have issues with modul
 - [ ] Split the discovery part of the `plugin-{web-app,service,package}-base` from the other details, because discovery is opinionated and the other parts aren't so much (or, they are distinct opinions). All of the discovery can probably go in a single package.
 - [ ] Make `loadConfig` accept an expected config type, fail if providing a service config when expecting a web app (for example)
 - [ ] Maybe allow passing project-level plugins at root, and then they are applied to each project? It is a bit weird right now that all plugins will probably need a "all projects" and a "single project" mode
+- [ ] Make sure that running `Workspace#run()` (in test) returns the output that the user would have actually seen
 
 ## Errors to handle
 
