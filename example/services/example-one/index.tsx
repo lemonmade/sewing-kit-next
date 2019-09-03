@@ -7,7 +7,7 @@ const app = new Koa();
 app.use((ctx) => {
   ctx.body = `<html><body><div id="app">${renderToString(
     <App />,
-  )}</div><script src="http://localhost:8081/webpack/assets/main.js"></script></body></html>`;
+  )}</div><script src="http://localhost:8081/assets/main.js"></script></body></html>`;
 });
 
 app.listen(8082, () => {

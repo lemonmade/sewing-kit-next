@@ -29,27 +29,32 @@ export default function devService({hooks, workspace}: DevTask) {
 
             let server: import('execa').ExecaChildProcess<string> | undefined;
 
-            compiler.hooks.done.tap(PLUGIN, () => {
+            const start = () => {
               if (server) {
                 server.kill();
                 server = undefined;
               }
 
               server = step.exec('node', [file]);
-            });
+              server!.stdout!.on('data', (chunk) => {
+                // eslint-disable-next-line no-console
+                console.log(chunk.toString().trim());
+              });
+            };
+
+            compiler.hooks.done.tap(PLUGIN, start);
 
             compiler.watch({ignored: 'node_modules/**'}, (err, stats) => {
               if (err) {
+                // eslint-disable-next-line no-console
                 console.log(err);
               }
 
               if (stats.hasErrors()) {
-                console.log(config.module.rules);
+                // eslint-disable-next-line no-console
                 console.log(stats.toString('errors-only'));
               }
             });
-
-            // compiler.watch()
           },
         ),
       ];

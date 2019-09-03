@@ -16,7 +16,8 @@ export async function createWebpackConfig(
   if (
     buildHooks.webpackConfig == null ||
     buildHooks.webpackPlugins == null ||
-    buildHooks.webpackRules == null
+    buildHooks.webpackRules == null ||
+    buildHooks.webpackPublicPath == null
   ) {
     throw new MissingPluginError('@sewing-kit/plugin-webpack');
   }
@@ -26,6 +27,7 @@ export async function createWebpackConfig(
   const extensions = await buildHooks.extensions.promise([]);
   const outputPath = await buildHooks.output.promise(workspace.fs.buildPath());
   const filename = await buildHooks.filename.promise('[name].js');
+  const publicPath = await buildHooks.webpackPublicPath.promise('/assets');
 
   return buildHooks.webpackConfig.promise({
     entry: await buildHooks.entries.promise([webApp.entry]),
@@ -34,6 +36,7 @@ export async function createWebpackConfig(
     output: {
       path: outputPath,
       filename,
+      publicPath,
     },
     plugins,
     ...explicitConfig,

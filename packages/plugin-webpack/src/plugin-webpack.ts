@@ -13,6 +13,7 @@ interface WebpackHooks {
   readonly webpackRules: AsyncSeriesWaterfallHook<any[]>;
   readonly webpackPlugins: AsyncSeriesWaterfallHook<WebpackPlugin[]>;
   readonly webpackConfig: AsyncSeriesWaterfallHook<WebpackConfiguration>;
+  readonly webpackPublicPath: AsyncSeriesWaterfallHook<string>;
 }
 
 declare module '@sewing-kit/types' {
@@ -26,6 +27,7 @@ const addWebpackHooks = addHooks<Partial<WebpackHooks>>(() => ({
   webpackRules: new AsyncSeriesWaterfallHook(['webpackRules']),
   webpackConfig: new AsyncSeriesWaterfallHook(['webpackConfig']),
   webpackPlugins: new AsyncSeriesWaterfallHook(['webpackPlugins']),
+  webpackPublicPath: new AsyncSeriesWaterfallHook(['webpackPublicPath']),
 }));
 
 export default createPlugin(

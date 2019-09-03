@@ -14,6 +14,15 @@ export default function devWebApp({hooks, workspace}: DevTask) {
           const {default: koaWebpack} = await import('koa-webpack');
           const {default: Koa} = await import('koa');
 
+          const devServerHost = 'localhost';
+          const devServerScheme = 'http://';
+          const devServerPort = 8081;
+
+          buildBrowserConfig.webpackPublicPath!.tap(
+            PLUGIN,
+            () => `${devServerScheme}${devServerHost}:${devServerPort}/assets`,
+          );
+
           const config = await createWebpackConfig(
             buildBrowserConfig,
             webApp,
@@ -22,8 +31,6 @@ export default function devWebApp({hooks, workspace}: DevTask) {
               mode: 'development',
             },
           );
-
-          (config as any).output.publicPath = '/webpack/assets';
 
           const compiler = webpack(config);
           const middleware = await koaWebpack({
@@ -34,9 +41,11 @@ export default function devWebApp({hooks, workspace}: DevTask) {
           const app = new Koa();
 
           app.use(middleware);
-          app.listen(8081, () => {
+          app.listen(devServerPort, () => {
             // eslint-disable-next-line no-console
-            console.log(`Listening on http://localhost:8081`);
+            console.log(
+              `Listening on ${devServerScheme}${devServerHost}:${devServerPort}`,
+            );
           });
         }),
       ];
