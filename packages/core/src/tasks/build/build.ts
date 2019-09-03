@@ -10,6 +10,7 @@ import {
   PluginTarget,
 } from '@sewing-kit/types';
 import {run, createStep} from '@sewing-kit/ui';
+import {ArrayElement} from '@shopify/useful-types';
 
 import {Workspace} from '../../workspace';
 import {Runner} from '../../runner';
@@ -39,7 +40,7 @@ export async function runBuild(
     workspace,
   });
 
-  const webAppSteps: Step[] = (await Promise.all(
+  const webAppSteps: Step[] = await Promise.all(
     workspace.webApps.map(async (webApp) => {
       const hooks: BuildWebAppHooks = {
         variants: new AsyncSeriesWaterfallHook(['variants']),
@@ -63,39 +64,45 @@ export async function runBuild(
 
       const variants = await hooks.variants.promise([]);
 
-      return createStep(
-        {label: (fmt) => fmt`Building app {emphasis ${webApp.name}}`},
-        async (step) => {
-          const steps = variants.map((variant) => {
-            return createStep(async (step) => {
-              const configurationHooks: BuildBrowserConfigurationHooks = {
-                entries: new AsyncSeriesWaterfallHook(['entries']),
-                extensions: new AsyncSeriesWaterfallHook([
-                  'extensions',
-                  'options',
-                ]),
-                filename: new AsyncSeriesWaterfallHook(['filename']),
-                output: new AsyncSeriesWaterfallHook(['output']),
-              };
+      const stepsForVariant = async (
+        variant: ArrayElement<typeof variants>,
+      ) => {
+        const configurationHooks: BuildBrowserConfigurationHooks = {
+          entries: new AsyncSeriesWaterfallHook(['entries']),
+          extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
+          filename: new AsyncSeriesWaterfallHook(['filename']),
+          output: new AsyncSeriesWaterfallHook(['output']),
+        };
 
-              await hooks.configure.promise(configurationHooks, variant);
-              await hooks.configureBrowser.promise(configurationHooks, variant);
+        await hooks.configure.promise(configurationHooks, variant);
+        await hooks.configureBrowser.promise(configurationHooks, variant);
 
-              const steps = await hooks.steps.promise([], {
-                variant,
-                browserConfig: configurationHooks,
-                serviceWorkerConfig: configurationHooks,
-              });
+        return hooks.steps.promise([], {
+          variant,
+          browserConfig: configurationHooks,
+          serviceWorkerConfig: configurationHooks,
+        });
+      };
 
-              await step.run(steps);
-            });
-          });
+      const steps =
+        variants.length > 1
+          ? await Promise.all(
+              variants.map(async (variant) => {
+                return createStep({
+                  label: (fmt) =>
+                    fmt`Building variant {${stringifyVariant(variant)}}`,
+                  steps,
+                });
+              }),
+            )
+          : await stepsForVariant({});
 
-          await step.run(steps);
-        },
-      );
+      return createStep({
+        label: (fmt) => fmt`Building app {emphasis ${webApp.name}}`,
+        steps,
+      });
     }),
-  )).flat();
+  );
 
   const serviceSteps: Step[] = await Promise.all(
     workspace.services.map(async (service) => {
@@ -113,25 +120,23 @@ export async function runBuild(
       await buildTaskHooks.project.promise({project: service, hooks});
       await buildTaskHooks.service.promise({service, hooks});
 
-      return createStep(
-        {label: (fmt) => fmt`Building service {emphasis ${service.name}}`},
-        async (step) => {
-          const configurationHooks: BuildServiceConfigurationHooks = {
-            entries: new AsyncSeriesWaterfallHook(['entries']),
-            extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
-            filename: new AsyncSeriesWaterfallHook(['filename']),
-            output: new AsyncSeriesWaterfallHook(['output']),
-          };
+      const configurationHooks: BuildServiceConfigurationHooks = {
+        entries: new AsyncSeriesWaterfallHook(['entries']),
+        extensions: new AsyncSeriesWaterfallHook(['extensions', 'options']),
+        filename: new AsyncSeriesWaterfallHook(['filename']),
+        output: new AsyncSeriesWaterfallHook(['output']),
+      };
 
-          await hooks.configure.promise(configurationHooks);
+      await hooks.configure.promise(configurationHooks);
 
-          const steps = await hooks.steps.promise([], {
-            config: configurationHooks,
-          });
+      const steps = await hooks.steps.promise([], {
+        config: configurationHooks,
+      });
 
-          await step.run(steps);
-        },
-      );
+      return createStep({
+        steps,
+        label: (fmt) => fmt`Building service {emphasis ${service.name}}`,
+      });
     }),
   );
 
@@ -158,35 +163,31 @@ export async function runBuild(
 
           const variants = await hooks.variants.promise([]);
 
-          return createStep(
-            {label: (fmt) => fmt`Build package {emphasis ${pkg.name}}`},
-            async (step) => {
-              const steps = variants.map((variant) =>
-                createStep(
-                  {
-                    label: (fmt) =>
-                      fmt`Build {emphasis ${Object.keys(variant)[0]}} variant`,
-                  },
-                  async (step) => {
-                    const configurationHooks: BuildPackageConfigurationHooks = {
-                      extensions: new AsyncSeriesWaterfallHook(['extensions']),
-                    };
+          const steps = await Promise.all(
+            variants.map(async (variant) => {
+              const configurationHooks: BuildPackageConfigurationHooks = {
+                extensions: new AsyncSeriesWaterfallHook(['extensions']),
+              };
 
-                    await hooks.configure.promise(configurationHooks, variant);
+              await hooks.configure.promise(configurationHooks, variant);
 
-                    const steps = await hooks.steps.promise([], {
-                      variant,
-                      config: configurationHooks,
-                    });
+              const steps = await hooks.steps.promise([], {
+                variant,
+                config: configurationHooks,
+              });
 
-                    await step.run(steps);
-                  },
-                ),
-              );
-
-              await step.run(steps);
-            },
+              return createStep({
+                steps,
+                label: (fmt) =>
+                  fmt`Build {emphasis ${stringifyVariant(variant)}} variant`,
+              });
+            }),
           );
+
+          return createStep({
+            steps,
+            label: (fmt) => fmt`Build package {emphasis ${pkg.name}}`,
+          });
         }),
       );
 
@@ -203,4 +204,12 @@ export async function runBuild(
     pre,
     post,
   });
+}
+
+function stringifyVariant(variant: object) {
+  return Object.entries(variant)
+    .map(([key, value]) => {
+      return value === true ? key : `${key}: ${value}`;
+    })
+    .join(', ');
 }

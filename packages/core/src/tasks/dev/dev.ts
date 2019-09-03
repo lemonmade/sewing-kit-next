@@ -118,15 +118,11 @@ export async function runDev(
 
       return steps.length > 0
         ? [
-            createStep(
-              {
-                label: (fmt) =>
-                  fmt`Starting development mode for web app {emphasis ${webApp.name}}`,
-              },
-              async (step) => {
-                await step.run(steps);
-              },
-            ),
+            createStep({
+              steps,
+              label: (fmt) =>
+                fmt`Starting development mode for web app {emphasis ${webApp.name}}`,
+            }),
           ]
         : [];
     }),
@@ -178,15 +174,11 @@ export async function runDev(
 
       return steps.length > 0
         ? [
-            createStep(
-              {
-                label: (fmt) =>
-                  fmt`Starting development mode for service {emphasis ${service.name}}`,
-              },
-              async (step) => {
-                await step.run(steps);
-              },
-            ),
+            createStep({
+              steps,
+              label: (fmt) =>
+                fmt`Starting development mode for service {emphasis ${service.name}}`,
+            }),
           ]
         : [];
     }),
@@ -237,15 +229,11 @@ export async function runDev(
 
           return steps.length > 0
             ? [
-                createStep(
-                  {
-                    label: (fmt) =>
-                      fmt`Starting development mode for web app {emphasis ${pkg.name}}`,
-                  },
-                  async (step) => {
-                    await step.run(steps);
-                  },
-                ),
+                createStep({
+                  steps,
+                  label: (fmt) =>
+                    fmt`Starting development mode for web app {emphasis ${pkg.name}}`,
+                }),
               ]
             : [];
         }),

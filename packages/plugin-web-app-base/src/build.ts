@@ -19,8 +19,6 @@ export default function buildWebApp({hooks, workspace, options}: BuildTask) {
       modules: false,
     });
 
-    hooks.variants.tap(PLUGIN, () => [{}]);
-
     hooks.configure.tap(PLUGIN, (configurationHooks) => {
       if (configurationHooks.babelConfig) {
         configurationHooks.babelConfig.tap(PLUGIN, (babelConfig) => {

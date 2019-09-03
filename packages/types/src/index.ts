@@ -19,15 +19,15 @@ export enum LogLevel {
 }
 
 export interface StepRunner {
-  exec: typeof execa;
+  readonly exec: typeof execa;
   log(arg: Loggable, level?: LogLevel): void;
-  run(steps: Step[]): Promise<void>;
 }
 
 export interface Step {
-  label?: Loggable;
-  indefinite?: boolean;
-  run(runner: StepRunner): void | Promise<void>;
+  readonly label?: Loggable;
+  readonly indefinite?: boolean;
+  readonly steps?: readonly Step[];
+  run?(runner: StepRunner): void | Promise<void>;
 }
 
 // ==================================================================

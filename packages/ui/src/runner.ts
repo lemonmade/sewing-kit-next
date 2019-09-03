@@ -19,7 +19,12 @@ class StepRunner {
   private state = StepState.Pending;
   private readonly stepRunners: StepRunner[] = [];
 
-  constructor(private readonly step: Step, private readonly update: Update) {}
+  constructor(private readonly step: Step, private readonly update: Update) {
+    for (const subStep of step.steps || []) {
+      const stepRunner = new StepRunner(subStep, this.update);
+      this.stepRunners.push(stepRunner);
+    }
+  }
 
   async run(ui: Ui) {
     this.setState(StepState.InProgress);
@@ -30,19 +35,16 @@ class StepRunner {
         log(loggable, _logLevel) {
           ui.log(loggable);
         },
-        run: async (steps) => {
-          for (const step of steps) {
-            const stepRunner = new StepRunner(step, this.update);
-            this.stepRunners.push(stepRunner);
-          }
-
-          for (const stepRunner of this.stepRunners) {
-            await stepRunner.run(ui);
-          }
-        },
       };
 
-      await this.step.run(runner);
+      if (this.step.run) {
+        await this.step.run(runner);
+      }
+
+      for (const stepRunner of this.stepRunners) {
+        await stepRunner.run(ui);
+      }
+
       this.setState(StepState.Success);
     } catch (error) {
       this.setState(StepState.Failure);
@@ -66,7 +68,7 @@ class StepRunner {
           prefix = fmt`{success ✓}`;
           break;
         case StepState.Failure:
-          prefix = fmt`{error o}`;
+          prefix = fmt`{error ✕}`;
           break;
         case StepState.Pending:
           prefix = fmt`{subdued o}`;
