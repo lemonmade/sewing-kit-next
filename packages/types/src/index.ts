@@ -27,6 +27,7 @@ export interface Step {
   readonly label?: Loggable;
   readonly indefinite?: boolean;
   readonly steps?: readonly Step[];
+  skip(skipped: string[]): boolean;
   run?(runner: StepRunner): void | Promise<void>;
 }
 

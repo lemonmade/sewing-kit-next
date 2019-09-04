@@ -14,6 +14,9 @@ export interface BuildTaskOptions {
   readonly env: Env;
   readonly simulateEnv: Env;
   readonly sourceMaps?: boolean;
+  readonly skip?: string[];
+  readonly skipPre?: string[];
+  readonly skipPost?: string[];
 }
 
 interface BuildStepDetails {

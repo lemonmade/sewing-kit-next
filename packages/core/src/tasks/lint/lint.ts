@@ -34,5 +34,15 @@ export async function runLint(
     configuration: configurationHooks,
   });
 
-  await run(steps, {ui: runner.ui, title: 'lint', pre, post});
+  const {skip, skipPre, skipPost} = options;
+
+  await run(steps, {
+    ui: runner.ui,
+    title: 'lint',
+    pre,
+    post,
+    skip,
+    skipPre,
+    skipPost,
+  });
 }

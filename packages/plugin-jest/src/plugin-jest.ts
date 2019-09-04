@@ -270,7 +270,6 @@ export default createPlugin(
             watch = true,
             testPattern,
             testNamePattern,
-            maxWorkers,
             updateSnapshot,
           } = options;
 
@@ -282,7 +281,6 @@ export default createPlugin(
             onlyChanged: testPattern == null,
             testNamePattern,
             testPathPattern: testPattern,
-            maxWorkers,
             updateSnapshot,
             runInBand: debug,
             forceExit: debug,

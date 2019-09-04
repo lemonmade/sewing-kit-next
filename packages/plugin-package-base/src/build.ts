@@ -19,13 +19,16 @@ export default function buildPackages({hooks, workspace}: BuildTask) {
     workspace.packages.length > 0
       ? [
           ...steps,
-          createStep({label: 'Removing package build artifacts'}, async () => {
-            await Promise.all(
-              (await configuration.packageBuildArtifacts!.promise([])).map(
-                (path) => remove(path),
-              ),
-            );
-          }),
+          createStep(
+            {label: 'Removing package build artifacts', skip: /clean/},
+            async () => {
+              await Promise.all(
+                (await configuration.packageBuildArtifacts!.promise([])).map(
+                  (path) => remove(path),
+                ),
+              );
+            },
+          ),
         ]
       : steps,
   );

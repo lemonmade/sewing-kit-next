@@ -11,6 +11,9 @@ import {Package, WebApp, Service, Workspace} from '../../workspace';
 
 export interface DevTaskOptions {
   readonly sourceMaps?: boolean;
+  readonly skip?: string[];
+  readonly skipPre?: string[];
+  readonly skipPost?: string[];
 }
 
 interface DevStepDetails {

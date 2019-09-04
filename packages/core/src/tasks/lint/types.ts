@@ -4,6 +4,9 @@ import {Workspace} from '../../workspace';
 
 export interface LintTaskOptions {
   readonly fix?: boolean;
+  readonly skip?: string[];
+  readonly skipPre?: string[];
+  readonly skipPost?: string[];
 }
 
 interface LintStepDetails {

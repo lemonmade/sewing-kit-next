@@ -34,5 +34,15 @@ export async function runTypeCheck(
     configuration: configurationHooks,
   });
 
-  await run(steps, {ui: runner.ui, title: 'type-check', pre, post});
+  const {skip, skipPre, skipPost} = options;
+
+  await run(steps, {
+    ui: runner.ui,
+    title: 'type-check',
+    pre,
+    post,
+    skip,
+    skipPre,
+    skipPost,
+  });
 }

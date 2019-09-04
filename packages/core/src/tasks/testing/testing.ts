@@ -74,5 +74,6 @@ export async function runTests(
   const steps = await hooks.steps.promise([], stepDetails);
   const post = await hooks.post.promise([], stepDetails);
 
-  await run(steps, {ui: runner.ui, pre, post});
+  const {skip, skipPre, skipPost} = options;
+  await run(steps, {ui: runner.ui, pre, post, skip, skipPre, skipPost});
 }

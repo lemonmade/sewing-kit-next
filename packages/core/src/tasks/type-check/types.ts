@@ -3,8 +3,10 @@ import {Step, TypeCheckRootConfigurationHooks} from '@sewing-kit/types';
 import {Workspace} from '../../workspace';
 
 export interface TypeCheckOptions {
-  heap?: number;
-  watch?: boolean;
+  readonly watch?: boolean;
+  readonly skip?: string[];
+  readonly skipPre?: string[];
+  readonly skipPost?: string[];
 }
 
 interface TypeCheckStepDetails {

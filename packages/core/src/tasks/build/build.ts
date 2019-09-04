@@ -228,10 +228,15 @@ export async function runBuild(
     buildTaskHooks.post.promise([], {configuration: configurationHooks}),
   ]);
 
+  const {skip, skipPre, skipPost} = options;
+
   await run([...webAppSteps, ...serviceSteps, ...packageSteps], {
     ui: runner.ui,
     pre,
     post,
+    skip,
+    skipPre,
+    skipPost,
   });
 }
 

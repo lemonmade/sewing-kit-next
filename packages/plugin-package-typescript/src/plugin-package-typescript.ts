@@ -137,10 +137,16 @@ async function writeTypeScriptEntries(
         await pkg.fs.write(symlinkFile, '');
       }
 
-      await symlink(
-        symlinkFile,
-        pkg.fs.resolvePath(`${entry.name || 'index'}.d.ts`),
-      );
+      try {
+        await symlink(
+          symlinkFile,
+          pkg.fs.resolvePath(`${entry.name || 'index'}.d.ts`),
+        );
+      } catch (error) {
+        if (error.code !== 'EEXIST') {
+          throw error;
+        }
+      }
     }
   }
 }

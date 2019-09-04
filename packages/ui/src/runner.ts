@@ -9,6 +9,7 @@ enum StepState {
   Failure,
   Success,
   Pending,
+  Skipped,
 }
 
 type Update = () => void;
@@ -26,7 +27,12 @@ class StepRunner {
     }
   }
 
-  async run(ui: Ui) {
+  async run(ui: Ui, skip: string[]) {
+    if (this.step.skip(skip)) {
+      this.setState(StepState.Skipped);
+      return;
+    }
+
     this.setState(StepState.InProgress);
 
     try {
@@ -42,7 +48,7 @@ class StepRunner {
       }
 
       for (const stepRunner of this.stepRunners) {
-        await stepRunner.run(ui);
+        await stepRunner.run(ui, skip);
       }
 
       this.setState(StepState.Success);
@@ -73,6 +79,9 @@ class StepRunner {
         case StepState.Pending:
           prefix = fmt`{subdued o}`;
           break;
+        case StepState.Skipped:
+          prefix = fmt`{subdued ⇥}`;
+          break;
       }
 
       const ownLine = fmt`${prefix} ${fmt`${this.step.label || ''}`}`;
@@ -96,21 +105,26 @@ class StepRunner {
   }
 }
 
+interface StepGroup {
+  steps: Step[];
+  skip: string[];
+}
+
 class StepGroupRunner {
   readonly stepRunners: StepRunner[] = [];
 
   constructor(
-    private readonly steps: Step[],
+    private readonly group: StepGroup,
     private readonly update: Update,
   ) {}
 
   async run(ui: Ui) {
-    for (const step of this.steps) {
+    for (const step of this.group.steps) {
       this.stepRunners.push(new StepRunner(step, this.update));
     }
 
     for (const step of this.stepRunners) {
-      await step.run(ui);
+      await step.run(ui, this.group.skip);
     }
   }
 
@@ -128,7 +142,7 @@ class RunnerUi {
   private groupRunners: StepGroupRunner[] = [];
   private lastContentHeight = 0;
 
-  constructor(private readonly groups: Step[][], private readonly ui: Ui) {}
+  constructor(private readonly groups: StepGroup[], private readonly ui: Ui) {}
 
   async run() {
     for (const group of this.groups) {
@@ -174,20 +188,36 @@ class RunnerUi {
   };
 }
 
+interface RunOptions {
+  ui: Ui;
+  pre?: Step[];
+  post?: Step[];
+  skip?: string[];
+  skipPre?: string[];
+  skipPost?: string[];
+  title?: string;
+}
+
 export async function run(
   steps: Step[],
   {
     ui,
     pre = [],
     post = [],
+    skip = [],
+    skipPre = [],
+    skipPost = [],
     title,
-  }: {ui: Ui; pre?: Step[]; post?: Step[]; title?: string},
+  }: RunOptions,
 ) {
   if (pre.length + steps.length + post.length === 0) {
     return;
   }
 
-  const runnerUi = new RunnerUi([pre, steps, post], ui);
+  const runnerUi = new RunnerUi(
+    [{steps: pre, skip: skipPre}, {steps, skip}, {steps: post, skip: skipPost}],
+    ui,
+  );
 
   try {
     if (title) {
