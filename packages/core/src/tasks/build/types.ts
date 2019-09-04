@@ -20,6 +20,21 @@ interface BuildStepDetails {
   readonly configuration: BuildRootConfigurationHooks;
 }
 
+export interface BuildWebAppDetails {
+  webApp: WebApp;
+  hooks: BuildWebAppHooks;
+}
+
+export interface BuildPackageDetails {
+  pkg: Package;
+  hooks: BuildPackageHooks;
+}
+
+export interface BuildServiceDetails {
+  service: Service;
+  hooks: BuildServiceHooks;
+}
+
 export type BuildProjectDetails =
   | {
       project: WebApp;
@@ -32,12 +47,9 @@ export interface BuildTaskHooks {
   readonly configure: AsyncSeriesHook<BuildRootConfigurationHooks>;
 
   readonly project: AsyncSeriesHook<BuildProjectDetails>;
-  readonly package: AsyncSeriesHook<{pkg: Package; hooks: BuildPackageHooks}>;
-  readonly webApp: AsyncSeriesHook<{webApp: WebApp; hooks: BuildWebAppHooks}>;
-  readonly service: AsyncSeriesHook<{
-    service: Service;
-    hooks: BuildServiceHooks;
-  }>;
+  readonly package: AsyncSeriesHook<BuildPackageDetails>;
+  readonly webApp: AsyncSeriesHook<BuildWebAppDetails>;
+  readonly service: AsyncSeriesHook<BuildServiceDetails>;
 
   readonly pre: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;
   readonly post: AsyncSeriesWaterfallHook<Step[], BuildStepDetails>;

@@ -88,20 +88,19 @@ export default createPlugin(
 
           const outputPath = pkg.fs.buildPath('cjs');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.cjs.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: '.js',
-                contents: (relative) =>
-                  `module.exports = require(${JSON.stringify(relative)});`,
-              }),
-            );
-          });
+          return [
+            ...steps,
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.cjs.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: '.js',
+              contents: (relative) =>
+                `module.exports = require(${JSON.stringify(relative)});`,
+            }),
+          ];
         });
       });
     });

@@ -55,11 +55,22 @@ export async function runBuild(
 
       const projectDetails = {project: webApp, hooks};
 
-      for (const plugin of webApp.pluginsForTarget(PluginTarget.BuildProject)) {
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+        ...webApp.pluginsForTarget(PluginTarget.BuildProject),
+      ]) {
         plugin(projectDetails);
       }
 
       await buildTaskHooks.project.promise(projectDetails);
+
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildWebApp),
+        ...webApp.pluginsForTarget(PluginTarget.BuildWebApp),
+      ]) {
+        plugin({webApp, hooks});
+      }
+
       await buildTaskHooks.webApp.promise({webApp, hooks});
 
       const variants = await hooks.variants.promise([]);
@@ -91,7 +102,7 @@ export async function runBuild(
                 return createStep({
                   label: (fmt) =>
                     fmt`Building variant {${stringifyVariant(variant)}}`,
-                  steps,
+                  steps: await stepsForVariant(variant),
                 });
               }),
             )
@@ -111,13 +122,22 @@ export async function runBuild(
         configure: new AsyncSeriesHook(['configuration']),
       };
 
-      for (const plugin of service.pluginsForTarget(
-        PluginTarget.BuildProject,
-      )) {
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+        ...service.pluginsForTarget(PluginTarget.BuildProject),
+      ]) {
         plugin({project: service, hooks});
       }
 
       await buildTaskHooks.project.promise({project: service, hooks});
+
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildService),
+        ...service.pluginsForTarget(PluginTarget.BuildService),
+      ]) {
+        plugin({service, hooks});
+      }
+
       await buildTaskHooks.service.promise({service, hooks});
 
       const configurationHooks: BuildServiceConfigurationHooks = {
@@ -152,13 +172,22 @@ export async function runBuild(
 
           const projectDetails = {project: pkg, hooks};
 
-          for (const plugin of pkg.pluginsForTarget(
-            PluginTarget.BuildProject,
-          )) {
+          for (const plugin of [
+            ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+            ...pkg.pluginsForTarget(PluginTarget.BuildProject),
+          ]) {
             plugin(projectDetails);
           }
 
           await buildTaskHooks.project.promise(projectDetails);
+
+          for (const plugin of [
+            ...workspace.pluginsForTarget(PluginTarget.BuildPackage),
+            ...pkg.pluginsForTarget(PluginTarget.BuildPackage),
+          ]) {
+            plugin({pkg, hooks});
+          }
+
           await buildTaskHooks.package.promise({pkg, hooks});
 
           const variants = await hooks.variants.promise([]);

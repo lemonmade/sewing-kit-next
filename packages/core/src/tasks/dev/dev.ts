@@ -84,11 +84,22 @@ export async function runDev(
         ]),
       };
 
-      for (const plugin of webApp.pluginsForTarget(PluginTarget.BuildProject)) {
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+        ...webApp.pluginsForTarget(PluginTarget.BuildProject),
+      ]) {
         plugin({project: webApp, hooks: buildHooks});
       }
 
       await devTaskHooks.project.promise({project: webApp, hooks});
+
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildWebApp),
+        ...webApp.pluginsForTarget(PluginTarget.BuildWebApp),
+      ]) {
+        plugin({webApp, hooks: buildHooks});
+      }
+
       await devTaskHooks.webApp.promise({webApp, hooks});
 
       await buildTaskHooks.project.promise({
@@ -140,13 +151,22 @@ export async function runDev(
         configure: new AsyncSeriesHook(['configuration']),
       };
 
-      for (const plugin of service.pluginsForTarget(
-        PluginTarget.BuildProject,
-      )) {
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+        ...service.pluginsForTarget(PluginTarget.BuildProject),
+      ]) {
         plugin({project: service, hooks: buildHooks});
       }
 
       await devTaskHooks.project.promise({project: service, hooks});
+
+      for (const plugin of [
+        ...workspace.pluginsForTarget(PluginTarget.BuildService),
+        ...service.pluginsForTarget(PluginTarget.BuildService),
+      ]) {
+        plugin({service, hooks: buildHooks});
+      }
+
       await devTaskHooks.service.promise({service, hooks});
 
       await buildTaskHooks.project.promise({
@@ -199,13 +219,22 @@ export async function runDev(
             configure: new AsyncSeriesHook(['buildTarget', 'options']),
           };
 
-          for (const plugin of pkg.pluginsForTarget(
-            PluginTarget.BuildProject,
-          )) {
+          for (const plugin of [
+            ...workspace.pluginsForTarget(PluginTarget.BuildProject),
+            ...pkg.pluginsForTarget(PluginTarget.BuildProject),
+          ]) {
             plugin({project: pkg, hooks: buildHooks});
           }
 
           await devTaskHooks.project.promise({project: pkg, hooks});
+
+          for (const plugin of [
+            ...workspace.pluginsForTarget(PluginTarget.BuildPackage),
+            ...pkg.pluginsForTarget(PluginTarget.BuildPackage),
+          ]) {
+            plugin({pkg, hooks: buildHooks});
+          }
+
           await devTaskHooks.package.promise({pkg, hooks});
 
           await buildTaskHooks.project.promise({

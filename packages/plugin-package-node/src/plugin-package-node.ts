@@ -89,21 +89,20 @@ export default createPlugin(
 
           const outputPath = pkg.fs.buildPath('node');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.node.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: EXTENSION,
-                exclude: (entry) => entry.runtime === Runtime.Node,
-                contents: (relative) =>
-                  `module.exports = require(${JSON.stringify(relative)});`,
-              }),
-            );
-          });
+          return [
+            ...steps,
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.node.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: EXTENSION,
+              exclude: (entry) => entry.runtime === Runtime.Node,
+              contents: (relative) =>
+                `module.exports = require(${JSON.stringify(relative)});`,
+            }),
+          ];
         });
       });
     });

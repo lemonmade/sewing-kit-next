@@ -69,22 +69,21 @@ export default createPlugin(
 
           const outputPath = pkg.fs.buildPath('esm');
 
-          return produce(steps, (steps) => {
-            steps.push(
-              createCompileBabelStep(pkg, workspace, config, {
-                outputPath,
-                configFile: 'babel.esm.js',
-              }),
-              createWriteEntriesStep(pkg, {
-                outputPath,
-                extension: '.mjs',
-                contents: (relative) =>
-                  `export * from ${JSON.stringify(
-                    relative,
-                  )};\nexport {default} from ${JSON.stringify(relative)};`,
-              }),
-            );
-          });
+          return [
+            ...steps,
+            createCompileBabelStep(pkg, workspace, config, {
+              outputPath,
+              configFile: 'babel.esm.js',
+            }),
+            createWriteEntriesStep(pkg, {
+              outputPath,
+              extension: '.mjs',
+              contents: (relative) =>
+                `export * from ${JSON.stringify(
+                  relative,
+                )};\nexport {default} from ${JSON.stringify(relative)};`,
+            }),
+          ];
         });
       });
     });

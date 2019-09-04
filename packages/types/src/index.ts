@@ -44,6 +44,9 @@ export enum Env {
 export enum PluginTarget {
   Root,
   BuildProject,
+  BuildWebApp,
+  BuildService,
+  BuildPackage,
   TestProject,
 }
 
