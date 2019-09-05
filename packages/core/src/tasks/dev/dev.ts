@@ -175,7 +175,10 @@ export async function runDev(
       });
       await buildTaskHooks.service.promise({service, hooks: buildHooks});
 
-      const configurationHooks: DevServiceConfigurationHooks = {};
+      const configurationHooks: DevServiceConfigurationHooks = {
+        ip: new AsyncSeriesWaterfallHook(['ip']),
+        port: new AsyncSeriesWaterfallHook(['port']),
+      };
       await hooks.configure.promise(configurationHooks);
 
       const buildConfigurationHooks: BuildServiceConfigurationHooks = {

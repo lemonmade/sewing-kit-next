@@ -10,7 +10,9 @@ app.use((ctx) => {
   )}</div><script src="http://localhost:8081/assets/main.js"></script></body></html>`;
 });
 
-app.listen(8082, () => {
+const {PORT: port, IP: ip} = process.env;
+
+app.listen(parseInt(port, 10), ip, () => {
   // eslint-disable-next-line no-console
-  console.log(`Service listening on localhost:8082`);
+  console.log(`Service listening on ${ip}:${port}`);
 });

@@ -16,6 +16,7 @@ Just run `yarn` and you should be good to go. If you ever have issues with modul
 - [ ] Maybe allow passing project-level plugins at root, and then they are applied to each project? It is a bit weird right now that all plugins will probably need a "all projects" and a "single project" mode
 - [ ] Make sure that running `Workspace#run()` (in test) returns the output that the user would have actually seen
 - [ ] Move the definition of workspace/ web app/ service etc to its own package. Same thing with steps, and with plugins. Because of the hoops to get module type augmentation working and the interdependencies between various packages, the current setup means that only a subset of the hooks API for sewing-kit can be expressed in `@sewing-kit/types`, since anything that depends on knowledge of `Workspace` (which is a concept defined in `@sewing-kit/core`, which depends on `@sewing-kit/types`) can only be written in `@sewing-kit/core`. The problem for plugins and steps is similar, but just generally speaking, those things are all discrete concepts that would be better as their own things.
+- [ ] Vendor DLL plugin that automatically reads dependencies of project + removes any packages in a whitelist, same whitelist can be used for the whitelist in `node-externals`. Vendor DLL takes care of updating the webpack config in dev also
 
 ## Errors to handle
 

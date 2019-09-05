@@ -6,5 +6,6 @@ module.exports = {
   ],
   rules: {
     'no-process-env': 'off',
+    'callback-return': 'off',
   },
 };

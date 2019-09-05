@@ -271,7 +271,12 @@ export interface DevPackageHooks {
 // PACKAGE
 
 export interface DevServiceConfigurationCustomHooks {}
-export interface DevServiceConfigurationCoreHooks {}
+
+export interface DevServiceConfigurationCoreHooks {
+  readonly ip: AsyncSeriesWaterfallHook<string | undefined>;
+  readonly port: AsyncSeriesWaterfallHook<number | undefined>;
+}
+
 export interface DevServiceConfigurationHooks
   extends DevServiceConfigurationCoreHooks,
     Partial<DevServiceConfigurationCustomHooks> {}
