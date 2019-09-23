@@ -69,8 +69,9 @@ export async function runDev(
   const webAppSteps: Step[] = (await Promise.all(
     workspace.webApps.map(async (webApp) => {
       const hooks: DevWebAppHooks = {
-        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
-        configure: new AsyncSeriesHook(['configuration', 'variant']),
+        details: new AsyncSeriesHook(['details']),
+        configure: new AsyncSeriesHook(['configuration']),
+        steps: new AsyncSeriesWaterfallHook(['steps', 'details']),
       };
 
       const buildHooks: BuildWebAppHooks = {
@@ -121,11 +122,14 @@ export async function runDev(
       await buildHooks.configure.promise(buildConfigurationHooks, {});
       await buildHooks.configureBrowser.promise(buildConfigurationHooks, {});
 
-      const steps = await hooks.steps.promise([], {
+      const details = {
         config: configurationHooks,
         buildBrowserConfig: buildConfigurationHooks,
         buildServiceWorkerConfig: buildConfigurationHooks,
-      });
+      };
+
+      await hooks.details.promise(details);
+      const steps = await hooks.steps.promise([], details);
 
       return steps.length > 0
         ? [
@@ -142,8 +146,9 @@ export async function runDev(
   const serviceSteps: Step[] = (await Promise.all(
     workspace.services.map(async (service) => {
       const hooks: DevServiceHooks = {
-        steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
-        configure: new AsyncSeriesHook(['configuration', 'variant']),
+        configure: new AsyncSeriesHook(['configuration']),
+        details: new AsyncSeriesHook(['details']),
+        steps: new AsyncSeriesWaterfallHook(['steps', 'details']),
       };
 
       const buildHooks: BuildServiceHooks = {
@@ -190,10 +195,13 @@ export async function runDev(
 
       await buildHooks.configure.promise(buildConfigurationHooks);
 
-      const steps = await hooks.steps.promise([], {
+      const details = {
         config: configurationHooks,
         buildConfig: buildConfigurationHooks,
-      });
+      };
+
+      await hooks.details.promise(details);
+      const steps = await hooks.steps.promise([], details);
 
       return steps.length > 0
         ? [
@@ -212,8 +220,9 @@ export async function runDev(
     : (await Promise.all(
         workspace.packages.map(async (pkg) => {
           const hooks: DevPackageHooks = {
-            steps: new AsyncSeriesWaterfallHook(['steps', 'options']),
             configure: new AsyncSeriesHook(['buildTarget', 'options']),
+            details: new AsyncSeriesHook(['details']),
+            steps: new AsyncSeriesWaterfallHook(['steps', 'details']),
           };
 
           const buildHooks: BuildPackageHooks = {
@@ -254,10 +263,13 @@ export async function runDev(
           };
           await buildHooks.configure.promise(buildConfigurationHooks);
 
-          const steps = await hooks.steps.promise([], {
+          const details = {
             config: configurationHooks,
             buildConfig: buildConfigurationHooks,
-          });
+          };
+
+          await hooks.details.promise(details);
+          const steps = await hooks.steps.promise([], details);
 
           return steps.length > 0
             ? [
